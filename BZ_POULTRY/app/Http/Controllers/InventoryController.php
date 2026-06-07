@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class InventoryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $items = InventoryItem::latest()->paginate(10);
 
@@ -36,6 +36,23 @@ class InventoryController extends Controller
             ->select('type', DB::raw('SUM(quantity) as total'))
             ->groupBy('type')->get();
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                'items' => $items->items(),
+                'pagination' => [
+                    'current_page' => $items->currentPage(),
+                    'last_page' => $items->lastPage(),
+                    'per_page' => $items->perPage(),
+                    'total' => $items->total(),
+                ],
+                'summary' => compact('totalItems', 'totalValue', 'lowStock', 'stockIn', 'stockOut'),
+                'byCategory' => $byCategory,
+                'recentTransactions' => $recentTransactions,
+                'lowStockAlerts' => $lowStockAlerts,
+                'monthlyMovement' => $monthlyMovement,
+            ]);
+        }
+
         return view('inventory.index', compact(
             'items', 'totalItems', 'totalValue', 'lowStock', 'stockIn', 'stockOut',
             'byCategory', 'recentTransactions', 'lowStockAlerts', 'monthlyMovement'
@@ -56,17 +73,25 @@ class InventoryController extends Controller
         ]);
 
         $data['last_updated'] = now();
-        InventoryItem::create($data);
+        $item = InventoryItem::create($data);
         ActivityLogger::log('created', 'Inventory', "Added inventory item {$data['name']}");
+
+        if ($request->wantsJson()) {
+            return response()->json(['message' => 'Inventory item added.', 'item' => $item], 201);
+        }
 
         return back()->with('success', 'Inventory item added.');
     }
 
-    public function destroy(InventoryItem $inventory)
+    public function destroy(Request $request, InventoryItem $inventory)
     {
         $name = $inventory->name;
         $inventory->delete();
         ActivityLogger::log('deleted', 'Inventory', "Deleted inventory item {$name}");
+
+        if ($request->wantsJson()) {
+            return response()->json(['message' => 'Inventory item deleted.']);
+        }
 
         return back()->with('success', 'Inventory item deleted.');
     }

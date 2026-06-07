@@ -15,7 +15,10 @@
 <div class="card">
     <div class="table-toolbar">
         <div class="search-box"><i class="bi bi-search"></i><input type="text" placeholder="Search flocks..."></div>
-        <button class="btn btn-success" onclick="openModal('addFlockModal')"><i class="bi bi-plus-lg"></i> Add New Flock</button>
+        <div>
+            <button class="btn btn-outline" onclick="openExportModal('Flocks','{{ route('flocks.index') }}')"><i class="bi bi-printer"></i> Export</button>
+            <button class="btn btn-success" onclick="openModal('addFlockModal')"><i class="bi bi-plus-lg"></i> Add New Flock</button>
+        </div>
     </div>
     <table class="data-table">
         <thead>
@@ -35,10 +38,8 @@
                 <td><span class="status-badge status-{{ $flock->status }}">{{ ucfirst($flock->status) }}</span></td>
                 <td>
                     <div class="action-btns">
-                        <form action="{{ route('flocks.destroy', $flock) }}" method="POST" onsubmit="return confirm('Delete this flock?')">
-                            @csrf @method('DELETE')
-                            <button class="action-btn delete" type="submit"><i class="bi bi-trash"></i></button>
-                        </form>
+                        <button class="action-btn edit" title="Edit" data-action="{{ route('flocks.update', $flock) }}" data-batch="{{ $flock->batch_no }}" data-type="{{ $flock->type }}" data-breed="{{ $flock->breed }}" data-quantity="{{ $flock->quantity }}" data-age="{{ $flock->age_weeks }}" data-date_in="{{ $flock->date_in->format('Y-m-d') }}" onclick="handleOpenEdit(this)"><i class="bi bi-pencil"></i></button>
+                        <button class="action-btn delete" title="Delete" onclick="confirmDelete('{{ route('flocks.destroy', $flock) }}', 'Delete flock {{ $flock->batch_no }}?')"><i class="bi bi-trash"></i></button>
                     </div>
                 </td>
             </tr>
@@ -91,5 +92,20 @@ new Chart(document.getElementById('distChart'), {
     data: { labels: ['Layers','Pullets','Roosters'], datasets: [{ data: [{{ $distribution['layers'] }},{{ $distribution['pullets'] }},{{ $distribution['roosters'] }}], backgroundColor: ['#2d6a4f','#52b788','#95d5b2'] }] },
     options: { responsive: true, maintainAspectRatio: false }
 });
+</script>
+<script>
+function handleOpenEdit(btn){
+    const d = btn.dataset;
+    const content = `
+        <div class="form-group"><label>Batch No.</label><input name="batch_no" value="${d.batch}" class="form-control" required></div>
+        <div class="form-group"><label>Type</label><select name="type" class="form-control" required><option value="layers" ${d.type==='layers' ? 'selected' : ''}>Layers</option><option value="pullets" ${d.type==='pullets' ? 'selected' : ''}>Pullets</option><option value="roosters" ${d.type==='roosters' ? 'selected' : ''}>Roosters</option></select></div>
+        <div class="form-group"><label>Breed</label><input name="breed" value="${d.breed}" class="form-control" required></div>
+        <div class="form-group"><label>Quantity</label><input name="quantity" type="number" value="${d.quantity}" class="form-control" required></div>
+        <div class="form-group"><label>Age (Weeks)</label><input name="age_weeks" type="number" value="${d.age}" class="form-control" required></div>
+        <div class="form-group"><label>Date In</label><input name="date_in" type="date" value="${d.date_in}" class="form-control" required></div>
+        <input type="hidden" name="_method" value="PUT" />
+    `;
+    openEditModal(content, btn.dataset.action);
+}
 </script>
 @endpush

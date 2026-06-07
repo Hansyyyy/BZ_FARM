@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 
 class ReportsController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $reports = Report::with('generator')->latest('generated_at')->take(10)->get();
 
@@ -22,6 +22,10 @@ class ReportsController extends Controller
             ['name' => 'Mortality Report', 'category' => 'Poultry', 'icon' => 'heart-pulse'],
         ];
 
+        if ($request->wantsJson()) {
+            return response()->json(['reports' => $reports, 'reportTypes' => $reportTypes]);
+        }
+
         return view('reports.index', compact('reports', 'reportTypes'));
     }
 
@@ -32,12 +36,16 @@ class ReportsController extends Controller
             'category' => 'required|string',
         ]);
 
-        Report::create([
+        $report = Report::create([
             'report_name' => $data['report_name'],
             'category' => $data['category'],
             'generated_by' => auth()->id(),
             'generated_at' => now(),
         ]);
+
+        if ($request->wantsJson()) {
+            return response()->json(['message' => 'Report generated successfully.', 'report' => $report], 201);
+        }
 
         return back()->with('success', 'Report generated successfully.');
     }

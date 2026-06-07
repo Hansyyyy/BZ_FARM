@@ -13,11 +13,14 @@ use Illuminate\Support\Facades\DB;
 
 class SalesController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $today = Carbon::today();
         $weekStart = Carbon::now()->startOfWeek();
         $monthStart = Carbon::now()->startOfMonth();
+        $cleanupCutoff = Carbon::now()->subDays(30);
+
+        Sale::where('sale_date', '<', $cleanupCutoff)->delete();
 
         $eggsToday = EggProduction::whereDate('date', $today)->sum('total_eggs');
         $calTotal = EggProduction::whereDate('date', $today)->sum('good_eggs');
@@ -51,6 +54,25 @@ class SalesController extends Controller
 
         $recentSales = Sale::with(['customer', 'product'])->latest('sale_date')->take(5)->get();
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                'items' => $sales->items(),
+                'pagination' => [
+                    'current_page' => $sales->currentPage(),
+                    'last_page' => $sales->lastPage(),
+                    'per_page' => $sales->perPage(),
+                    'total' => $sales->total(),
+                ],
+                'summary' => compact('eggsToday', 'calTotal', 'crackedToday', 'weekTotal', 'monthTotal', 'salesSummary'),
+                'customers' => $customers,
+                'products' => $products,
+                'salesTrend' => $salesTrend,
+                'salesByProduct' => $salesByProduct,
+                'paymentStatus' => $paymentStatus,
+                'recentSales' => $recentSales,
+            ]);
+        }
+
         return view('sales.index', compact(
             'eggsToday', 'calTotal', 'crackedToday', 'weekTotal', 'monthTotal',
             'sales', 'customers', 'products', 'salesTrend', 'salesByProduct',
@@ -73,17 +95,25 @@ class SalesController extends Controller
 
         $data['amount'] = $data['quantity'] * $data['unit_price'];
         $data['user_id'] = auth()->id();
-        Sale::create($data);
+        $sale = Sale::create($data);
         ActivityLogger::log('created', 'Sales', "New sale {$data['invoice_no']}");
+
+        if ($request->wantsJson()) {
+            return response()->json(['message' => 'Sale recorded successfully.', 'item' => $sale], 201);
+        }
 
         return back()->with('success', 'Sale recorded successfully.');
     }
 
-    public function destroy(Sale $sale)
+    public function destroy(Request $request, Sale $sale)
     {
         $invoice = $sale->invoice_no;
         $sale->delete();
         ActivityLogger::log('deleted', 'Sales', "Deleted sale {$invoice}");
+
+        if ($request->wantsJson()) {
+            return response()->json(['message' => 'Sale deleted.']);
+        }
 
         return back()->with('success', 'Sale deleted.');
     }

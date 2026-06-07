@@ -12,10 +12,11 @@ use App\Models\Sale;
 use App\Models\StockTransaction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $today = Carbon::today();
         $weekStart = Carbon::now()->startOfWeek();
@@ -62,6 +63,17 @@ class DashboardController extends Controller
             'daily_avg' => (int) EggProduction::whereMonth('date', $today->month)->avg('good_eggs'),
         ];
         $recentActivities = Activity::with('user')->latest()->take(6)->get();
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'summary' => compact('totalPoultry', 'eggsToday', 'feedStock', 'medicineStock', 'salesToday', 'feedLow', 'medicineLow', 'eggSummary'),
+                'weeklyProduction' => $weeklyProduction,
+                'inventoryBreakdown' => $inventoryBreakdown,
+                'lowStockAlerts' => $lowStockAlerts,
+                'recentTransactions' => $recentTransactions,
+                'recentActivities' => $recentActivities,
+            ]);
+        }
 
         return view('dashboard.index', compact(
             'totalPoultry', 'eggsToday', 'feedStock', 'medicineStock', 'salesToday',

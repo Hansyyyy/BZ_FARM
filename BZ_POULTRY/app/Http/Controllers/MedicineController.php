@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class MedicineController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $items = MedicineItem::latest()->paginate(10);
 
@@ -38,6 +38,23 @@ class MedicineController extends Controller
             ->select(DB::raw('DATE(created_at) as day'), DB::raw('SUM(quantity) as total'))
             ->groupBy('day')->orderBy('day')->get();
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                'items' => $items->items(),
+                'pagination' => [
+                    'current_page' => $items->currentPage(),
+                    'last_page' => $items->lastPage(),
+                    'per_page' => $items->perPage(),
+                    'total' => $items->total(),
+                ],
+                'summary' => compact('totalItems', 'totalValue', 'lowStock', 'expiringSoon', 'usedThisMonth'),
+                'recentTransactions' => $recentTransactions,
+                'expiringItems' => $expiringItems,
+                'lowStockAlerts' => $lowStockAlerts,
+                'monthlyUsage' => $monthlyUsage,
+            ]);
+        }
+
         return view('medicine.index', compact(
             'items', 'totalItems', 'totalValue', 'lowStock', 'expiringSoon',
             'usedThisMonth', 'recentTransactions', 'expiringItems', 'lowStockAlerts', 'monthlyUsage'
@@ -57,17 +74,25 @@ class MedicineController extends Controller
         ]);
 
         $data['last_stock_in'] = now();
-        MedicineItem::create($data);
+        $item = MedicineItem::create($data);
         ActivityLogger::log('created', 'Medicine & Vaccine', "Added medicine item {$data['name']}");
+
+        if ($request->wantsJson()) {
+            return response()->json(['message' => 'Medicine item added.', 'item' => $item], 201);
+        }
 
         return back()->with('success', 'Medicine item added.');
     }
 
-    public function destroy(MedicineItem $medicine)
+    public function destroy(Request $request, MedicineItem $medicine)
     {
         $name = $medicine->name;
         $medicine->delete();
         ActivityLogger::log('deleted', 'Medicine & Vaccine', "Deleted medicine item {$name}");
+
+        if ($request->wantsJson()) {
+            return response()->json(['message' => 'Medicine item deleted.']);
+        }
 
         return back()->with('success', 'Medicine item deleted.');
     }

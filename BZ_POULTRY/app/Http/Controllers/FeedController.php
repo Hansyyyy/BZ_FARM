@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class FeedController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $feeds = FeedItem::latest()->paginate(10);
 
@@ -39,6 +39,23 @@ class FeedController extends Controller
             ->select(DB::raw('DATE(created_at) as day'), DB::raw('SUM(quantity) as total'))
             ->groupBy('day')->orderBy('day')->get();
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                'items' => $feeds->items(),
+                'pagination' => [
+                    'current_page' => $feeds->currentPage(),
+                    'last_page' => $feeds->lastPage(),
+                    'per_page' => $feeds->perPage(),
+                    'total' => $feeds->total(),
+                ],
+                'summary' => compact('totalItems', 'totalStock', 'lowStock', 'consumed', 'feedCost'),
+                'stockLevels' => $stockLevels,
+                'recentTransactions' => $recentTransactions,
+                'lowStockAlerts' => $lowStockAlerts,
+                'monthlyConsumption' => $monthlyConsumption,
+            ]);
+        }
+
         return view('feed.index', compact(
             'feeds', 'totalItems', 'totalStock', 'lowStock', 'consumed',
             'feedCost', 'stockLevels', 'recentTransactions', 'lowStockAlerts', 'monthlyConsumption'
@@ -57,17 +74,25 @@ class FeedController extends Controller
         ]);
 
         $data['last_stock_in'] = now();
-        FeedItem::create($data);
+        $feedItem = FeedItem::create($data);
         ActivityLogger::log('created', 'Feed Inventory', "Added feed item {$data['name']}");
+
+        if ($request->wantsJson()) {
+            return response()->json(['message' => 'Feed item added.', 'item' => $feedItem], 201);
+        }
 
         return back()->with('success', 'Feed item added.');
     }
 
-    public function destroy(FeedItem $feed)
+    public function destroy(Request $request, FeedItem $feed)
     {
         $name = $feed->name;
         $feed->delete();
         ActivityLogger::log('deleted', 'Feed Inventory', "Deleted feed item {$name}");
+
+        if ($request->wantsJson()) {
+            return response()->json(['message' => 'Feed item deleted.']);
+        }
 
         return back()->with('success', 'Feed item deleted.');
     }

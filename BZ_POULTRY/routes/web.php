@@ -22,40 +22,56 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::prefix('api')->group(function () {
+        Route::get('/user', function () { return auth()->user(); });
 
-    Route::get('/poultry-stock', [FlockController::class, 'index'])->name('flocks.index');
-    Route::post('/poultry-stock', [FlockController::class, 'store'])->name('flocks.store');
-    Route::put('/poultry-stock/{flock}', [FlockController::class, 'update'])->name('flocks.update');
-    Route::delete('/poultry-stock/{flock}', [FlockController::class, 'destroy'])->name('flocks.destroy');
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('api.dashboard');
 
-    Route::get('/feed-inventory', [FeedController::class, 'index'])->name('feed.index');
-    Route::post('/feed-inventory', [FeedController::class, 'store'])->name('feed.store');
-    Route::delete('/feed-inventory/{feed}', [FeedController::class, 'destroy'])->name('feed.destroy');
+        Route::get('/flocks', [FlockController::class, 'index'])->name('api.flocks.index');
+        Route::post('/flocks', [FlockController::class, 'store'])->name('api.flocks.store');
+        Route::put('/flocks/{flock}', [FlockController::class, 'update'])->name('api.flocks.update');
+        Route::delete('/flocks/{flock}', [FlockController::class, 'destroy'])->name('api.flocks.destroy');
 
-    Route::get('/medicine-vaccine', [MedicineController::class, 'index'])->name('medicine.index');
-    Route::post('/medicine-vaccine', [MedicineController::class, 'store'])->name('medicine.store');
-    Route::delete('/medicine-vaccine/{medicine}', [MedicineController::class, 'destroy'])->name('medicine.destroy');
+        Route::get('/feed', [FeedController::class, 'index'])->name('api.feed.index');
+        Route::post('/feed', [FeedController::class, 'store'])->name('api.feed.store');
+        Route::delete('/feed/{feed}', [FeedController::class, 'destroy'])->name('api.feed.destroy');
 
-    Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
-    Route::post('/inventory', [InventoryController::class, 'store'])->name('inventory.store');
-    Route::delete('/inventory/{inventory}', [InventoryController::class, 'destroy'])->name('inventory.destroy');
+        Route::get('/medicine', [MedicineController::class, 'index'])->name('api.medicine.index');
+        Route::post('/medicine', [MedicineController::class, 'store'])->name('api.medicine.store');
+        Route::delete('/medicine/{medicine}', [MedicineController::class, 'destroy'])->name('api.medicine.destroy');
 
-    Route::get('/egg-production', [EggProductionController::class, 'index'])->name('eggs.index');
-    Route::post('/egg-production', [EggProductionController::class, 'store'])->name('eggs.store');
-    Route::delete('/egg-production/{egg}', [EggProductionController::class, 'destroy'])->name('eggs.destroy');
+        Route::get('/inventory', [InventoryController::class, 'index'])->name('api.inventory.index');
+        Route::post('/inventory', [InventoryController::class, 'store'])->name('api.inventory.store');
+        Route::delete('/inventory/{inventory}', [InventoryController::class, 'destroy'])->name('api.inventory.destroy');
 
-    Route::get('/sales', [SalesController::class, 'index'])->name('sales.index');
-    Route::post('/sales', [SalesController::class, 'store'])->name('sales.store');
-    Route::delete('/sales/{sale}', [SalesController::class, 'destroy'])->name('sales.destroy');
+        Route::get('/eggs', [EggProductionController::class, 'index'])->name('api.eggs.index');
+        Route::post('/eggs', [EggProductionController::class, 'store'])->name('api.eggs.store');
+        Route::delete('/eggs/{egg}', [EggProductionController::class, 'destroy'])->name('api.eggs.destroy');
 
-    Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');
-    Route::post('/reports/generate', [ReportsController::class, 'generate'])->name('reports.generate');
+        Route::get('/sales', [SalesController::class, 'index'])->name('api.sales.index');
+        Route::post('/sales', [SalesController::class, 'store'])->name('api.sales.store');
+        Route::delete('/sales/{sale}', [SalesController::class, 'destroy'])->name('api.sales.destroy');
 
-    Route::middleware('role:admin')->group(function () {
-        Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
-        Route::post('/settings/users', [SettingsController::class, 'storeUser'])->name('settings.users.store');
-        Route::put('/settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile');
-        Route::delete('/settings/users/{user}', [SettingsController::class, 'destroyUser'])->name('settings.users.destroy');
+        Route::get('/reports', [ReportsController::class, 'index'])->name('api.reports.index');
+        Route::post('/reports', [ReportsController::class, 'generate'])->name('api.reports.generate');
+
+        Route::middleware('role:admin')->group(function () {
+            Route::get('/settings', [SettingsController::class, 'index'])->name('api.settings.index');
+            Route::post('/settings', [SettingsController::class, 'store'])->name('api.settings.store');
+            Route::post('/settings/users', [SettingsController::class, 'storeUser'])->name('api.settings.users.store');
+            Route::put('/settings/profile', [SettingsController::class, 'updateProfile'])->name('api.settings.profile');
+            Route::delete('/settings/users/{user}', [SettingsController::class, 'destroyUser'])->name('api.settings.users.destroy');
+        });
     });
+
+    Route::view('/dashboard', 'react-app')->name('dashboard');
+    Route::view('/poultry-stock', 'react-app');
+    Route::view('/feed-inventory', 'react-app');
+    Route::view('/medicine-vaccine', 'react-app');
+    Route::view('/inventory', 'react-app');
+    Route::view('/egg-production', 'react-app');
+    Route::view('/sales', 'react-app');
+    Route::view('/reports', 'react-app');
+    Route::view('/settings', 'react-app');
+    Route::view('/{any}', 'react-app')->where('any', '.*');
 });
