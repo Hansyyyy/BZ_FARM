@@ -20,9 +20,11 @@ export default function DynamicForm({ id, fields, values, onChange, onSubmit }) 
                             <input
                                 className="form-control"
                                 type={field.type}
-                                value={values[field.key] || ''}
+                                value={values[field.key] ?? ''}
                                 onChange={(event) => onChange(field.key, event.target.value)}
-                                required={field.type !== 'date'}
+                                required={field.type !== 'date' && !field.readOnly}
+                                readOnly={field.readOnly}
+                                disabled={field.readOnly}
                             />
                         )}
                     </div>

@@ -1,20 +1,22 @@
 import { NavLink } from 'react-router-dom';
-import { navItems } from '../../config/navigation';
+import { getNavItems } from '../../config/navigation';
 
 export default function Sidebar({ collapsed, mobileOpen, onNavigate }) {
     const user = window.Laravel?.user || { role: 'user' };
-    const isAdmin = user.role === 'admin';
-    const items = navItems.filter((item) => !item.adminOnly || isAdmin);
+    const items = getNavItems(user.role);
+    const isCollapsed = collapsed && !mobileOpen;
     const className = [
         'sidebar',
-        collapsed ? 'collapsed' : '',
+        isCollapsed ? 'collapsed' : '',
         mobileOpen ? 'open' : '',
     ].filter(Boolean).join(' ');
 
     return (
         <aside className={className}>
             <div className="sidebar-logo" title="BZ Farm">
-                <div className="logo-circle"></div>
+                <div className="logo-circle">
+                    <img src={window.Laravel?.logoUrl || '/images/BZ%20LOGO.png'} alt="BZ Farm logo" />
+                </div>
                 <span>BZ FARM</span>
             </div>
             <ul className="nav-menu">

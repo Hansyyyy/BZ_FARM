@@ -9,10 +9,49 @@ import DonutChart from '../components/ui/DonutChart';
 import RecentActivities from '../components/ui/RecentActivities';
 import PanelCard from '../components/ui/PanelCard';
 import Modal from '../components/ui/Modal';
+import ExportModal from '../components/ui/ExportModal';
+import ConfirmModal from '../components/ui/ConfirmModal';
 import DynamicForm from '../components/forms/DynamicForm';
+import { exportTableData } from '../utils/exportData';
 import { stockTabs, getStockResource } from '../config/stockTabs';
 
 const PAGE_SIZE = 8;
+
+function prepareFormItem(item, fields) {
+    const prepared = { ...item };
+
+    fields.forEach((field) => {
+        if (field.type === 'date' && prepared[field.key]) {
+            prepared[field.key] = String(prepared[field.key]).slice(0, 10);
+        }
+    });
+
+    if (prepared.status === undefined) {
+        prepared.status = 'active';
+    }
+
+    if (prepared.mortality === undefined) {
+        prepared.mortality = 0;
+    }
+
+    return prepared;
+}
+
+function buildPayload(form, fields) {
+    const payload = {};
+
+    fields.forEach((field) => {
+        if (field.readOnly) {
+            return;
+        }
+
+        if (form[field.key] !== undefined && form[field.key] !== '') {
+            payload[field.key] = form[field.key];
+        }
+    });
+
+    return payload;
+}
 
 export default function StockHubPage() {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -25,14 +64,21 @@ export default function StockHubPage() {
     const [filters, setFilters] = useState({ type: '', breed: '', status: '', category: '', building: '' });
     const [page, setPage] = useState(1);
     const [form, setForm] = useState({});
+    const [editingId, setEditingId] = useState(null);
     const [viewItem, setViewItem] = useState(null);
     const [isFormOpen, setFormOpen] = useState(false);
+    const [isExportOpen, setExportOpen] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState(null);
+
+    const activeFields = editingId && resource.editFormFields ? resource.editFormFields : resource.formFields;
+    const isEditing = Boolean(editingId);
 
     useEffect(() => {
         setSearch('');
         setFilters({ type: '', breed: '', status: '', category: '', building: '' });
         setPage(1);
         setForm({});
+        setEditingId(null);
     }, [activeTab]);
 
     const items = useMemo(() => {
@@ -63,43 +109,78 @@ export default function StockHubPage() {
 
     const updateField = (key, value) => setForm((previous) => ({ ...previous, [key]: value }));
 
+    const closeForm = () => {
+        setFormOpen(false);
+        setForm({});
+        setEditingId(null);
+    };
+
+    const openCreate = () => {
+        setEditingId(null);
+        setForm({});
+        setFormOpen(true);
+    };
+
+    const openEdit = (item) => {
+        const fields = resource.editFormFields || resource.formFields;
+        setEditingId(item.id);
+        setForm(prepareFormItem(item, fields));
+        setFormOpen(true);
+    };
+
     const submit = async (event) => {
         event.preventDefault();
+
         try {
-            const payload = new FormData();
-            Object.entries(form).forEach(([key, value]) => payload.append(key, value));
-            await axios.post(resource.endpoint, payload);
-            setFormOpen(false);
-            setForm({});
+            const payload = buildPayload(form, activeFields);
+
+            if (isEditing) {
+                await axios.put(`${resource.endpoint}/${editingId}`, payload);
+            } else {
+                const formData = new FormData();
+                Object.entries(payload).forEach(([key, value]) => formData.append(key, value));
+                await axios.post(resource.endpoint, formData);
+            }
+
+            closeForm();
             await reload();
         } catch (err) {
-            setError(err.message);
+            setError(err.response?.data?.message || err.message);
         }
     };
 
-    const remove = async (id) => {
-        if (!window.confirm('Delete this record?')) return;
+    const confirmDelete = async () => {
+        if (!deleteTarget) return;
+
         try {
-            await axios.delete(`${resource.endpoint}/${id}`);
+            await axios.delete(`${resource.endpoint}/${deleteTarget.id}`);
             setData((previous) => ({
                 ...previous,
-                items: previous.items.filter((item) => item.id !== id),
+                items: previous.items.filter((item) => item.id !== deleteTarget.id),
             }));
+            setDeleteTarget(null);
         } catch (err) {
-            setError(err.message);
+            setError(err.response?.data?.message || err.message);
         }
+    };
+
+    const handleExport = async (format) => {
+        exportTableData({
+            title: tabConfig.listTitle,
+            columns: resource.columns,
+            rows: items,
+            format,
+        });
     };
 
     const setTab = (tabId) => {
         setSearchParams({ tab: tabId });
     };
 
-    const summaryFields = activeTab === 'chicken' ? resource.summaryFields : resource.summaryFields;
-
     return (
         <PageState loading={loading} error={error} loadingLabel="Loading stock data...">
             {resource.summaryFields && (
-                <SummaryCards fields={summaryFields} summary={data?.summary} />
+                <SummaryCards fields={resource.summaryFields} summary={data?.summary} />
             )}
 
             <div className="data-panel">
@@ -146,10 +227,13 @@ export default function StockHubPage() {
                                 {categoryOptions.map((category) => <option key={category} value={category}>{category}</option>)}
                             </select>
                         )}
+                        <button type="button" className="btn btn-outline" onClick={() => setExportOpen(true)}>
+                            <i className="bi bi-printer"></i> Export
+                        </button>
+                        <button type="button" className="btn btn-primary" onClick={openCreate}>
+                            <i className="bi bi-plus-lg"></i> {tabConfig.addLabel}
+                        </button>
                     </div>
-                    <button type="button" className="btn btn-primary" onClick={() => setFormOpen(true)}>
-                        <i className="bi bi-plus-lg"></i> {tabConfig.addLabel}
-                    </button>
                 </div>
 
                 <div className="data-panel-title">{tabConfig.listTitle}</div>
@@ -181,10 +265,10 @@ export default function StockHubPage() {
                                             <button type="button" className="action-btn" title="View" onClick={() => setViewItem(item)}>
                                                 <i className="bi bi-eye"></i>
                                             </button>
-                                            <button type="button" className="action-btn" title="Edit" onClick={() => { setForm(item); setFormOpen(true); }}>
+                                            <button type="button" className="action-btn" title="Edit" onClick={() => openEdit(item)}>
                                                 <i className="bi bi-pencil"></i>
                                             </button>
-                                            <button type="button" className="action-btn delete" title="Delete" onClick={() => remove(item.id)}>
+                                            <button type="button" className="action-btn delete" title="Delete" onClick={() => setDeleteTarget(item)}>
                                                 <i className="bi bi-trash"></i>
                                             </button>
                                         </div>
@@ -222,7 +306,7 @@ export default function StockHubPage() {
 
             {activeTab === 'chicken' && (
                 <div className="grid-2 stock-widgets">
-                    <PanelCard title="Flock Distribution by Type" actionLabel="View All">
+                    <PanelCard title="Chicken Distribution by Type" actionLabel="View All">
                         <DonutChart distribution={data?.distribution} total={data?.summary?.totalPoultry} />
                     </PanelCard>
                     <PanelCard title="Recent Activities" actionLabel="View All">
@@ -233,17 +317,19 @@ export default function StockHubPage() {
 
             <Modal
                 open={isFormOpen}
-                title={tabConfig.addLabel}
+                title={isEditing ? `Update ${tabConfig.listTitle.replace(' List', '')}` : tabConfig.addLabel}
                 size="landscape"
-                onClose={() => { setFormOpen(false); setForm({}); }}
+                onClose={closeForm}
                 actions={(
                     <>
-                        <button type="button" className="btn btn-outline" onClick={() => { setFormOpen(false); setForm({}); }}>Cancel</button>
-                        <button type="submit" className="btn btn-primary" form="stock-form">Save</button>
+                        <button type="button" className="btn btn-outline" onClick={closeForm}>Cancel</button>
+                        <button type="submit" className="btn btn-primary" form="stock-form">
+                            {isEditing ? 'Update' : 'Save'}
+                        </button>
                     </>
                 )}
             >
-                <DynamicForm id="stock-form" fields={resource.formFields} values={form} onChange={updateField} onSubmit={submit} />
+                <DynamicForm id="stock-form" fields={activeFields} values={form} onChange={updateField} onSubmit={submit} />
             </Modal>
 
             <Modal
@@ -267,6 +353,23 @@ export default function StockHubPage() {
                     </div>
                 )}
             </Modal>
+
+            <ExportModal
+                open={isExportOpen}
+                title={`Export ${tabConfig.listTitle}`}
+                description={`Choose how you want to export your ${tabConfig.listTitle.toLowerCase()}.`}
+                onClose={() => setExportOpen(false)}
+                onExport={handleExport}
+            />
+
+            <ConfirmModal
+                open={Boolean(deleteTarget)}
+                title="Delete Record"
+                message="Are you sure you want to delete this record? This action cannot be undone."
+                confirmLabel="Delete"
+                onClose={() => setDeleteTarget(null)}
+                onConfirm={confirmDelete}
+            />
         </PageState>
     );
 }

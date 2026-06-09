@@ -26,16 +26,16 @@
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-logo">
             <div class="logo-circle"><img src="{{ asset('images/BZ LOGO.png') }}" alt="BZ logo"></div>
-            <span>FARM MANAGEMENT</span>
+            <span>BZ FARM</span>
             <button id="sidebarToggle" class="sidebar-toggle" title="Collapse sidebar"><i class="bi bi-chevron-left"></i></button>
         </div>
         <ul class="nav-menu">
-            <li><a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+            <li><a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}"><i class="bi bi-house"></i> Dashboard</a></li>
             <li><a href="{{ route('flocks.index') }}" class="{{ request()->routeIs('flocks.*') ? 'active' : '' }}"><i class="bi bi-egg-fried"></i> Poultry Stock</a></li>
             <li><a href="{{ route('feed.index') }}" class="{{ request()->routeIs('feed.*') ? 'active' : '' }}"><i class="bi bi-basket"></i> Feed Inventory</a></li>
             <li><a href="{{ route('medicine.index') }}" class="{{ request()->routeIs('medicine.*') ? 'active' : '' }}"><i class="bi bi-capsule"></i> Medicine & Vaccine</a></li>
             <li><a href="{{ route('inventory.index') }}" class="{{ request()->routeIs('inventory.*') ? 'active' : '' }}"><i class="bi bi-box-seam"></i> Inventory</a></li>
-            <li><a href="{{ route('eggs.index') }}" class="{{ request()->routeIs('eggs.*') ? 'active' : '' }}"><i class="bi bi-bar-chart-line"></i> Egg Production</a></li>
+            <li><a href="{{ route('eggs.index') }}" class="{{ request()->routeIs('eggs.*') ? 'active' : '' }}"><i class="bi bi-egg"></i> Egg Production</a></li>
             <li><a href="{{ route('sales.index') }}" class="{{ request()->routeIs('sales.*') ? 'active' : '' }}"><i class="bi bi-cash-stack"></i> Sales Management</a></li>
             <li><a href="{{ route('reports.index') }}" class="{{ request()->routeIs('reports.*') ? 'active' : '' }}"><i class="bi bi-file-earmark-text"></i> Reports</a></li>
             @if(auth()->user()->isAdmin())

@@ -4,6 +4,7 @@ import useFetch from '../hooks/useFetch';
 import PageState from '../components/ui/PageState';
 import PanelCard from '../components/ui/PanelCard';
 import Modal from '../components/ui/Modal';
+import ConfirmModal from '../components/ui/ConfirmModal';
 import FarmSettingsForm from '../components/forms/FarmSettingsForm';
 import UserForm from '../components/forms/UserForm';
 
@@ -14,6 +15,7 @@ export default function SettingsPage() {
     const [message, setMessage] = useState(null);
     const [showAddUser, setShowAddUser] = useState(false);
     const [newUser, setNewUser] = useState({ name: '', username: '', email: '', password: '', role: 'manager' });
+    const [deleteTarget, setDeleteTarget] = useState(null);
 
     useEffect(() => {
         if (data) {
@@ -50,11 +52,13 @@ export default function SettingsPage() {
         }
     };
 
-    const deleteUser = async (userId) => {
-        if (!window.confirm('Delete this user?')) return;
+    const confirmDeleteUser = async () => {
+        if (!deleteTarget) return;
+
         try {
-            await axios.delete(`/api/settings/users/${userId}`);
-            setUsers((previous) => previous.filter((user) => user.id !== userId));
+            await axios.delete(`/api/settings/users/${deleteTarget.id}`);
+            setUsers((previous) => previous.filter((user) => user.id !== deleteTarget.id));
+            setDeleteTarget(null);
             setMessage('User deleted successfully.');
         } catch (err) {
             setError(err.message);
@@ -86,7 +90,7 @@ export default function SettingsPage() {
                                     <td>{user.email}</td>
                                     <td><span className={`status-pill status-${user.role}`}>{user.role}</span></td>
                                     <td>
-                                        <button type="button" className="action-btn delete" onClick={() => deleteUser(user.id)}>
+                                        <button type="button" className="action-btn delete" onClick={() => setDeleteTarget(user)}>
                                             <i className="bi bi-trash"></i>
                                         </button>
                                     </td>
@@ -96,6 +100,15 @@ export default function SettingsPage() {
                     </table>
                 </div>
             </div>
+
+            <ConfirmModal
+                open={Boolean(deleteTarget)}
+                title="Delete User"
+                message={`Are you sure you want to delete ${deleteTarget?.name || 'this user'}? This action cannot be undone.`}
+                confirmLabel="Delete"
+                onClose={() => setDeleteTarget(null)}
+                onConfirm={confirmDeleteUser}
+            />
 
             <Modal open={showAddUser} title="Add User" size="landscape" onClose={() => setShowAddUser(false)} actions={(
                 <>

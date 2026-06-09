@@ -5,6 +5,13 @@ import PageState from '../components/ui/PageState';
 import PanelCard from '../components/ui/PanelCard';
 import Modal from '../components/ui/Modal';
 import ExportModal from '../components/ui/ExportModal';
+import { exportTableData } from '../utils/exportData';
+
+const reportColumns = [
+    { key: 'report_name', label: 'Name' },
+    { key: 'category', label: 'Category' },
+    { key: 'generated_at', label: 'Generated At', render: (report) => new Date(report.generated_at).toLocaleString() },
+];
 
 export default function ReportsPage() {
     const { data, loading, error, reload, setError } = useFetch('/api/reports');
@@ -98,7 +105,13 @@ export default function ReportsPage() {
                 </form>
             </Modal>
 
-            <ExportModal open={showExport} title="Export Reports" description="Choose how you want to export your generated reports." onClose={() => setShowExport(false)} onExport={() => window.alert('Export request submitted.')} />
+            <ExportModal
+                open={showExport}
+                title="Export Reports"
+                description="Choose how you want to export your generated reports."
+                onClose={() => setShowExport(false)}
+                onExport={(format) => exportTableData({ title: 'Generated Reports', columns: reportColumns, rows: filteredReports, format })}
+            />
         </PageState>
     );
 }

@@ -12,7 +12,6 @@ use App\Models\MedicineItem;
 use App\Models\Sale;
 use App\Models\StockTransaction;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -49,24 +48,50 @@ class DashboardController extends Controller
             ]))
             ->take(5);
 
+        $flockDistribution = [
+            'layers' => (int) Flock::where('type', 'layers')->where('status', 'active')->sum('quantity'),
+            'pullets' => (int) Flock::where('type', 'pullets')->where('status', 'active')->sum('quantity'),
+            'roosters' => (int) Flock::where('type', 'roosters')->where('status', 'active')->sum('quantity'),
+        ];
+
+        $weeklyProduction = collect(range(0, 6))->map(function (int $offset) use ($weekStart) {
+            $day = $weekStart->copy()->addDays($offset);
+
+            return [
+                'prod_date' => $day->toDateString(),
+                'label' => $day->format('D'),
+                'total' => (int) EggProduction::whereDate('date', $day)->sum('good_eggs'),
+            ];
+        })->values();
+
+        $eggQuality = [
+            'good' => (int) EggProduction::where('date', '>=', $weekStart)->sum('good_eggs'),
+            'cracked' => (int) EggProduction::where('date', '>=', $weekStart)->sum('cracked_eggs'),
+        ];
+
+        $inventoryBreakdown = [
+            'feed' => (float) FeedItem::sum('stock'),
+            'medicine' => (float) MedicineItem::sum('stock'),
+            'supplies' => (float) InventoryItem::where('category', 'Supplies')->sum('stock'),
+            'others' => (float) InventoryItem::where('category', '!=', 'Supplies')->sum('stock'),
+        ];
+
+        $recentTransactions = StockTransaction::with('user')->latest()->take(8)->get()->map(fn ($txn) => [
+            'id' => $txn->id,
+            'type' => $txn->type,
+            'quantity' => $txn->quantity,
+            'item_name' => $txn->item_name,
+            'created_at' => $txn->created_at,
+        ]);
+
         return response()->json([
             'summary' => compact('totalPoultry', 'eggsToday', 'feedStock', 'medicineStock', 'salesToday', 'feedLow', 'medicineLow', 'eggSummary'),
-            'weeklyProduction' => EggProduction::select(
-                DB::raw('DATE(date) as prod_date'),
-                DB::raw('SUM(good_eggs) as total')
-            )
-                ->where('date', '>=', $weekStart)
-                ->groupBy('prod_date')
-                ->orderBy('prod_date')
-                ->get(),
-            'inventoryBreakdown' => [
-                'feed' => FeedItem::sum('stock'),
-                'medicine' => MedicineItem::sum('stock'),
-                'supplies' => InventoryItem::where('category', 'Supplies')->sum('stock'),
-                'others' => InventoryItem::where('category', '!=', 'Supplies')->sum('stock'),
-            ],
+            'weeklyProduction' => $weeklyProduction,
+            'flockDistribution' => $flockDistribution,
+            'eggQuality' => $eggQuality,
+            'inventoryBreakdown' => $inventoryBreakdown,
             'lowStockAlerts' => $lowStockAlerts,
-            'recentTransactions' => StockTransaction::with('user')->latest()->take(8)->get(),
+            'recentTransactions' => $recentTransactions,
             'recentActivities' => Activity::with('user')->latest()->take(6)->get(),
         ]);
     }

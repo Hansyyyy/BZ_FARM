@@ -6,7 +6,7 @@ export const stockTabs = [
         label: 'Chicken',
         resourceKey: 'flocks',
         listTitle: 'Chicken List',
-        addLabel: 'Add New Flock',
+        addLabel: 'Add New Chicken',
         searchPlaceholder: 'search by batch no, breed, or type...',
         showDistribution: true,
         showActivities: true,

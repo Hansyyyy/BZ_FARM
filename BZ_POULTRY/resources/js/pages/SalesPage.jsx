@@ -5,7 +5,9 @@ import PageState from '../components/ui/PageState';
 import SummaryCards from '../components/ui/SummaryCards';
 import Modal from '../components/ui/Modal';
 import ExportModal from '../components/ui/ExportModal';
+import ConfirmModal from '../components/ui/ConfirmModal';
 import SaleForm from '../components/forms/SaleForm';
+import { exportTableData } from '../utils/exportData';
 
 const salesSummaryFields = [
     { key: 'eggsToday', label: 'Eggs Collected Today', sub: 'Today' },
@@ -15,36 +17,78 @@ const salesSummaryFields = [
     { key: 'monthTotal', label: 'This Month', sub: 'Monthly Total' },
 ];
 
+const salesColumns = [
+    { key: 'sale_date', label: 'Date' },
+    { key: 'invoice_no', label: 'Invoice No.' },
+    { key: 'customer', label: 'Customer', render: (sale) => sale.customer?.name ?? sale.customer_name },
+    { key: 'product', label: 'Product', render: (sale) => sale.product?.name ?? sale.product_name },
+    { key: 'quantity', label: 'Qty' },
+    { key: 'amount', label: 'Amount', render: (sale) => `₱${Number(sale.amount).toFixed(2)}` },
+    { key: 'payment_method', label: 'Payment' },
+    { key: 'status', label: 'Status' },
+];
+
 export default function SalesPage() {
     const { data, loading, error, setData, reload, setError } = useFetch('/api/sales');
     const [search, setSearch] = useState('');
     const [form, setForm] = useState({});
-    const [showCreate, setShowCreate] = useState(false);
+    const [editingId, setEditingId] = useState(null);
+    const [showForm, setShowForm] = useState(false);
     const [showExport, setShowExport] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState(null);
 
     const updateField = (key, value) => setForm((previous) => ({ ...previous, [key]: value }));
+
+    const closeForm = () => {
+        setShowForm(false);
+        setForm({});
+        setEditingId(null);
+    };
+
+    const openEdit = (sale) => {
+        setEditingId(sale.id);
+        setForm({
+            invoice_no: sale.invoice_no || '',
+            customer_id: sale.customer_id || sale.customer?.id || '',
+            product_id: sale.product_id || sale.product?.id || '',
+            quantity: sale.quantity || '',
+            unit_price: sale.unit_price || '',
+            payment_method: sale.payment_method || '',
+            status: sale.status || '',
+            sale_date: sale.sale_date ? String(sale.sale_date).slice(0, 10) : '',
+        });
+        setShowForm(true);
+    };
 
     const submit = async (event) => {
         event.preventDefault();
         try {
-            const payload = new FormData();
-            Object.entries(form).forEach(([key, value]) => payload.append(key, value));
-            await axios.post('/api/sales', payload);
-            setShowCreate(false);
-            setForm({});
+            const payload = { ...form };
+
+            if (editingId) {
+                await axios.put(`/api/sales/${editingId}`, payload);
+            } else {
+                const formData = new FormData();
+                Object.entries(payload).forEach(([key, value]) => formData.append(key, value));
+                await axios.post('/api/sales', formData);
+            }
+
+            closeForm();
             await reload();
         } catch (err) {
-            setError(err.message);
+            setError(err.response?.data?.message || err.message);
         }
     };
 
-    const remove = async (id) => {
-        if (!window.confirm('Delete this sale?')) return;
+    const confirmDelete = async () => {
+        if (!deleteTarget) return;
+
         try {
-            await axios.delete(`/api/sales/${id}`);
-            setData((previous) => ({ ...previous, items: previous.items.filter((item) => item.id !== id) }));
+            await axios.delete(`/api/sales/${deleteTarget.id}`);
+            setData((previous) => ({ ...previous, items: previous.items.filter((item) => item.id !== deleteTarget.id) }));
+            setDeleteTarget(null);
         } catch (err) {
-            setError(err.message);
+            setError(err.response?.data?.message || err.message);
         }
     };
 
@@ -75,7 +119,7 @@ export default function SalesPage() {
                         <button type="button" className="btn btn-outline" onClick={() => setShowExport(true)}>
                             <i className="bi bi-printer"></i> Export
                         </button>
-                        <button type="button" className="btn btn-primary" onClick={() => setShowCreate(true)}>
+                        <button type="button" className="btn btn-primary" onClick={() => { setEditingId(null); setForm({}); setShowForm(true); }}>
                             <i className="bi bi-plus-lg"></i> New Sale
                         </button>
                     </div>
@@ -103,9 +147,14 @@ export default function SalesPage() {
                                     <td>{sale.payment_method}</td>
                                     <td><span className={`status-pill status-${sale.status}`}>{sale.status}</span></td>
                                     <td>
-                                        <button type="button" className="action-btn delete" onClick={() => remove(sale.id)}>
-                                            <i className="bi bi-trash"></i>
-                                        </button>
+                                        <div className="row-actions">
+                                            <button type="button" className="action-btn" title="Edit" onClick={() => openEdit(sale)}>
+                                                <i className="bi bi-pencil"></i>
+                                            </button>
+                                            <button type="button" className="action-btn delete" title="Delete" onClick={() => setDeleteTarget(sale)}>
+                                                <i className="bi bi-trash"></i>
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             )) : <tr><td colSpan="9">No sales found.</td></tr>}
@@ -114,16 +163,31 @@ export default function SalesPage() {
                 </div>
             </div>
 
-            <Modal open={showCreate} title="New Sale" size="landscape" onClose={() => setShowCreate(false)} actions={(
+            <Modal open={showForm} title={editingId ? 'Update Sale' : 'New Sale'} size="landscape" onClose={closeForm} actions={(
                 <>
-                    <button type="button" className="btn btn-outline" onClick={() => setShowCreate(false)}>Cancel</button>
-                    <button type="submit" className="btn btn-primary" form="sale-form">Record Sale</button>
+                    <button type="button" className="btn btn-outline" onClick={closeForm}>Cancel</button>
+                    <button type="submit" className="btn btn-primary" form="sale-form">{editingId ? 'Update' : 'Record Sale'}</button>
                 </>
             )}>
                 <SaleForm id="sale-form" form={form} onChange={updateField} onSubmit={submit} customers={data?.customers || []} products={data?.products || []} />
             </Modal>
 
-            <ExportModal open={showExport} title="Export Sales" description="Choose how you want to export your sales records." onClose={() => setShowExport(false)} onExport={() => window.alert('Export request submitted.')} />
+            <ExportModal
+                open={showExport}
+                title="Export Sales"
+                description="Choose how you want to export your sales records."
+                onClose={() => setShowExport(false)}
+                onExport={(format) => exportTableData({ title: 'Sales List', columns: salesColumns, rows: filteredSales, format })}
+            />
+
+            <ConfirmModal
+                open={Boolean(deleteTarget)}
+                title="Delete Sale"
+                message="Are you sure you want to delete this sale? This action cannot be undone."
+                confirmLabel="Delete"
+                onClose={() => setDeleteTarget(null)}
+                onConfirm={confirmDelete}
+            />
         </PageState>
     );
 }

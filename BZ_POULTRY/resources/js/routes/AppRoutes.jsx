@@ -1,15 +1,19 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import DashboardPage from '../pages/DashboardPage';
+import AdminInventoryPage from '../pages/admin/AdminInventoryPage';
 import StockHubPage from '../pages/StockHubPage';
 import SalesPage from '../pages/SalesPage';
 import ReportsPage from '../pages/ReportsPage';
 import SettingsPage from '../pages/SettingsPage';
 import NotFoundPage from '../pages/NotFoundPage';
 
+const user = window.Laravel?.user;
+const isAdmin = user?.role === 'admin';
+
 export default function AppRoutes() {
     return (
         <Routes>
-            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/dashboard" element={isAdmin ? <AdminInventoryPage /> : <DashboardPage />} />
             <Route path="/chicken-stock" element={<StockHubPage />} />
             <Route path="/daily-reports" element={<ReportsPage />} />
             <Route path="/sales" element={<SalesPage />} />

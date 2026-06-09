@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { getPageMeta } from '../../config/pageMeta';
+import NotificationBell from './NotificationBell';
 
 export default function Header({ onToggleSidebar, onLogout }) {
     const location = useLocation();
@@ -26,10 +27,7 @@ export default function Header({ onToggleSidebar, onLogout }) {
                 </div>
             </div>
             <div className="header-right">
-                <button type="button" className="notification-btn" title="Notifications">
-                    <i className="bi bi-bell"></i>
-                    <span className="notification-dot"></span>
-                </button>
+                <NotificationBell />
                 <div className={`user-dropdown ${menuOpen ? 'open' : ''}`}>
                     <button type="button" className="user-profile" onClick={() => setMenuOpen(!menuOpen)}>
                         <div className="user-avatar"><i className="bi bi-person"></i></div>

@@ -67,6 +67,24 @@ class MedicineController extends Controller
         return response()->json(['message' => 'Medicine item added.', 'item' => $item], 201);
     }
 
+    public function update(Request $request, MedicineItem $medicine)
+    {
+        $data = $request->validate([
+            'name' => 'required|string',
+            'category' => 'required|string',
+            'type' => 'nullable|string',
+            'stock' => 'required|numeric|min:0',
+            'reorder_level' => 'required|numeric|min:0',
+            'expiry_date' => 'nullable|date',
+            'unit_price' => 'required|numeric|min:0',
+        ]);
+
+        $medicine->update($data);
+        ActivityLogger::log('updated', 'Medicine & Vaccine', "Updated medicine item {$data['name']}");
+
+        return response()->json(['message' => 'Medicine item updated.', 'item' => $medicine]);
+    }
+
     public function destroy(MedicineItem $medicine)
     {
         $name = $medicine->name;

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - BZ Farm</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="{{ asset('css/farm.css') }}">
+    <link rel="stylesheet" href="<?php echo e(asset('css/farm.css')); ?>">
     <style>
         .password-field{position:relative}
         .password-field .toggle-password{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:transparent;padding:6px;color:#495057}
@@ -19,7 +19,7 @@
     <div class="login-card split-card">
         <div class="login-card__aside">
             <div class="aside-top">
-                <div class="login-logo"><img src="{{ asset('images/BZ LOGO.png') }}" alt="BZ Logo"></div>
+                <div class="login-logo"><img src="<?php echo e(asset('images/BZ LOGO.png')); ?>" alt="BZ Logo"></div>
             </div>
             <div class="aside-body">
                 <h1>Your next poultry adventure awaits!</h1>
@@ -33,19 +33,19 @@
              
             </div>
 
-            @if($errors->any())
+            <?php if($errors->any()): ?>
                 <div class="alert-error" style="margin-bottom:20px">
-                    @foreach($errors->all() as $error)
-                        <div>{{ $error }}</div>
-                    @endforeach
+                    <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <div><?php echo e($error); ?></div>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </div>
-            @endif
+            <?php endif; ?>
 
-            <form method="POST" action="{{ route('login') }}">
-                @csrf
+            <form method="POST" action="<?php echo e(route('login')); ?>">
+                <?php echo csrf_field(); ?>
                 <div class="form-group">
                     <label for="username">Username</label>
-                    <input type="text" id="username" name="username" class="form-control" value="{{ old('username') }}" placeholder="Enter username" required autofocus>
+                    <input type="text" id="username" name="username" class="form-control" value="<?php echo e(old('username')); ?>" placeholder="Enter username" required autofocus>
                 </div>
                 <div class="form-group">
                     <label for="password">Password</label>
@@ -72,11 +72,11 @@
 </div>
 <script>
     const loginBgImages = [
-        "{{ asset('images/login-bg-1.jpg') }}",
-        "{{ asset('images/login-bg-2.jpg') }}",
-        "{{ asset('images/login-bg-3.jpg') }}",
-        "{{ asset('images/login-bg-4.jpg') }}",
-        "{{ asset('images/login-bg-5.jpg') }}"
+        "<?php echo e(asset('images/login-bg-1.jpg')); ?>",
+        "<?php echo e(asset('images/login-bg-2.jpg')); ?>",
+        "<?php echo e(asset('images/login-bg-3.jpg')); ?>",
+        "<?php echo e(asset('images/login-bg-4.jpg')); ?>",
+        "<?php echo e(asset('images/login-bg-5.jpg')); ?>"
     ];
 
     let loginBgIndex = 0;
@@ -127,3 +127,4 @@
 </script>
 </body>
 </html>
+<?php /**PATH C:\xampp\htdocs\BZ_FARM\BZ_POULTRY\resources\views/auth/login.blade.php ENDPATH**/ ?>

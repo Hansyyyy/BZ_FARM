@@ -83,6 +83,26 @@ class SalesController extends Controller
         return response()->json(['message' => 'Sale recorded successfully.', 'item' => $sale], 201);
     }
 
+    public function update(Request $request, Sale $sale)
+    {
+        $data = $request->validate([
+            'invoice_no' => 'required|unique:sales,invoice_no,'.$sale->id,
+            'customer_id' => 'required|exists:customers,id',
+            'product_id' => 'required|exists:products,id',
+            'quantity' => 'required|integer|min:1',
+            'unit_price' => 'required|numeric|min:0',
+            'payment_method' => 'required|in:cash,credit',
+            'status' => 'required|in:paid,unpaid',
+            'sale_date' => 'required|date',
+        ]);
+
+        $data['amount'] = $data['quantity'] * $data['unit_price'];
+        $sale->update($data);
+        ActivityLogger::log('updated', 'Sales', "Updated sale {$data['invoice_no']}");
+
+        return response()->json(['message' => 'Sale updated successfully.', 'item' => $sale]);
+    }
+
     public function destroy(Sale $sale)
     {
         $invoice = $sale->invoice_no;

@@ -64,6 +64,23 @@ class FeedController extends Controller
         return response()->json(['message' => 'Feed item added.', 'item' => $feedItem], 201);
     }
 
+    public function update(Request $request, FeedItem $feed)
+    {
+        $data = $request->validate([
+            'name' => 'required|string',
+            'category' => 'required|string',
+            'stock' => 'required|numeric|min:0',
+            'reorder_level' => 'required|numeric|min:0',
+            'expiry_date' => 'nullable|date',
+            'cost_per_kg' => 'required|numeric|min:0',
+        ]);
+
+        $feed->update($data);
+        ActivityLogger::log('updated', 'Feed Inventory', "Updated feed item {$data['name']}");
+
+        return response()->json(['message' => 'Feed item updated.', 'item' => $feed]);
+    }
+
     public function destroy(FeedItem $feed)
     {
         $name = $feed->name;

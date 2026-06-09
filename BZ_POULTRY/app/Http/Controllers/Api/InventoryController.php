@@ -64,6 +64,26 @@ class InventoryController extends Controller
         return response()->json(['message' => 'Inventory item added.', 'item' => $item], 201);
     }
 
+    public function update(Request $request, InventoryItem $inventory)
+    {
+        $data = $request->validate([
+            'item_code' => 'required|unique:inventory_items,item_code,'.$inventory->id,
+            'name' => 'required|string',
+            'category' => 'required|string',
+            'stock' => 'required|numeric|min:0',
+            'unit' => 'required|string',
+            'reorder_level' => 'required|numeric|min:0',
+            'location' => 'nullable|string',
+            'unit_price' => 'required|numeric|min:0',
+        ]);
+
+        $data['last_updated'] = now();
+        $inventory->update($data);
+        ActivityLogger::log('updated', 'Inventory', "Updated inventory item {$data['name']}");
+
+        return response()->json(['message' => 'Inventory item updated.', 'item' => $inventory]);
+    }
+
     public function destroy(InventoryItem $inventory)
     {
         $name = $inventory->name;

@@ -1,12 +1,12 @@
 @extends('layouts.app')
 @section('title', 'Poultry Stock')
 @section('page-title', 'Poultry Stock')
-@section('page-description', 'Manage your poultry flocks and batches')
+@section('page-description', 'Manage your poultry chickens and batches')
 
 @section('content')
 <div class="stat-cards">
-    <div class="stat-card"><div class="label">Total Flocks</div><div class="value">{{ $totalFlocks }}</div><div class="sub">Active Flocks</div></div>
-    <div class="stat-card"><div class="label">Total Poultry</div><div class="value">{{ number_format($totalPoultry) }}</div><div class="sub">Birds in Stock</div></div>
+    <div class="stat-card"><div class="label">Total Chicken</div><div class="value">{{ $totalFlocks }}</div><div class="sub">Active Chickens</div></div>
+    <div class="stat-card"><div class="label">Total Poultry</div><div class="value">{{ number_format($totalPoultry) }}</div><div class="sub">Chickens in Stock</div></div>
     <div class="stat-card"><div class="label">Layers</div><div class="value">{{ number_format($layers) }}</div><div class="sub">{{ $totalPoultry > 0 ? round($layers/$totalPoultry*100,1) : 0 }}% of total</div></div>
     <div class="stat-card"><div class="label">Pullets</div><div class="value">{{ number_format($pullets) }}</div><div class="sub">{{ $totalPoultry > 0 ? round($pullets/$totalPoultry*100,1) : 0 }}% of total</div></div>
     <div class="stat-card"><div class="label">Roosters</div><div class="value">{{ number_format($roosters) }}</div><div class="sub">{{ $totalPoultry > 0 ? round($roosters/$totalPoultry*100,1) : 0 }}% of total</div></div>
@@ -14,10 +14,10 @@
 
 <div class="card">
     <div class="table-toolbar">
-        <div class="search-box"><i class="bi bi-search"></i><input type="text" placeholder="Search flocks..."></div>
+        <div class="search-box"><i class="bi bi-search"></i><input type="text" placeholder="Search chickens..."></div>
         <div>
-            <button class="btn btn-outline" onclick="openExportModal('Flocks','{{ route('flocks.index') }}')"><i class="bi bi-printer"></i> Export</button>
-            <button class="btn btn-success" onclick="openModal('addFlockModal')"><i class="bi bi-plus-lg"></i> Add New Flock</button>
+            <button class="btn btn-outline" onclick="openExportModal('Chickens','{{ route('flocks.index') }}')"><i class="bi bi-printer"></i> Export</button>
+            <button class="btn btn-success" onclick="openModal('addFlockModal')"><i class="bi bi-plus-lg"></i> Add New Chicken</button>
         </div>
     </div>
     <table class="data-table">
@@ -39,7 +39,7 @@
                 <td>
                     <div class="action-btns">
                         <button class="action-btn edit" title="Edit" data-action="{{ route('flocks.update', $flock) }}" data-batch="{{ $flock->batch_no }}" data-type="{{ $flock->type }}" data-breed="{{ $flock->breed }}" data-quantity="{{ $flock->quantity }}" data-age="{{ $flock->age_weeks }}" data-date_in="{{ $flock->date_in->format('Y-m-d') }}" onclick="handleOpenEdit(this)"><i class="bi bi-pencil"></i></button>
-                        <button class="action-btn delete" title="Delete" onclick="confirmDelete('{{ route('flocks.destroy', $flock) }}', 'Delete flock {{ $flock->batch_no }}?')"><i class="bi bi-trash"></i></button>
+                        <button class="action-btn delete" title="Delete" onclick="confirmDelete('{{ route('flocks.destroy', $flock) }}', 'Delete chicken {{ $flock->batch_no }}?')"><i class="bi bi-trash"></i></button>
                     </div>
                 </td>
             </tr>
@@ -51,7 +51,7 @@
 
 <div class="grid-2">
     <div class="card">
-        <div class="card-header"><h3>Flock Distribution by Type</h3></div>
+        <div class="card-header"><h3>Chicken Distribution by Type</h3></div>
         <div class="card-body"><div class="chart-container"><canvas id="distChart"></canvas></div></div>
     </div>
     <div class="card">
@@ -68,7 +68,7 @@
 
 <div class="modal-overlay" id="addFlockModal">
     <div class="modal">
-        <div class="modal-header"><h3>Add New Flock</h3><button onclick="closeModal('addFlockModal')" class="action-btn"><i class="bi bi-x-lg"></i></button></div>
+        <div class="modal-header"><h3>Add New Chicken</h3><button onclick="closeModal('addFlockModal')" class="action-btn"><i class="bi bi-x-lg"></i></button></div>
         <form method="POST" action="{{ route('flocks.store') }}">
             @csrf
             <div class="modal-body">
@@ -79,7 +79,7 @@
                 <div class="form-group"><label>Age (Weeks)</label><input name="age_weeks" type="number" class="form-control" required></div>
                 <div class="form-group"><label>Date In</label><input name="date_in" type="date" class="form-control" required></div>
             </div>
-            <div class="modal-footer"><button type="button" class="btn btn-outline" onclick="closeModal('addFlockModal')">Cancel</button><button type="submit" class="btn btn-success">Add Flock</button></div>
+            <div class="modal-footer"><button type="button" class="btn btn-outline" onclick="closeModal('addFlockModal')">Cancel</button><button type="submit" class="btn btn-success">Add Chicken</button></div>
         </form>
     </div>
 </div>

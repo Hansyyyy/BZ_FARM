@@ -71,6 +71,22 @@ class EggProductionController extends Controller
         return response()->json(['message' => 'Production record added.', 'item' => $record], 201);
     }
 
+    public function update(Request $request, EggProduction $egg)
+    {
+        $data = $request->validate([
+            'date' => 'required|date',
+            'building_id' => 'required|exists:buildings,id',
+            'total_eggs' => 'required|integer|min:1',
+            'good_eggs' => 'required|integer|min:0',
+            'cracked_eggs' => 'required|integer|min:0',
+        ]);
+
+        $egg->update($data);
+        ActivityLogger::log('updated', 'Egg Production', "Updated production record for {$data['date']}");
+
+        return response()->json(['message' => 'Production record updated.', 'item' => $egg]);
+    }
+
     public function destroy(EggProduction $egg)
     {
         $egg->delete();

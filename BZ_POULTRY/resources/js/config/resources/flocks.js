@@ -2,8 +2,8 @@ export default {
     title: 'Chicken Stock',
     endpoint: '/api/flocks',
     summaryFields: [
-        { key: 'totalFlocks', label: 'Total Flocks', sub: 'Active Flocks' },
-        { key: 'totalPoultry', label: 'Total Poultry', sub: 'Bird in Stock' },
+        { key: 'totalFlocks', label: 'Total Chickens', sub: 'Active Chickens' },
+        { key: 'totalPoultry', label: 'Total Poultry', sub: 'Birds in Stock' },
         { key: 'layers', label: 'Layers', percentOf: 'totalPoultry' },
         { key: 'pullets', label: 'Pullets', percentOf: 'totalPoultry' },
         { key: 'roosters', label: 'Roosters', percentOf: 'totalPoultry' },
@@ -34,5 +34,14 @@ export default {
         { key: 'quantity', label: 'Quantity', type: 'number' },
         { key: 'age_weeks', label: 'Age (Weeks)', type: 'number' },
         { key: 'date_in', label: 'Date In', type: 'date' },
+    ],
+    editFormFields: [
+        { key: 'batch_no', label: 'Building / Batch No.', type: 'text', readOnly: true },
+        { key: 'type', label: 'Type', type: 'select', options: ['layers', 'pullets', 'roosters'] },
+        { key: 'breed', label: 'Breed', type: 'text' },
+        { key: 'quantity', label: 'Quantity', type: 'number' },
+        { key: 'age_weeks', label: 'Age (Weeks)', type: 'number' },
+        { key: 'mortality', label: 'Mortality', type: 'number' },
+        { key: 'status', label: 'Status', type: 'select', options: ['active', 'inactive'] },
     ],
 };

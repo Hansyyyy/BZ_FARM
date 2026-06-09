@@ -1,8 +1,16 @@
+const user = typeof window !== 'undefined' ? window.Laravel?.user : null;
+const isAdmin = user?.role === 'admin';
+
 export const pageMeta = {
-    '/dashboard': {
-        title: 'Dashboard',
-        description: 'Overview of your farm operations',
-    },
+    '/dashboard': isAdmin
+        ? {
+            title: 'Inventory Dashboard',
+            description: 'Admin overview of manager-submitted farm data',
+        }
+        : {
+            title: 'Dashboard',
+            description: 'Overview of your farm operations',
+        },
     '/daily-reports': {
         title: 'Daily Reports',
         description: 'View and generate daily farm reports',
