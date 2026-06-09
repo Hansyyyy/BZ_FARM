@@ -1,13 +1,12 @@
-export default function Loading() {
+export default function Loading({ label = 'Loading...' }) {
     return (
-        <div className="loading-overlay">
+        <div className="page-loading">
             <div className="spinner">
                 <div className="spinner-ring"></div>
                 <div className="spinner-ring"></div>
                 <div className="spinner-ring"></div>
-                <div className="spinner-ring"></div>
             </div>
-            <p>Loading...</p>
+            <p>{label}</p>
         </div>
     );
 }

@@ -6,6 +6,12 @@
     <title>Login - BZ Farm</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{{ asset('css/farm.css') }}">
+    <style>
+        .password-field{position:relative}
+        .password-field .toggle-password{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:transparent;padding:6px;color:#495057}
+        .password-field .toggle-password:focus{outline:none}
+        .password-field .form-control{padding-right:38px}
+    </style>
 </head>
 <body>
 <div class="login-page">
@@ -24,7 +30,7 @@
         <div class="login-card__main">
             <div class="login-form-header">
                 <h2>Welcome back!</h2>
-                <p>Please enter your details to continue.</p>
+             
             </div>
 
             @if($errors->any())
@@ -43,7 +49,12 @@
                 </div>
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required>
+                    <div class="password-field">
+                        <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required>
+                        <button type="button" class="toggle-password" aria-label="Show password">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="form-group remember-row">
                     <label class="checkbox-field">
@@ -55,11 +66,7 @@
                 <button type="submit" class="btn btn-primary btn-block">Sign In</button>
             </form>
 
-            <div class="login-card__help">
-                <p><strong>Demo Accounts:</strong></p>
-                <p>Admin: <code>admin</code> / <code>admin123</code></p>
-                <p>Manager: <code>manager</code> / <code>manager123</code></p>
-            </div>
+         
         </div>
     </div>
 </div>
@@ -97,6 +104,26 @@
         updateLoginBg();
         setInterval(updateLoginBg, 7000);
     }
+
+    // Password show/hide toggle
+    (function(){
+        const pwdInput = document.getElementById('password');
+        const toggle = document.querySelector('.toggle-password');
+        if (!pwdInput || !toggle) return;
+
+        toggle.addEventListener('click', function(){
+            const icon = this.querySelector('i');
+            if (pwdInput.type === 'password'){
+                pwdInput.type = 'text';
+                if (icon) { icon.classList.remove('bi-eye'); icon.classList.add('bi-eye-slash'); }
+                this.setAttribute('aria-label','Hide password');
+            } else {
+                pwdInput.type = 'password';
+                if (icon) { icon.classList.remove('bi-eye-slash'); icon.classList.add('bi-eye'); }
+                this.setAttribute('aria-label','Show password');
+            }
+        });
+    })();
 </script>
 </body>
 </html>

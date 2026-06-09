@@ -1,13 +1,14 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use App\Models\Report;
 use Illuminate\Http\Request;
 
 class ReportsController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
         $reports = Report::with('generator')->latest('generated_at')->take(10)->get();
 
@@ -22,11 +23,7 @@ class ReportsController extends Controller
             ['name' => 'Mortality Report', 'category' => 'Poultry', 'icon' => 'heart-pulse'],
         ];
 
-        if ($request->wantsJson()) {
-            return response()->json(['reports' => $reports, 'reportTypes' => $reportTypes]);
-        }
-
-        return view('reports.index', compact('reports', 'reportTypes'));
+        return response()->json(['reports' => $reports, 'reportTypes' => $reportTypes]);
     }
 
     public function generate(Request $request)
@@ -43,10 +40,6 @@ class ReportsController extends Controller
             'generated_at' => now(),
         ]);
 
-        if ($request->wantsJson()) {
-            return response()->json(['message' => 'Report generated successfully.', 'report' => $report], 201);
-        }
-
-        return back()->with('success', 'Report generated successfully.');
+        return response()->json(['message' => 'Report generated successfully.', 'report' => $report], 201);
     }
 }

@@ -1,0 +1,33 @@
+export default function DynamicForm({ id, fields, values, onChange, onSubmit }) {
+    return (
+        <form id={id} onSubmit={onSubmit}>
+            <div className="modal-form-grid">
+                {fields.map((field) => (
+                    <div className="form-group" key={field.key}>
+                        <label>{field.label}</label>
+                        {field.type === 'select' ? (
+                            <select
+                                className="form-control"
+                                value={values[field.key] || ''}
+                                onChange={(event) => onChange(field.key, event.target.value)}
+                            >
+                                <option value="">Select {field.label}</option>
+                                {field.options.map((option) => (
+                                    <option key={option} value={option}>{option}</option>
+                                ))}
+                            </select>
+                        ) : (
+                            <input
+                                className="form-control"
+                                type={field.type}
+                                value={values[field.key] || ''}
+                                onChange={(event) => onChange(field.key, event.target.value)}
+                                required={field.type !== 'date'}
+                            />
+                        )}
+                    </div>
+                ))}
+            </div>
+        </form>
+    );
+}

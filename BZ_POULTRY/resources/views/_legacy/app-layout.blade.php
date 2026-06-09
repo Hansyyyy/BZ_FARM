@@ -25,19 +25,18 @@
 <div class="app-layout">
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-logo">
-            <div class="logo-circle"><img src="{{ asset('images/BZ LOGO.png') }}" alt="BZ logo"></div>
-            <span>FARM MANAGEMENT</span>
-            <button id="sidebarToggle" class="sidebar-toggle" title="Collapse sidebar"><i class="bi bi-chevron-left"></i></button>
+            <div class="logo-circle"><i class="bi bi-egg-fried"></i></div>
+            <span>BZ FARM</span>
         </div>
         <ul class="nav-menu">
-            <li><a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+            <li><a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}"><i class="bi bi-grid-1x2"></i> Dashboard</a></li>
             <li><a href="{{ route('flocks.index') }}" class="{{ request()->routeIs('flocks.*') ? 'active' : '' }}"><i class="bi bi-egg-fried"></i> Poultry Stock</a></li>
             <li><a href="{{ route('feed.index') }}" class="{{ request()->routeIs('feed.*') ? 'active' : '' }}"><i class="bi bi-basket"></i> Feed Inventory</a></li>
             <li><a href="{{ route('medicine.index') }}" class="{{ request()->routeIs('medicine.*') ? 'active' : '' }}"><i class="bi bi-capsule"></i> Medicine & Vaccine</a></li>
             <li><a href="{{ route('inventory.index') }}" class="{{ request()->routeIs('inventory.*') ? 'active' : '' }}"><i class="bi bi-box-seam"></i> Inventory</a></li>
-            <li><a href="{{ route('eggs.index') }}" class="{{ request()->routeIs('eggs.*') ? 'active' : '' }}"><i class="bi bi-bar-chart-line"></i> Egg Production</a></li>
+            <li><a href="{{ route('eggs.index') }}" class="{{ request()->routeIs('eggs.*') ? 'active' : '' }}"><i class="bi bi-graph-up"></i> Egg Production</a></li>
             <li><a href="{{ route('sales.index') }}" class="{{ request()->routeIs('sales.*') ? 'active' : '' }}"><i class="bi bi-cash-stack"></i> Sales Management</a></li>
-            <li><a href="{{ route('reports.index') }}" class="{{ request()->routeIs('reports.*') ? 'active' : '' }}"><i class="bi bi-file-earmark-text"></i> Reports</a></li>
+            <li><a href="{{ route('reports.index') }}" class="{{ request()->routeIs('reports.*') ? 'active' : '' }}"><i class="bi bi-file-earmark-bar-graph"></i> Reports</a></li>
             @if(auth()->user()->isAdmin())
             <li><a href="{{ route('settings.index') }}" class="{{ request()->routeIs('settings.*') ? 'active' : '' }}"><i class="bi bi-gear"></i> Settings</a></li>
             @endif
@@ -47,6 +46,7 @@
     <div class="main-content">
         <header class="top-header">
             <div class="header-left">
+                <button id="sidebarToggle" class="btn btn-sm btn-outline" title="Collapse sidebar"><i class="bi bi-chevron-left"></i></button>
                 <h1>@yield('page-title', 'Dashboard')</h1>
                 <p>@yield('page-description', 'Overview of your farm operations')</p>
             </div>
@@ -108,30 +108,14 @@
 <!-- Export Modal (PDF/CSV) -->
 <div class="modal-overlay" id="exportModal">
     <div class="modal">
-        <div class="modal-header"><h3>Update Export</h3><button onclick="closeModal('exportModal')" class="action-btn"><i class="bi bi-x-lg"></i></button></div>
+        <div class="modal-header"><h3>Export <span class="export-module"></span></h3><button onclick="closeModal('exportModal')" class="action-btn"><i class="bi bi-x-lg"></i></button></div>
         <form method="GET" action="#">
             <div class="modal-body">
                 <p>Select export format for <strong class="export-module"></strong>:</p>
-                <div class="export-format-grid">
-                    <label class="export-format-card">
-                        <input type="radio" name="format" value="pdf" checked hidden>
-                        <i class="bi bi-file-earmark-pdf"></i>
-                        <div>
-                            <strong class="export-format-name">PDF</strong>
-                            <span class="export-format-hint">Create a printable export.</span>
-                        </div>
-                    </label>
-                    <label class="export-format-card">
-                        <input type="radio" name="format" value="csv" hidden>
-                        <i class="bi bi-file-earmark-spreadsheet"></i>
-                        <div>
-                            <strong class="export-format-name">CSV</strong>
-                            <span class="export-format-hint">Download as a spreadsheet.</span>
-                        </div>
-                    </label>
-                </div>
+                <div class="form-group"><label><input type="radio" name="format" value="pdf" checked> PDF</label></div>
+                <div class="form-group"><label><input type="radio" name="format" value="csv"> CSV</label></div>
             </div>
-            <div class="modal-footer"><button type="button" class="btn btn-outline" onclick="closeModal('exportModal')">Cancel</button><button type="submit" class="btn btn-success">Update</button></div>
+            <div class="modal-footer"><button type="button" class="btn btn-outline" onclick="closeModal('exportModal')">Cancel</button><button type="submit" class="btn btn-success">Export</button></div>
         </form>
     </div>
 </div>
@@ -170,18 +154,8 @@ function openExportModal(moduleName, url){
     const modal = document.getElementById('exportModal');
     modal.querySelectorAll('.export-module').forEach(e => e.textContent = moduleName);
     modal.querySelector('form').action = url;
-    updateExportSelection();
     openModal('exportModal');
 }
-function updateExportSelection(){
-    document.querySelectorAll('#exportModal .export-format-card').forEach(card => {
-        const input = card.querySelector('input[type="radio"]');
-        card.classList.toggle('selected', input?.checked);
-    });
-}
-document.querySelectorAll('#exportModal .export-format-card input[type="radio"]').forEach(input => {
-    input.addEventListener('change', updateExportSelection);
-});
 // Sidebar collapse toggle persistent in localStorage
 const sidebar = document.getElementById('sidebar');
 const toggle = document.getElementById('sidebarToggle');

@@ -1,0 +1,30 @@
+export default {
+    title: 'Inventory',
+    endpoint: '/api/inventory',
+    summaryFields: [
+        { key: 'totalItems', label: 'Total Items' },
+        { key: 'totalValue', label: 'Total Value' },
+        { key: 'lowStock', label: 'Low Stock' },
+        { key: 'stockIn', label: 'Stock In' },
+        { key: 'stockOut', label: 'Stock Out' },
+    ],
+    columns: [
+        { key: 'item_code', label: 'Code' },
+        { key: 'name', label: 'Name' },
+        { key: 'category', label: 'Category' },
+        { key: 'stock', label: 'Stock' },
+        { key: 'unit', label: 'Unit' },
+        { key: 'reorder_level', label: 'Reorder Level' },
+        { key: 'location', label: 'Location' },
+    ],
+    formFields: [
+        { key: 'item_code', label: 'Item Code', type: 'text' },
+        { key: 'name', label: 'Name', type: 'text' },
+        { key: 'category', label: 'Category', type: 'text' },
+        { key: 'stock', label: 'Stock', type: 'number' },
+        { key: 'unit', label: 'Unit', type: 'text' },
+        { key: 'reorder_level', label: 'Reorder Level', type: 'number' },
+        { key: 'location', label: 'Location', type: 'text' },
+        { key: 'unit_price', label: 'Unit Price', type: 'number' },
+    ],
+};
