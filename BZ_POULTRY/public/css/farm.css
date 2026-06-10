@@ -948,16 +948,64 @@ body {
     font-weight: 700;
     color: var(--text-dark);
 }
+
+/* Table Responsive Wrapper */
+.table-responsive {
+    overflow-x: auto;
+    background: white;
+}
+
+.table-responsive::-webkit-scrollbar {
+    height: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: #f5f7f6;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #cfe7d8;
+    border-radius: 3px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #b8d4c8;
+}
+.mockup-table { 
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    margin: 0;
+}
+.mockup-table thead {
+    background: #f7f8f7;
+}
 .mockup-table thead th {
-    background: #f0f7f1;
+    padding: 16px 16px;
     font-size: 12px;
-    text-transform: none;
-    color: var(--text-muted);
+    text-transform: uppercase;
+    color: var(--text-dark);
     font-weight: 700;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.6px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+}
+.mockup-table tbody tr {
+    transition: background-color 0.2s ease;
+    border-bottom: 1px solid var(--border);
+}
+.mockup-table tbody tr:nth-child(odd) {
+    background-color: white;
+}
+.mockup-table tbody tr:nth-child(even) {
+    background-color: #fafbfa;
+}
+.mockup-table tbody tr:hover {
+    background-color: #f0f5f2;
 }
 .mockup-table tbody td {
-    font-size: 14px;
+    padding: 14px 16px;
+    font-size: 13px;
     vertical-align: middle;
 }
 .status-pill {
@@ -1191,23 +1239,57 @@ body {
 }
 .search-box input { border: none; background: none; outline: none; font-size: 13px; width: 100%; }
 
-.data-table { width: 100%; border-collapse: collapse; }
+.data-table { 
+    width: 100%; 
+    border-collapse: collapse;
+    background: white;
+    margin: 0;
+}
 .data-table th {
     text-align: left;
-    padding: 12px 16px;
+    padding: 16px 16px;
     font-size: 12px;
-    color: var(--text-muted);
+    color: var(--text-dark);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.6px;
     border-bottom: 1px solid var(--border);
-    font-weight: 600;
+    font-weight: 700;
+    background-color: #f7f8f7;
 }
 .data-table td {
-    padding: 12px 16px;
+    padding: 14px 16px;
     font-size: 13px;
     border-bottom: 1px solid var(--border);
 }
-.data-table tr:hover { background: rgba(30, 109, 63, 0.04); }
+.data-table tbody tr {
+    transition: background-color 0.2s ease;
+}
+.data-table tbody tr:nth-child(odd) {
+    background-color: white;
+}
+.data-table tbody tr:nth-child(even) {
+    background-color: #fafbfa;
+}
+.data-table tbody tr:hover { 
+    background-color: #f0f5f2;
+}
+
+/* Empty state styling */
+.data-table tbody tr td[colspan] {
+    text-align: center;
+    padding: 32px 16px;
+    font-size: 14px;
+    color: var(--text-muted);
+    background-color: #fafbfa;
+}
+
+.mockup-table tbody tr td[colspan] {
+    text-align: center;
+    padding: 32px 16px;
+    font-size: 14px;
+    color: var(--text-muted);
+    background-color: #fafbfa;
+}
 
 .status-badge {
     display: inline-flex;

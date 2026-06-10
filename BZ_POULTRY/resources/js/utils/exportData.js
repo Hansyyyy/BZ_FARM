@@ -81,6 +81,41 @@ function openPrintView(title, columns, rows, { printImmediately = false } = {}) 
     return printWindow;
 }
 
+function downloadPdf(filename, columns, rows) {
+    if (typeof html2pdf === 'undefined') {
+        // Fallback to print dialog if html2pdf is not available
+        throw new Error('PDF library not loaded. Please try again.');
+    }
+
+    const headerCells = columns.map((column) => `<th>${column.label}</th>`).join('');
+    const bodyRows = rows.map((row) => {
+        const cells = columns.map((column) => `<td>${getCellValue(column, row)}</td>`).join('');
+        return `<tr>${cells}</tr>`;
+    }).join('');
+
+    const element = document.createElement('div');
+    element.innerHTML = `
+        <div style="padding: 24px; font-family: Arial, sans-serif;">
+            <h1>${filename}</h1>
+            <p style="color: #6c757d; font-size: 12px;">Generated on ${new Date().toLocaleString()}</p>
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead><tr>${headerCells}</tr></thead>
+                <tbody>${bodyRows}</tbody>
+            </table>
+        </div>
+    `;
+
+    const opt = {
+        margin: 10,
+        filename: `${slugify(filename)}-${new Date().toISOString().slice(0, 10)}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' },
+    };
+
+    html2pdf().set(opt).from(element).save();
+}
+
 export function exportTableData({ title, columns, rows, format }) {
     if (!rows.length) {
         throw new Error('No data available to export.');
@@ -92,7 +127,7 @@ export function exportTableData({ title, columns, rows, format }) {
     }
 
     if (format === 'pdf') {
-        openPrintView(title, columns, rows, { printImmediately: true });
+        downloadPdf(title, columns, rows);
         return;
     }
 

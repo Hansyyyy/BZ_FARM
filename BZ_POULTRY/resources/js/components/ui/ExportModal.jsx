@@ -5,7 +5,7 @@ const formats = [
     {
         value: 'pdf',
         label: 'PDF',
-        hint: 'Save as PDF via print dialog',
+        hint: 'Save as PDF document',
         icon: 'bi-file-earmark-pdf',
         actionLabel: 'Export PDF',
     },
