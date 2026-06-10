@@ -1,13 +1,16 @@
 import { BrowserRouter } from 'react-router-dom';
+import { FarmSettingsProvider } from './context/FarmSettingsContext';
 import Layout from './components/layout/Layout';
 import AppRoutes from './routes/AppRoutes';
 
 function App() {
     return (
         <BrowserRouter>
-            <Layout>
-                <AppRoutes />
-            </Layout>
+            <FarmSettingsProvider>
+                <Layout>
+                    <AppRoutes />
+                </Layout>
+            </FarmSettingsProvider>
         </BrowserRouter>
     );
 }

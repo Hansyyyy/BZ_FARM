@@ -9,7 +9,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="manifest" href="{{ asset('manifest.json') }}">
     <link rel="apple-touch-icon" href="{{ asset('images/BZ LOGO.png') }}">
-    <title>BZ Farm</title>
+    @php($farmSettings = \App\Models\FarmSetting::current()->toSettingsArray())
+    <title>{{ $farmSettings['farm_name'] ?? 'BZ Farm' }}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{{ asset('css/farm.css') }}">
     @vite(['resources/css/app.css', 'resources/js/main.jsx'])
@@ -22,6 +23,7 @@
             user: @json(auth()->user()),
             csrfToken: '{{ csrf_token() }}',
             logoUrl: @json(asset('images/BZ LOGO.png')),
+            farmSettings: @json($farmSettings),
         };
     </script>
 </head>

@@ -6,6 +6,7 @@ import SummaryCards from '../components/ui/SummaryCards';
 import Modal from '../components/ui/Modal';
 import ExportModal from '../components/ui/ExportModal';
 import SaleForm from '../components/forms/SaleForm';
+import CustomerForm from '../components/forms/CustomerForm';
 import RowActionButtons from '../components/ui/RowActionButtons';
 import { exportTableData } from '../utils/exportData';
 
@@ -31,18 +32,31 @@ const salesColumns = [
 export default function SalesPage() {
     const { data, loading, error, reload, setError } = useFetch('/api/sales');
     const [search, setSearch] = useState('');
+    const [customerSearch, setCustomerSearch] = useState('');
     const [form, setForm] = useState({});
+    const [newCustomer, setNewCustomer] = useState({ name: '', contact: '', email: '', phone: '' });
     const [editingId, setEditingId] = useState(null);
     const [showForm, setShowForm] = useState(false);
+    const [showAddCustomer, setShowAddCustomer] = useState(false);
     const [showExport, setShowExport] = useState(false);
     const [viewItem, setViewItem] = useState(null);
+    const [customerMessage, setCustomerMessage] = useState(null);
+
+    const customers = data?.customers || [];
 
     const updateField = (key, value) => setForm((previous) => ({ ...previous, [key]: value }));
+    const updateCustomerField = (key, value) => setNewCustomer((previous) => ({ ...previous, [key]: value }));
 
     const closeForm = () => {
         setShowForm(false);
         setForm({});
         setEditingId(null);
+    };
+
+    const openCreateSale = () => {
+        setEditingId(null);
+        setForm({});
+        setShowForm(true);
     };
 
     const openEdit = (sale) => {
@@ -63,6 +77,11 @@ export default function SalesPage() {
     const submit = async (event) => {
         event.preventDefault();
         try {
+            if (!form.customer_id) {
+                setError('Please select a customer.');
+                return;
+            }
+
             const payload = { ...form };
 
             if (editingId) {
@@ -75,6 +94,20 @@ export default function SalesPage() {
 
             closeForm();
             await reload();
+        } catch (err) {
+            setError(err.response?.data?.message || err.message);
+        }
+    };
+
+    const addCustomer = async (event) => {
+        event.preventDefault();
+        try {
+            const response = await axios.post('/api/customers', newCustomer);
+            setShowAddCustomer(false);
+            setNewCustomer({ name: '', contact: '', email: '', phone: '' });
+            setCustomerMessage(`${response.data.item.name} added to customer list.`);
+            await reload();
+            setForm((previous) => ({ ...previous, customer_id: response.data.item.id }));
         } catch (err) {
             setError(err.response?.data?.message || err.message);
         }
@@ -93,9 +126,65 @@ export default function SalesPage() {
         ));
     }, [data, search]);
 
+    const filteredCustomers = useMemo(() => {
+        if (!customerSearch.trim()) return customers;
+        const query = customerSearch.toLowerCase();
+        return customers.filter((customer) => (
+            String(customer.name || '').toLowerCase().includes(query) ||
+            String(customer.contact || '').toLowerCase().includes(query) ||
+            String(customer.email || '').toLowerCase().includes(query) ||
+            String(customer.phone || '').toLowerCase().includes(query)
+        ));
+    }, [customers, customerSearch]);
+
     return (
         <PageState loading={loading} error={error} loadingLabel="Loading sales...">
             <SummaryCards fields={salesSummaryFields} summary={data?.summary} />
+
+            <div className="data-panel">
+                <div className="data-panel-toolbar">
+                    <div className="data-panel-title" style={{ margin: 0 }}>Customers</div>
+                    <div className="data-panel-filters">
+                        <div className="data-panel-search">
+                            <i className="bi bi-search"></i>
+                            <input
+                                type="text"
+                                placeholder="Search customers..."
+                                value={customerSearch}
+                                onChange={(event) => setCustomerSearch(event.target.value)}
+                            />
+                        </div>
+                        <button type="button" className="btn btn-primary" onClick={() => setShowAddCustomer(true)}>
+                            <i className="bi bi-person-plus"></i> Add Customer
+                        </button>
+                    </div>
+                </div>
+                {customerMessage && <div className="alert-success panel-inline-alert">{customerMessage}</div>}
+                <div className="table-responsive">
+                    <table className="data-table mockup-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Contact</th>
+                                <th>Phone</th>
+                                <th>Email</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredCustomers.length ? filteredCustomers.map((customer) => (
+                                <tr key={customer.id}>
+                                    <td><strong>{customer.name}</strong></td>
+                                    <td>{customer.contact || '—'}</td>
+                                    <td>{customer.phone || '—'}</td>
+                                    <td>{customer.email || '—'}</td>
+                                </tr>
+                            )) : (
+                                <tr><td colSpan="4" className="empty-state">No customers yet. Click Add Customer to create one.</td></tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
             <div className="data-panel">
                 <div className="data-panel-toolbar">
@@ -107,7 +196,7 @@ export default function SalesPage() {
                         <button type="button" className="btn btn-outline" onClick={() => setShowExport(true)}>
                             <i className="bi bi-printer"></i> Export
                         </button>
-                        <button type="button" className="btn btn-primary" onClick={() => { setEditingId(null); setForm({}); setShowForm(true); }}>
+                        <button type="button" className="btn btn-primary" onClick={openCreateSale}>
                             <i className="bi bi-plus-lg"></i> New Sale
                         </button>
                     </div>
@@ -153,7 +242,16 @@ export default function SalesPage() {
                     <button type="submit" className="btn btn-primary" form="sale-form">{editingId ? 'Update' : 'Record Sale'}</button>
                 </>
             )}>
-                <SaleForm id="sale-form" form={form} onChange={updateField} onSubmit={submit} customers={data?.customers || []} products={data?.products || []} />
+                <SaleForm id="sale-form" form={form} onChange={updateField} onSubmit={submit} customers={customers} products={data?.products || []} />
+            </Modal>
+
+            <Modal open={showAddCustomer} title="Add Customer" size="landscape" onClose={() => setShowAddCustomer(false)} actions={(
+                <>
+                    <button type="button" className="btn btn-outline" onClick={() => setShowAddCustomer(false)}>Cancel</button>
+                    <button type="submit" className="btn btn-primary" form="customer-form">Save Customer</button>
+                </>
+            )}>
+                <CustomerForm id="customer-form" customer={newCustomer} onChange={updateCustomerField} onSubmit={addCustomer} />
             </Modal>
 
             <Modal

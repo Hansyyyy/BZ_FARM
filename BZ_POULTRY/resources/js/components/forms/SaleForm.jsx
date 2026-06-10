@@ -1,3 +1,5 @@
+import SearchableSelect from '../ui/SearchableSelect';
+
 export default function SaleForm({ id, form, onChange, onSubmit, customers = [], products = [] }) {
     return (
         <form id={id} onSubmit={onSubmit}>
@@ -10,14 +12,17 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
                     <label>Sale Date</label>
                     <input type="date" className="form-control" value={form.sale_date || ''} onChange={(e) => onChange('sale_date', e.target.value)} required />
                 </div>
-                <div className="form-group">
-                    <label>Customer</label>
-                    <select className="form-control" value={form.customer_id || ''} onChange={(e) => onChange('customer_id', e.target.value)} required>
-                        <option value="">Choose customer</option>
-                        {customers.map((customer) => (
-                            <option key={customer.id} value={customer.id}>{customer.name}</option>
-                        ))}
-                    </select>
+                <div className="form-group span-2 searchable-select-field">
+                    <SearchableSelect
+                        label="Customer"
+                        placeholder="Choose customer"
+                        options={customers}
+                        value={form.customer_id || ''}
+                        onChange={(value) => onChange('customer_id', value)}
+                        getOptionLabel={(customer) => customer.name}
+                        getOptionValue={(customer) => customer.id}
+                        emptyMessage="No customers found. Add a customer first."
+                    />
                 </div>
                 <div className="form-group">
                     <label>Product</label>

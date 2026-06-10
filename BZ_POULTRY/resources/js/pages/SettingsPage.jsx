@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import useFetch from '../hooks/useFetch';
+import { useFarmSettings } from '../context/FarmSettingsContext';
 import PageState from '../components/ui/PageState';
 import PanelCard from '../components/ui/PanelCard';
 import Modal from '../components/ui/Modal';
@@ -8,12 +9,14 @@ import FarmSettingsForm from '../components/forms/FarmSettingsForm';
 import UserForm from '../components/forms/UserForm';
 
 export default function SettingsPage() {
+    const { updateSettings } = useFarmSettings();
     const { data, loading, error, reload, setError } = useFetch('/api/settings');
     const [settings, setSettings] = useState({});
     const [users, setUsers] = useState([]);
     const [message, setMessage] = useState(null);
     const [showAddUser, setShowAddUser] = useState(false);
     const [newUser, setNewUser] = useState({ name: '', username: '', email: '', password: '', role: 'manager' });
+
     useEffect(() => {
         if (data) {
             setSettings(data.settings || {});
@@ -27,10 +30,13 @@ export default function SettingsPage() {
     const update = async (event) => {
         event.preventDefault();
         try {
-            await axios.post('/api/settings', settings);
+            const response = await axios.post('/api/settings', settings);
+            const savedSettings = response.data.settings || settings;
+            setSettings(savedSettings);
+            updateSettings(savedSettings);
             setMessage('Settings updated successfully.');
         } catch (err) {
-            setError(err.message);
+            setError(err.response?.data?.message || err.message);
         }
     };
 

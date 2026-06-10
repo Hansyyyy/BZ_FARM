@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { getPageMeta } from '../../config/pageMeta';
+import { useFarmSettings } from '../../context/FarmSettingsContext';
 import NotificationBell from './NotificationBell';
 
 export default function Header({ onToggleSidebar, onLogout }) {
     const location = useLocation();
     const meta = getPageMeta(location.pathname);
+    const { farmName } = useFarmSettings();
     const user = window.Laravel?.user || { name: 'Username', role: 'Manager' };
     const [menuOpen, setMenuOpen] = useState(false);
 
@@ -22,6 +24,7 @@ export default function Header({ onToggleSidebar, onLogout }) {
                     <i className="bi bi-list"></i>
                 </button>
                 <div className="header-title-block">
+                    <span className="header-farm-name">{farmName}</span>
                     <h1>{meta.title}</h1>
                     <p>{meta.description}</p>
                 </div>

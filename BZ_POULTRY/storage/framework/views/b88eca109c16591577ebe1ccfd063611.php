@@ -9,7 +9,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="manifest" href="<?php echo e(asset('manifest.json')); ?>">
     <link rel="apple-touch-icon" href="<?php echo e(asset('images/BZ LOGO.png')); ?>">
-    <title>BZ Farm</title>
+    <?php ($farmSettings = \App\Models\FarmSetting::current()->toSettingsArray()); ?>
+    <title><?php echo e($farmSettings['farm_name'] ?? 'BZ Farm'); ?></title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="<?php echo e(asset('css/farm.css')); ?>">
     <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/main.jsx']); ?>
@@ -22,6 +23,7 @@
             user: <?php echo json_encode(auth()->user(), 15, 512) ?>,
             csrfToken: '<?php echo e(csrf_token()); ?>',
             logoUrl: <?php echo json_encode(asset('images/BZ LOGO.png'), 15, 512) ?>,
+            farmSettings: <?php echo json_encode($farmSettings, 15, 512) ?>,
         };
     </script>
 </head>

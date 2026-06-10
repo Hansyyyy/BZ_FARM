@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AdminInventoryController;
+use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\EggProductionController;
 use App\Http\Controllers\Api\FeedController;
@@ -47,6 +48,9 @@ Route::prefix('api')->group(function () {
     Route::post('/sales', [SalesController::class, 'store'])->name('api.sales.store');
     Route::put('/sales/{sale}', [SalesController::class, 'update'])->name('api.sales.update');
     Route::delete('/sales/{sale}', [SalesController::class, 'destroy'])->name('api.sales.destroy');
+
+    Route::get('/customers', [CustomerController::class, 'index'])->name('api.customers.index');
+    Route::post('/customers', [CustomerController::class, 'store'])->name('api.customers.store');
 
     Route::get('/reports', [ReportsController::class, 'index'])->name('api.reports.index');
     Route::post('/reports/generate', [ReportsController::class, 'generate'])->name('api.reports.generate');

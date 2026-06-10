@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\FarmSetting;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -14,35 +15,33 @@ class SettingsController extends Controller
     {
         return response()->json([
             'users' => User::latest()->get(),
-            'settings' => [
-                'farm_name' => session('farm_name', 'BZ Farm'),
-                'owner_name' => session('owner_name', ''),
-                'phone' => session('phone', ''),
-                'email' => session('email', ''),
-                'address' => session('address', ''),
-            ],
+            'settings' => FarmSetting::current()->toSettingsArray(),
         ]);
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'farm_name' => 'nullable|string|max:255',
+            'farm_name' => 'required|string|max:255',
             'owner_name' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email',
             'address' => 'nullable|string|max:500',
         ]);
 
-        session([
-            'farm_name' => $data['farm_name'] ?? 'BZ Farm',
+        $settings = FarmSetting::current();
+        $settings->update([
+            'farm_name' => trim($data['farm_name']),
             'owner_name' => $data['owner_name'] ?? '',
             'phone' => $data['phone'] ?? '',
             'email' => $data['email'] ?? '',
             'address' => $data['address'] ?? '',
         ]);
 
-        return response()->json(['message' => 'Settings updated successfully.']);
+        return response()->json([
+            'message' => 'Settings updated successfully.',
+            'settings' => $settings->fresh()->toSettingsArray(),
+        ]);
     }
 
     public function storeUser(Request $request)
