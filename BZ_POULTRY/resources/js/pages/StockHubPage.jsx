@@ -10,10 +10,12 @@ import RecentActivities from '../components/ui/RecentActivities';
 import PanelCard from '../components/ui/PanelCard';
 import Modal from '../components/ui/Modal';
 import ExportModal from '../components/ui/ExportModal';
-import ConfirmModal from '../components/ui/ConfirmModal';
 import DynamicForm from '../components/forms/DynamicForm';
+import RowActionButtons from '../components/ui/RowActionButtons';
 import { exportTableData } from '../utils/exportData';
 import { stockTabs, getStockResource } from '../config/stockTabs';
+import { needsMedication } from '../config/medicationAlerts';
+import MedicationAlertModal from '../components/ui/MedicationAlertModal';
 
 const PAGE_SIZE = 8;
 
@@ -59,7 +61,8 @@ export default function StockHubPage() {
     const tabConfig = stockTabs.find((tab) => tab.id === activeTab) || stockTabs[0];
     const resource = getStockResource(activeTab);
 
-    const { data, loading, error, setData, reload, setError } = useFetch(resource.endpoint);
+    const { data, loading, error, reload, setError } = useFetch(resource.endpoint);
+    const { reload: reloadFlocks } = useFetch('/api/flocks', { immediate: false });
     const [search, setSearch] = useState('');
     const [filters, setFilters] = useState({ type: '', breed: '', status: '', category: '', building: '' });
     const [page, setPage] = useState(1);
@@ -68,7 +71,8 @@ export default function StockHubPage() {
     const [viewItem, setViewItem] = useState(null);
     const [isFormOpen, setFormOpen] = useState(false);
     const [isExportOpen, setExportOpen] = useState(false);
-    const [deleteTarget, setDeleteTarget] = useState(null);
+    const [medicationAlert, setMedicationAlert] = useState(null);
+    const [medicationAlertShownForForm, setMedicationAlertShownForForm] = useState(false);
 
     const activeFields = editingId && resource.editFormFields ? resource.editFormFields : resource.formFields;
     const isEditing = Boolean(editingId);
@@ -107,7 +111,62 @@ export default function StockHubPage() {
     const breedOptions = useMemo(() => [...new Set((data?.items || []).map((item) => item.breed).filter(Boolean))], [data]);
     const categoryOptions = useMemo(() => [...new Set((data?.items || []).map((item) => item.category).filter(Boolean))], [data]);
 
-    const updateField = (key, value) => setForm((previous) => ({ ...previous, [key]: value }));
+    const showMedicationAlert = (alert) => {
+        setMedicationAlert(alert);
+    };
+
+    const updateField = (key, value) => {
+        const previousAge = Number(form.age_weeks) || 0;
+        const nextAge = key === 'age_weeks' ? Number(value) : previousAge;
+
+        setForm((previous) => ({ ...previous, [key]: value }));
+
+        if (
+            activeTab === 'chicken'
+            && key === 'age_weeks'
+            && needsMedication(nextAge)
+            && !needsMedication(previousAge)
+        ) {
+            setMedicationAlertShownForForm(true);
+            showMedicationAlert({
+                ageWeeks: nextAge,
+                batchNo: form.batch_no || 'this flock',
+                flocks: [],
+            });
+        }
+    };
+
+    useEffect(() => {
+        if (!isFormOpen) {
+            setMedicationAlertShownForForm(false);
+        }
+    }, [isFormOpen]);
+
+    useEffect(() => {
+        if (activeTab !== 'medicine') {
+            return undefined;
+        }
+
+        let cancelled = false;
+
+        reloadFlocks().then((payload) => {
+            if (cancelled) {
+                return;
+            }
+
+            const needing = (payload?.items || []).filter(
+                (item) => item.status === 'active' && needsMedication(item.age_weeks),
+            );
+
+            if (needing.length) {
+                showMedicationAlert({ flocks: needing });
+            }
+        });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [activeTab, reloadFlocks]);
 
     const closeForm = () => {
         setFormOpen(false);
@@ -142,23 +201,19 @@ export default function StockHubPage() {
                 await axios.post(resource.endpoint, formData);
             }
 
+            const savedAge = Number(payload.age_weeks ?? form.age_weeks);
+            const savedBatch = form.batch_no;
+
             closeForm();
             await reload();
-        } catch (err) {
-            setError(err.response?.data?.message || err.message);
-        }
-    };
 
-    const confirmDelete = async () => {
-        if (!deleteTarget) return;
-
-        try {
-            await axios.delete(`${resource.endpoint}/${deleteTarget.id}`);
-            setData((previous) => ({
-                ...previous,
-                items: previous.items.filter((item) => item.id !== deleteTarget.id),
-            }));
-            setDeleteTarget(null);
+            if (activeTab === 'chicken' && needsMedication(savedAge) && !medicationAlertShownForForm) {
+                showMedicationAlert({
+                    ageWeeks: savedAge,
+                    batchNo: savedBatch || 'this flock',
+                    flocks: [],
+                });
+            }
         } catch (err) {
             setError(err.response?.data?.message || err.message);
         }
@@ -261,17 +316,10 @@ export default function StockHubPage() {
                                         return <td key={col.key}>{value}</td>;
                                     })}
                                     <td>
-                                        <div className="row-actions">
-                                            <button type="button" className="action-btn" title="View" onClick={() => setViewItem(item)}>
-                                                <i className="bi bi-eye"></i>
-                                            </button>
-                                            <button type="button" className="action-btn" title="Edit" onClick={() => openEdit(item)}>
-                                                <i className="bi bi-pencil"></i>
-                                            </button>
-                                            <button type="button" className="action-btn delete" title="Delete" onClick={() => setDeleteTarget(item)}>
-                                                <i className="bi bi-trash"></i>
-                                            </button>
-                                        </div>
+                                        <RowActionButtons
+                                            onView={() => setViewItem(item)}
+                                            onEdit={() => openEdit(item)}
+                                        />
                                     </td>
                                 </tr>
                             )) : (
@@ -362,13 +410,16 @@ export default function StockHubPage() {
                 onExport={handleExport}
             />
 
-            <ConfirmModal
-                open={Boolean(deleteTarget)}
-                title="Delete Record"
-                message="Are you sure you want to delete this record? This action cannot be undone."
-                confirmLabel="Delete"
-                onClose={() => setDeleteTarget(null)}
-                onConfirm={confirmDelete}
+            <MedicationAlertModal
+                open={Boolean(medicationAlert)}
+                ageWeeks={medicationAlert?.ageWeeks}
+                batchNo={medicationAlert?.batchNo}
+                flocks={medicationAlert?.flocks || []}
+                onClose={() => setMedicationAlert(null)}
+                onGoToMedicine={() => {
+                    setMedicationAlert(null);
+                    setSearchParams({ tab: 'medicine' });
+                }}
             />
         </PageState>
     );

@@ -5,8 +5,8 @@ import PageState from '../components/ui/PageState';
 import SummaryCards from '../components/ui/SummaryCards';
 import Modal from '../components/ui/Modal';
 import ExportModal from '../components/ui/ExportModal';
-import ConfirmModal from '../components/ui/ConfirmModal';
 import SaleForm from '../components/forms/SaleForm';
+import RowActionButtons from '../components/ui/RowActionButtons';
 import { exportTableData } from '../utils/exportData';
 
 const salesSummaryFields = [
@@ -29,13 +29,13 @@ const salesColumns = [
 ];
 
 export default function SalesPage() {
-    const { data, loading, error, setData, reload, setError } = useFetch('/api/sales');
+    const { data, loading, error, reload, setError } = useFetch('/api/sales');
     const [search, setSearch] = useState('');
     const [form, setForm] = useState({});
     const [editingId, setEditingId] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [showExport, setShowExport] = useState(false);
-    const [deleteTarget, setDeleteTarget] = useState(null);
+    const [viewItem, setViewItem] = useState(null);
 
     const updateField = (key, value) => setForm((previous) => ({ ...previous, [key]: value }));
 
@@ -75,18 +75,6 @@ export default function SalesPage() {
 
             closeForm();
             await reload();
-        } catch (err) {
-            setError(err.response?.data?.message || err.message);
-        }
-    };
-
-    const confirmDelete = async () => {
-        if (!deleteTarget) return;
-
-        try {
-            await axios.delete(`/api/sales/${deleteTarget.id}`);
-            setData((previous) => ({ ...previous, items: previous.items.filter((item) => item.id !== deleteTarget.id) }));
-            setDeleteTarget(null);
         } catch (err) {
             setError(err.response?.data?.message || err.message);
         }
@@ -147,14 +135,10 @@ export default function SalesPage() {
                                     <td>{sale.payment_method}</td>
                                     <td><span className={`status-pill status-${sale.status}`}>{sale.status}</span></td>
                                     <td>
-                                        <div className="row-actions">
-                                            <button type="button" className="action-btn" title="Edit" onClick={() => openEdit(sale)}>
-                                                <i className="bi bi-pencil"></i>
-                                            </button>
-                                            <button type="button" className="action-btn delete" title="Delete" onClick={() => setDeleteTarget(sale)}>
-                                                <i className="bi bi-trash"></i>
-                                            </button>
-                                        </div>
+                                        <RowActionButtons
+                                            onView={() => setViewItem(sale)}
+                                            onEdit={() => openEdit(sale)}
+                                        />
                                     </td>
                                 </tr>
                             )) : <tr><td colSpan="9">No sales found.</td></tr>}
@@ -172,21 +156,34 @@ export default function SalesPage() {
                 <SaleForm id="sale-form" form={form} onChange={updateField} onSubmit={submit} customers={data?.customers || []} products={data?.products || []} />
             </Modal>
 
+            <Modal
+                open={Boolean(viewItem)}
+                title="Sale Details"
+                size="landscape"
+                onClose={() => setViewItem(null)}
+                actions={<button type="button" className="btn btn-outline" onClick={() => setViewItem(null)}>Close</button>}
+            >
+                {viewItem && (
+                    <div className="detail-grid">
+                        {salesColumns.map((col) => {
+                            const value = col.render ? col.render(viewItem) : viewItem[col.key] ?? '';
+                            return (
+                                <div className="detail-item" key={col.key}>
+                                    <span>{col.label}</span>
+                                    <strong>{value}</strong>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </Modal>
+
             <ExportModal
                 open={showExport}
                 title="Export Sales"
                 description="Choose how you want to export your sales records."
                 onClose={() => setShowExport(false)}
                 onExport={(format) => exportTableData({ title: 'Sales List', columns: salesColumns, rows: filteredSales, format })}
-            />
-
-            <ConfirmModal
-                open={Boolean(deleteTarget)}
-                title="Delete Sale"
-                message="Are you sure you want to delete this sale? This action cannot be undone."
-                confirmLabel="Delete"
-                onClose={() => setDeleteTarget(null)}
-                onConfirm={confirmDelete}
             />
         </PageState>
     );

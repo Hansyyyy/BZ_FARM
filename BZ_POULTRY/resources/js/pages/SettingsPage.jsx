@@ -4,7 +4,6 @@ import useFetch from '../hooks/useFetch';
 import PageState from '../components/ui/PageState';
 import PanelCard from '../components/ui/PanelCard';
 import Modal from '../components/ui/Modal';
-import ConfirmModal from '../components/ui/ConfirmModal';
 import FarmSettingsForm from '../components/forms/FarmSettingsForm';
 import UserForm from '../components/forms/UserForm';
 
@@ -15,8 +14,6 @@ export default function SettingsPage() {
     const [message, setMessage] = useState(null);
     const [showAddUser, setShowAddUser] = useState(false);
     const [newUser, setNewUser] = useState({ name: '', username: '', email: '', password: '', role: 'manager' });
-    const [deleteTarget, setDeleteTarget] = useState(null);
-
     useEffect(() => {
         if (data) {
             setSettings(data.settings || {});
@@ -52,19 +49,6 @@ export default function SettingsPage() {
         }
     };
 
-    const confirmDeleteUser = async () => {
-        if (!deleteTarget) return;
-
-        try {
-            await axios.delete(`/api/settings/users/${deleteTarget.id}`);
-            setUsers((previous) => previous.filter((user) => user.id !== deleteTarget.id));
-            setDeleteTarget(null);
-            setMessage('User deleted successfully.');
-        } catch (err) {
-            setError(err.message);
-        }
-    };
-
     return (
         <PageState loading={loading} error={error} loadingLabel="Loading settings...">
             <PanelCard title="Farm Settings">
@@ -81,7 +65,7 @@ export default function SettingsPage() {
                 </div>
                 <div className="table-responsive">
                     <table className="data-table mockup-table">
-                        <thead><tr><th>Name</th><th>Username</th><th>Email</th><th>Role</th><th>Action</th></tr></thead>
+                        <thead><tr><th>Name</th><th>Username</th><th>Email</th><th>Role</th></tr></thead>
                         <tbody>
                             {users.length ? users.map((user) => (
                                 <tr key={user.id}>
@@ -89,26 +73,12 @@ export default function SettingsPage() {
                                     <td>{user.username}</td>
                                     <td>{user.email}</td>
                                     <td><span className={`status-pill status-${user.role}`}>{user.role}</span></td>
-                                    <td>
-                                        <button type="button" className="action-btn delete" onClick={() => setDeleteTarget(user)}>
-                                            <i className="bi bi-trash"></i>
-                                        </button>
-                                    </td>
                                 </tr>
-                            )) : <tr><td colSpan="5">No users found.</td></tr>}
+                            )) : <tr><td colSpan="4">No users found.</td></tr>}
                         </tbody>
                     </table>
                 </div>
             </div>
-
-            <ConfirmModal
-                open={Boolean(deleteTarget)}
-                title="Delete User"
-                message={`Are you sure you want to delete ${deleteTarget?.name || 'this user'}? This action cannot be undone.`}
-                confirmLabel="Delete"
-                onClose={() => setDeleteTarget(null)}
-                onConfirm={confirmDeleteUser}
-            />
 
             <Modal open={showAddUser} title="Add User" size="landscape" onClose={() => setShowAddUser(false)} actions={(
                 <>
