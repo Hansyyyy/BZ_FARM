@@ -14,7 +14,9 @@ export default function AppRoutes() {
     return (
         <Routes>
             <Route path="/dashboard" element={isAdmin ? <AdminInventoryPage /> : <DashboardPage />} />
+            <Route path="/inventory-stock" element={<StockHubPage />} />
             <Route path="/chicken-stock" element={<StockHubPage />} />
+            <Route path="/Inventory-stock" element={<Navigate to="/inventory-stock" replace />} />
             <Route path="/daily-reports" element={<ReportsPage />} />
             <Route path="/sales" element={<SalesPage />} />
             <Route path="/settings" element={<SettingsPage />} />

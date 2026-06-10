@@ -25,4 +25,4 @@
     <div id="root"></div>
 </body>
 </html>
-<?php /**PATH C:\xampp\htdocs\BZ_FARM\BZ_POULTRY\resources\views/react-app.blade.php ENDPATH**/ ?>
+<?php /**PATH C:\xampp\htdocs\BZ_FARM-1\BZ_POULTRY\resources\views/react-app.blade.php ENDPATH**/ ?>

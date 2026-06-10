@@ -15,8 +15,12 @@ export const pageMeta = {
         title: 'Daily Reports',
         description: 'View and generate daily farm reports',
     },
+    '/inventory-stock': {
+        title: 'Inventory Stock',
+        description: 'Manage poultry, feed, medicine, eggs, and supplies',
+    },
     '/chicken-stock': {
-        title: 'Chicken Stock',
+        title: 'Inventory Stock',
         description: 'Manage poultry, feed, medicine, eggs, and supplies',
     },
     '/sales': {

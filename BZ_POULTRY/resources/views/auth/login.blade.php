@@ -8,9 +8,23 @@
     <link rel="stylesheet" href="{{ asset('css/farm.css') }}">
     <style>
         .password-field{position:relative}
-        .password-field .toggle-password{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:transparent;padding:6px;color:#495057}
+        .password-field .toggle-password{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:transparent;padding:6px;color:#495057;z-index:3}
         .password-field .toggle-password:focus{outline:none}
-        .password-field .form-control{padding-right:38px}
+        .password-field .floating-input{padding-right:42px}
+
+        .login-card__main .form-group{margin-bottom:22px}
+        .login-card__main .floating-field{position:relative}
+        .login-card__main .floating-input{width:100%;padding:20px 16px 10px;border-radius:14px;border:1px solid rgba(27,77,46,0.18);background:rgba(255,255,255,0.9);transition:all .25s ease, box-shadow .25s ease}
+        .login-card__main .floating-input::placeholder{color:transparent}
+        .login-card__main .floating-label{position:absolute;left:14px;top:50%;transform:translateY(-50%);pointer-events:none;background:rgba(255,255,255,0.9);padding:0 6px;color:#6c757d;transition:all .25s ease;border-radius:6px}
+        .login-card__main .floating-input:focus + .floating-label,
+        .login-card__main .floating-input:not(:placeholder-shown) + .floating-label,
+        .login-card__main .floating-input:valid + .floating-label{top:0;transform:translateY(-50%) scale(0.92);color:var(--primary)}
+        .login-card__main .floating-field:hover .floating-input{transform:translateY(-2px);box-shadow:0 12px 24px rgba(27,77,46,0.12);border-color:var(--primary-light)}
+        .login-card__main .floating-field:focus-within .floating-input{transform:translateY(-2px);box-shadow:0 0 0 4px rgba(27,77,46,0.12);border-color:var(--primary)}
+        .login-card__main .btn-primary{transition:transform .2s ease, box-shadow .2s ease, background .2s ease}
+        .login-card__main .btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 20px rgba(27,77,46,0.18)}
+        .login-card__main .btn-primary:active{transform:translateY(0) scale(0.98)}
     </style>
 </head>
 <body>
@@ -44,13 +58,15 @@
             <form method="POST" action="{{ route('login') }}">
                 @csrf
                 <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" class="form-control" value="{{ old('username') }}" placeholder="Enter username" required autofocus>
+                    <div class="floating-field">
+                        <input type="text" id="username" name="username" class="form-control floating-input" value="{{ old('username') }}" placeholder=" " required autofocus>
+                        <label for="username" class="floating-label">Username</label>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label for="password">Password</label>
-                    <div class="password-field">
-                        <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required>
+                    <div class="password-field floating-field">
+                        <input type="password" id="password" name="password" class="form-control floating-input" placeholder=" " required>
+                        <label for="password" class="floating-label">Password</label>
                         <button type="button" class="toggle-password" aria-label="Show password">
                             <i class="bi bi-eye"></i>
                         </button>
