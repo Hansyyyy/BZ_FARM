@@ -1,6 +1,10 @@
 import { useMemo, useState } from 'react';
 import useFetch from '../../hooks/useFetch';
 import PageState from '../../components/ui/PageState';
+import SummaryCards from '../../components/ui/SummaryCards';
+import ModuleTabs from '../../components/ui/ModuleTabs';
+import SegmentDonut from '../../components/ui/SegmentDonut';
+import { buildGradeSegments } from '../../config/chartTheme';
 
 const MAIN_TABS = [
     { id: 'overview', label: 'Overview' },
@@ -38,7 +42,6 @@ export default function AdminInventoryPage() {
     const [search, setSearch] = useState('');
 
     const { data, loading, error } = useFetch(`/api/admin/inventory?date=${selectedDate}`);
-    const user = window.Laravel?.user || { name: 'User' };
 
     const summary = data?.summary || {};
     const overview = data?.overview || {};
@@ -68,62 +71,29 @@ export default function AdminInventoryPage() {
                 : '0%';
 
             return [
-                { label: 'Total Active Layer Birds', value: formatNumber(overview.layer_count), tone: 'default' },
-                { label: 'On Hand Inventory', value: formatNumber(inventory.total_on_hand), tone: 'default' },
-                { label: 'Grade AA', value: formatNumber(gradeAa), tone: 'success' },
-                { label: 'Rejected Rate', value: rejectedRate, tone: 'danger' },
+                { key: 'layer-birds', label: 'Total Active Layer Birds', value: formatNumber(overview.layer_count), tone: 'default' },
+                { key: 'on-hand', label: 'On Hand Inventory', value: formatNumber(inventory.total_on_hand), tone: 'default' },
+                { key: 'grade-aa', label: 'Grade AA', value: formatNumber(gradeAa), tone: 'success' },
+                { key: 'rejected-rate', label: 'Rejected Rate', value: rejectedRate, tone: 'danger' },
             ];
         }
 
         return [
-            { label: 'Total Birds', value: formatNumber(summary.totalBirds), tone: 'default' },
-            { label: "Today's Egg Collections", value: formatNumber(summary.eggsToday), tone: 'default' },
-            { label: 'Cull Total', value: formatNumber(summary.cull), tone: 'default' },
-            { label: 'Mortality', value: formatNumber(summary.mortality), tone: 'default' },
+            { key: 'total-birds', label: 'Total Birds', value: formatNumber(summary.totalBirds), tone: 'default' },
+            { key: 'eggs-today', label: "Today's Egg Collections", value: formatNumber(summary.eggsToday), tone: 'default' },
+            { key: 'cull', label: 'Cull Total', value: formatNumber(summary.cull), tone: 'default' },
+            { key: 'mortality', label: 'Mortality', value: formatNumber(summary.mortality), tone: 'default' },
         ];
     }, [activeTab, eggProductions, overview.layer_count, summary]);
 
     return (
         <PageState loading={loading} error={error ? `Unable to load inventory dashboard: ${error}` : null} loadingLabel="Loading inventory dashboard...">
             <div className="admin-inventory">
-                <div className="admin-inventory-hero">
-                    <div className="admin-inventory-hero-left">
-                        <div className="admin-inventory-logo">
-                            <img src={window.Laravel?.logoUrl || '/images/BZ%20LOGO.png'} alt="BZ Farm logo" />
-                        </div>
-                        <div>
-                            <h2>Inventory Dashboard</h2>
-                            <p>Welcome, {user.name}!</p>
-                        </div>
-                    </div>
-                    <div className="admin-inventory-hero-right">
-                        <span className="admin-role-badge">Admin</span>
-                    </div>
-                </div>
+                <SummaryCards items={summaryCards} columns={4} />
 
-                <div className="admin-summary-cards">
-                    {summaryCards.map((card) => (
-                        <div key={card.label} className="admin-summary-card">
-                            <div className="admin-summary-card-label">{card.label}</div>
-                            <div className={`admin-summary-card-value tone-${card.tone}`}>{card.value}</div>
-                        </div>
-                    ))}
-                </div>
-
-                <div className="admin-tab-bar">
-                    <div className="admin-main-tabs">
-                        {MAIN_TABS.map((tab) => (
-                            <button
-                                key={tab.id}
-                                type="button"
-                                className={`admin-main-tab ${activeTab === tab.id ? 'active' : ''}`}
-                                onClick={() => setActiveTab(tab.id)}
-                            >
-                                {tab.label}
-                            </button>
-                        ))}
-                    </div>
-                    <div className="admin-date-picker">
+                <div className="page-toolbar">
+                    <ModuleTabs tabs={MAIN_TABS} activeTab={activeTab} onChange={setActiveTab} />
+                    <div className="page-date-picker">
                         <i className="bi bi-calendar3"></i>
                         <input
                             type="date"
@@ -372,6 +342,12 @@ export default function AdminInventoryPage() {
                                 <div className="admin-inventory-side">
                                     <div className="admin-panel-kicker">Total On Hand</div>
                                     <div className="admin-panel-big-value">{formatNumber(eggProductions.inventory?.total_on_hand)}</div>
+                                    <SegmentDonut
+                                        segments={buildGradeSegments(eggProductions.inventory?.grade_breakdown || [])}
+                                        total={eggProductions.inventory?.total_on_hand}
+                                        centerLabel="Eggs"
+                                        size={160}
+                                    />
                                     <div className="grade-breakdown">
                                         {eggProductions.inventory?.grade_breakdown?.map((grade) => (
                                             <div key={grade.key} className={`grade-row grade-${grade.color}`}>

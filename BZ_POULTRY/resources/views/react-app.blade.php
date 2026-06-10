@@ -13,6 +13,7 @@
     <title>{{ $farmSettings['farm_name'] ?? 'BZ Farm' }}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{{ asset('css/farm.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/design-system.css') }}">
     @vite(['resources/css/app.css', 'resources/js/main.jsx'])
      <!-- PDF Export Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>

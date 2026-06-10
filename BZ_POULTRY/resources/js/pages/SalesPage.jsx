@@ -11,11 +11,11 @@ import RowActionButtons from '../components/ui/RowActionButtons';
 import { exportTableData } from '../utils/exportData';
 
 const salesSummaryFields = [
-    { key: 'eggsToday', label: 'Eggs Collected Today', sub: 'Today' },
-    { key: 'calTotal', label: 'Cal Total', sub: 'Good Eggs' },
-    { key: 'crackedToday', label: 'Cracked Eggs', sub: 'Today' },
-    { key: 'weekTotal', label: 'This Week', sub: 'Weekly Total' },
-    { key: 'monthTotal', label: 'This Month', sub: 'Monthly Total' },
+    { key: 'eggsToday', label: 'Eggs Collected Today', sub: 'Today', icon: 'bi-basket' },
+    { key: 'calTotal', label: 'Cal Total', sub: 'Good Eggs', icon: 'bi-check-circle' },
+    { key: 'crackedToday', label: 'Cracked Eggs', sub: 'Today', icon: 'bi-exclamation-circle', tone: 'warning' },
+    { key: 'weekTotal', label: 'This Week', sub: 'Weekly Total', icon: 'bi-calendar-week' },
+    { key: 'monthTotal', label: 'This Month', sub: 'Monthly Total', icon: 'bi-calendar-month' },
 ];
 
 const salesColumns = [

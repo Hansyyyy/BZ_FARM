@@ -6,6 +6,7 @@
     <title>Login - BZ Farm</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{{ asset('css/farm.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/design-system.css') }}">
     <style>
         .password-field{position:relative}
         .password-field .toggle-password{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:transparent;padding:6px;color:#495057;z-index:3}

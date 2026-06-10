@@ -5,7 +5,8 @@ import useFetch from '../hooks/useFetch';
 import PageState from '../components/ui/PageState';
 import SummaryCards from '../components/ui/SummaryCards';
 import ModuleTabs from '../components/ui/ModuleTabs';
-import DonutChart from '../components/ui/DonutChart';
+import SegmentDonut from '../components/ui/SegmentDonut';
+import { buildFlockSegments } from '../config/chartTheme';
 import RecentActivities from '../components/ui/RecentActivities';
 import PanelCard from '../components/ui/PanelCard';
 import Modal from '../components/ui/Modal';
@@ -265,7 +266,7 @@ export default function StockHubPage() {
                         )}
                         {tabConfig.filters?.includes('breed') && (
                             <select value={filters.breed} onChange={(e) => setFilters({ ...filters, breed: e.target.value })}>
-                                <option value="">All Building</option>
+                                <option value="">All Breeds</option>
                                 {breedOptions.map((breed) => <option key={breed} value={breed}>{breed}</option>)}
                             </select>
                         )}
@@ -354,10 +355,14 @@ export default function StockHubPage() {
 
             {activeTab === 'chicken' && (
                 <div className="grid-2 stock-widgets">
-                    <PanelCard title="Chicken Distribution by Type" actionLabel="View All">
-                        <DonutChart distribution={data?.distribution} total={data?.summary?.totalPoultry} />
+                    <PanelCard title="Chicken Distribution by Type" subtitle="Birds by flock type" icon="bi-pie-chart">
+                        <SegmentDonut
+                            segments={buildFlockSegments(data?.distribution)}
+                            total={data?.summary?.totalPoultry}
+                            centerLabel="Birds"
+                        />
                     </PanelCard>
-                    <PanelCard title="Recent Activities" actionLabel="View All">
+                    <PanelCard title="Recent Activities" subtitle="Latest stock updates" icon="bi-clock-history">
                         <RecentActivities activities={data?.recentActivities} />
                     </PanelCard>
                 </div>

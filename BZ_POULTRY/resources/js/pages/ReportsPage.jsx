@@ -13,6 +13,13 @@ const reportColumns = [
     { key: 'generated_at', label: 'Generated At', render: (report) => new Date(report.generated_at).toLocaleString() },
 ];
 
+const reportTypeIcons = {
+    Inventory: 'bi-box-seam',
+    Production: 'bi-bar-chart-line',
+    Sales: 'bi-cash-stack',
+    Financial: 'bi-graph-up-arrow',
+};
+
 export default function ReportsPage() {
     const { data, loading, error, reload, setError } = useFetch('/api/reports');
     const [search, setSearch] = useState('');
@@ -45,8 +52,13 @@ export default function ReportsPage() {
         <PageState loading={loading} error={error} loadingLabel="Loading reports...">
             <div className="grid-3 report-types">
                 {data?.reportTypes?.map((type) => (
-                    <PanelCard key={type.name} title={type.name}>
-                        <p className="report-type-category">{type.category}</p>
+                    <PanelCard key={type.name} title={type.name} icon={reportTypeIcons[type.category] || 'bi-file-earmark-text'}>
+                        <div className="report-type-meta">
+                            <span className="report-type-icon">
+                                <i className={`bi ${reportTypeIcons[type.category] || 'bi-file-earmark-text'}`}></i>
+                            </span>
+                            <p className="report-type-category">{type.category}</p>
+                        </div>
                     </PanelCard>
                 ))}
             </div>
