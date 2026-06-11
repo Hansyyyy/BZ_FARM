@@ -15,7 +15,6 @@ import DynamicForm from '../components/forms/DynamicForm';
 import RowActionButtons from '../components/ui/RowActionButtons';
 import { exportTableData } from '../utils/exportData';
 import { stockTabs, getStockResource } from '../config/stockTabs';
-import MedicationNoticeBanner from '../components/ui/MedicationNoticeBanner';
 
 const PAGE_SIZE = 8;
 
@@ -75,7 +74,6 @@ export default function StockHubPage() {
     const [viewItem, setViewItem] = useState(null);
     const [isFormOpen, setFormOpen] = useState(false);
     const [isExportOpen, setExportOpen] = useState(false);
-    const [medicationBannerDismissed, setMedicationBannerDismissed] = useState(false);
 
     const activeFields = editingId && resource.editFormFields ? resource.editFormFields : resource.formFields;
     const isEditing = Boolean(editingId);
@@ -141,11 +139,6 @@ export default function StockHubPage() {
         return flockSnapshot?.medicationDue || [];
     }, [activeTab, data, flockSnapshot]);
 
-    const medicationBannerKey = useMemo(
-        () => medicationDueFlocks.map((flock) => flock.id).join('-'),
-        [medicationDueFlocks],
-    );
-
     const tabsWithBadges = useMemo(() => stockTabs.map((tab) => (
         tab.id === 'medicine' && medicationDueFlocks.length
             ? { ...tab, badge: medicationDueFlocks.length }
@@ -155,10 +148,6 @@ export default function StockHubPage() {
     useEffect(() => {
         reloadFlocks();
     }, [reloadFlocks]);
-
-    useEffect(() => {
-        setMedicationBannerDismissed(false);
-    }, [medicationBannerKey]);
 
     const updateField = (key, value) => {
         setForm((previous) => ({ ...previous, [key]: value }));
@@ -225,14 +214,6 @@ export default function StockHubPage() {
         <PageState loading={loading} error={error} loadingLabel="Loading stock data...">
             {resource.summaryFields && (
                 <SummaryCards fields={resource.summaryFields} summary={data?.summary} />
-            )}
-
-            {!medicationBannerDismissed && (
-                <MedicationNoticeBanner
-                    flocks={medicationDueFlocks}
-                    onGoToMedicine={() => setSearchParams({ tab: 'medicine' })}
-                    onDismiss={() => setMedicationBannerDismissed(true)}
-                />
             )}
 
             <div className="data-panel">

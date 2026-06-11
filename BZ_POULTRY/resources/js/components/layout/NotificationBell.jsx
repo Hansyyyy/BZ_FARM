@@ -82,9 +82,6 @@ export default function NotificationBell() {
                 onClick={handleOpen}
             >
                 <i className="bi bi-bell"></i>
-                {unreadCount > 0 && (
-                    <span className="notification-dot">{unreadCount > 9 ? '9+' : unreadCount}</span>
-                )}
             </button>
 
             {open && (

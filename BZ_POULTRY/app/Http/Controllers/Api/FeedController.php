@@ -13,7 +13,7 @@ use Illuminate\Validation\Rule;
 
 class FeedController extends Controller
 {
-    private const CATEGORIES = ['starter feeds', 'grower feeds', 'layer feeds'];
+    private const CATEGORIES = ['Starter feeds', 'Grower feeds', 'Layer feeds'];
 
     public function index()
     {
