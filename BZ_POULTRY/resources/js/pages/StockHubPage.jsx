@@ -67,7 +67,7 @@ export default function StockHubPage() {
 
     const { data, loading, error, reload, setError } = useFetch(resource.endpoint);
     const [search, setSearch] = useState('');
-    const [filters, setFilters] = useState({ type: '', breed: '', status: '', category: '', building: '' });
+    const [filters, setFilters] = useState({ type: '', breed: '', status: '', category: '', building: '', date: '' });
     const [page, setPage] = useState(1);
     const [form, setForm] = useState({});
     const [editingId, setEditingId] = useState(null);
@@ -97,7 +97,7 @@ export default function StockHubPage() {
 
     useEffect(() => {
         setSearch('');
-        setFilters({ type: '', breed: '', status: '', category: '', building: '' });
+        setFilters({ type: '', breed: '', status: '', category: '', building: '', date: '' });
         setPage(1);
         setForm({});
         setEditingId(null);
@@ -119,7 +119,10 @@ export default function StockHubPage() {
         if (filters.status) rows = rows.filter((item) => item.status === filters.status);
         if (filters.category) rows = rows.filter((item) => item.category === filters.category);
         if (filters.building) {
-            rows = rows.filter((item) => String(item.building?.name || '').includes(filters.building));
+            rows = rows.filter((item) => String(item.batch_no || '') === filters.building);
+        }
+        if (filters.date) {
+            rows = rows.filter((item) => String(item.date || '').slice(0, 10) === filters.date);
         }
 
         return rows;
@@ -237,9 +240,17 @@ export default function StockHubPage() {
                             <select value={filters.building} onChange={(e) => setFilters({ ...filters, building: e.target.value })}>
                                 <option value="">All Buildings</option>
                                 {(data?.buildings || []).map((building) => (
-                                    <option key={building.id} value={building.name}>{building.name}</option>
+                                    <option key={building.id} value={String(building.id)}>{building.name}</option>
                                 ))}
                             </select>
+                        )}
+                        {tabConfig.filters?.includes('date') && (
+                            <input
+                                type="date"
+                                value={filters.date}
+                                onChange={(e) => setFilters({ ...filters, date: e.target.value })}
+                                className="date-filter"
+                            />
                         )}
                         <button type="button" className="btn btn-outline" onClick={() => setExportOpen(true)}>
                             <i className="bi bi-printer"></i> Export

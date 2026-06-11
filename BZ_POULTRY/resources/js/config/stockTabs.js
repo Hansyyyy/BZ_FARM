@@ -10,7 +10,7 @@ export const stockTabs = [
         searchPlaceholder: 'search by batch no, breed, or type...',
         showDistribution: true,
         showActivities: true,
-        filters: ['type', 'breed', 'status'],
+        filters: ['type', 'building', 'status'],
     },
     {
         id: 'feeds',
@@ -37,7 +37,7 @@ export const stockTabs = [
         listTitle: 'Egg Production List',
         addLabel: 'Add New Record',
         searchPlaceholder: 'search by date or building...',
-        filters: ['building'],
+        filters: ['date'],
     },
     {
         id: 'medications',

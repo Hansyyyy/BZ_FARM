@@ -33,7 +33,7 @@ export default {
             label: 'Building',
             type: 'select',
             optionsKey: 'buildings',
-            optionValue: 'name',
+            optionValue: 'id',
             optionLabel: 'name',
         },
         { key: 'type', label: 'Type', type: 'select', options: ['layers', 'pullets', 'roosters'] },
