@@ -98,12 +98,13 @@ body {
     font-size: 0.92rem;
     border-left: none;
     gap: 14px;
+    transition: background-color 220ms ease, color 220ms ease, transform 220ms ease, box-shadow 220ms ease;
 }
 
 .nav-menu a:hover {
     background: var(--sidebar-hover);
     color: var(--sidebar-text);
-    transform: none;
+    transform: translateX(2px);
 }
 
 .nav-menu a.active {
@@ -111,6 +112,7 @@ body {
     color: var(--sidebar-active-text);
     font-weight: 600;
     box-shadow: 0 6px 20px rgba(13, 148, 136, 0.35);
+    transform: translateX(2px);
 }
 
 .nav-menu a.active i {

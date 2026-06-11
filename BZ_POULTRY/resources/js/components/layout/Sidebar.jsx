@@ -13,10 +13,16 @@ export default function Sidebar({ collapsed, mobileOpen, onNavigate }) {
         mobileOpen ? 'open' : '',
     ].filter(Boolean).join(' ');
 
+    const logoUrl = window.Laravel?.logoUrl || '/images/BZ%20LOGO.png';
+
     return (
         <aside className={className}>
             <div className="sidebar-logo" title={farmName}>
-                <span className="sidebar-brand">{farmName}</span>
+                <img
+                    src={logoUrl}
+                    alt="BZ Farm logo"
+                    className="sidebar-logo-image"
+                />
             </div>
             <ul className="nav-menu">
                 {items.map((item) => (

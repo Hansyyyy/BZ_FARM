@@ -353,6 +353,14 @@ body {
     gap: 10px;
     position: relative;
 }
+.sidebar-logo-image {
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+    border-radius: 16px;
+}
 .sidebar-logo::after {
     content: '';
     position: absolute;
