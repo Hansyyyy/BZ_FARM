@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import useFetch from '../../hooks/useFetch';
+import { usePageSearch } from '../../context/HeaderSearchContext';
 import PageState from '../../components/ui/PageState';
 import SummaryCards from '../../components/ui/SummaryCards';
 import ModuleTabs from '../../components/ui/ModuleTabs';
@@ -40,6 +41,16 @@ export default function AdminInventoryPage() {
     const [eggSubTab, setEggSubTab] = useState('daily');
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
     const [search, setSearch] = useState('');
+
+    const handleSearchChange = useCallback((value) => {
+        setSearch(value);
+    }, []);
+
+    usePageSearch(
+        activeTab === 'chickens' ? 'Search batch ID, building, breed...' : '',
+        search,
+        handleSearchChange,
+    );
 
     const { data, loading, error } = useFetch(`/api/admin/inventory?date=${selectedDate}`);
 
@@ -202,17 +213,6 @@ export default function AdminInventoryPage() {
 
                 {activeTab === 'chickens' && (
                     <div className="data-panel">
-                        <div className="data-panel-toolbar">
-                            <div className="data-panel-search">
-                                <i className="bi bi-search"></i>
-                                <input
-                                    type="text"
-                                    placeholder="Search batch ID, building, breed..."
-                                    value={search}
-                                    onChange={(event) => setSearch(event.target.value)}
-                                />
-                            </div>
-                        </div>
                         <div className="table-wrap">
                             <table className="data-table mockup-table">
                                 <thead>

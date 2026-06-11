@@ -972,9 +972,14 @@ body {
 .data-panel-toolbar {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 12px;
     padding: 18px 20px;
     flex-wrap: wrap;
+}
+
+.data-panel-toolbar:not(:has(.data-panel-title)) {
+    justify-content: flex-end;
 }
 .data-panel-search {
     display: flex;
@@ -1095,14 +1100,26 @@ body {
 .row-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
+    gap: 6px;
+    flex-wrap: nowrap;
 }
-.row-actions .btn {
-    padding: 9px 14px;
-    font-size: 13px;
-    border-radius: 10px;
+
+.row-actions .btn,
+.row-actions .btn-row-action {
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 8px;
     line-height: 1.2;
+    min-width: 56px;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+.mockup-table td:last-child,
+.mockup-table th:last-child {
+    min-width: 130px;
+    white-space: nowrap;
 }
 .row-action-btn {
     border: 1px solid var(--border);

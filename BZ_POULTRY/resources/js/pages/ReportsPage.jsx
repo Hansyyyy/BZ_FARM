@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import axios from 'axios';
 import useFetch from '../hooks/useFetch';
+import { usePageSearch } from '../context/HeaderSearchContext';
 import PageState from '../components/ui/PageState';
 import PanelCard from '../components/ui/PanelCard';
 import Modal from '../components/ui/Modal';
@@ -39,6 +40,12 @@ export default function ReportsPage() {
         }
     };
 
+    const handleSearchChange = useCallback((value) => {
+        setSearch(value);
+    }, []);
+
+    usePageSearch('Search reports...', search, handleSearchChange);
+
     const filteredReports = data?.reports?.filter((report) => {
         if (!search.trim()) return true;
         const query = search.toLowerCase();
@@ -65,10 +72,6 @@ export default function ReportsPage() {
 
             <div className="data-panel">
                 <div className="data-panel-toolbar">
-                    <div className="data-panel-search">
-                        <i className="bi bi-search"></i>
-                        <input type="text" placeholder="Search reports..." value={search} onChange={(e) => setSearch(e.target.value)} />
-                    </div>
                     <div className="data-panel-filters">
                         <button type="button" className="btn btn-outline" onClick={() => setShowExport(true)}>
                             <i className="bi bi-printer"></i> Export

@@ -16,10 +16,7 @@ export default function Sidebar({ collapsed, mobileOpen, onNavigate }) {
     return (
         <aside className={className}>
             <div className="sidebar-logo" title={farmName}>
-                <div className="logo-circle">
-                    <img src={window.Laravel?.logoUrl || '/images/BZ%20LOGO.png'} alt={`${farmName} logo`} />
-                </div>
-                <span>{farmName}</span>
+                <span className="sidebar-brand">{farmName}</span>
             </div>
             <ul className="nav-menu">
                 {items.map((item) => (

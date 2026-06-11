@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import useFetch from '../hooks/useFetch';
+import { usePageSearch } from '../context/HeaderSearchContext';
 import PageState from '../components/ui/PageState';
 import SummaryCards from '../components/ui/SummaryCards';
 import ModuleTabs from '../components/ui/ModuleTabs';
@@ -65,7 +66,6 @@ export default function StockHubPage() {
     const resource = getStockResource(activeTab);
 
     const { data, loading, error, reload, setError } = useFetch(resource.endpoint);
-    const { data: flockSnapshot, reload: reloadFlocks } = useFetch('/api/flocks', { immediate: false });
     const [search, setSearch] = useState('');
     const [filters, setFilters] = useState({ type: '', breed: '', status: '', category: '', building: '' });
     const [page, setPage] = useState(1);
@@ -131,23 +131,12 @@ export default function StockHubPage() {
     const breedOptions = useMemo(() => [...new Set((data?.items || []).map((item) => item.breed).filter(Boolean))], [data]);
     const categoryOptions = useMemo(() => [...new Set((data?.items || []).map((item) => item.category).filter(Boolean))], [data]);
 
-    const medicationDueFlocks = useMemo(() => {
-        if (activeTab === 'chicken' && data?.medicationDue) {
-            return data.medicationDue;
-        }
+    const handleSearchChange = useCallback((value) => {
+        setSearch(value);
+        setPage(1);
+    }, []);
 
-        return flockSnapshot?.medicationDue || [];
-    }, [activeTab, data, flockSnapshot]);
-
-    const tabsWithBadges = useMemo(() => stockTabs.map((tab) => (
-        tab.id === 'medicine' && medicationDueFlocks.length
-            ? { ...tab, badge: medicationDueFlocks.length }
-            : tab
-    )), [medicationDueFlocks]);
-
-    useEffect(() => {
-        reloadFlocks();
-    }, [reloadFlocks]);
+    usePageSearch(tabConfig.searchPlaceholder, search, handleSearchChange);
 
     const updateField = (key, value) => {
         setForm((previous) => ({ ...previous, [key]: value }));
@@ -188,10 +177,6 @@ export default function StockHubPage() {
 
             closeForm();
             await reload();
-
-            if (activeTab === 'chicken') {
-                await reloadFlocks();
-            }
         } catch (err) {
             setError(err.response?.data?.message || err.message);
         }
@@ -217,21 +202,9 @@ export default function StockHubPage() {
             )}
 
             <div className="data-panel">
-                <ModuleTabs tabs={tabsWithBadges} activeTab={activeTab} onChange={setTab} />
+                <ModuleTabs tabs={stockTabs} activeTab={activeTab} onChange={setTab} />
 
                 <div className="data-panel-toolbar">
-                    <div className="data-panel-search">
-                        <i className="bi bi-search"></i>
-                        <input
-                            type="text"
-                            placeholder={tabConfig.searchPlaceholder}
-                            value={search}
-                            onChange={(event) => {
-                                setSearch(event.target.value);
-                                setPage(1);
-                            }}
-                        />
-                    </div>
                     <div className="data-panel-filters">
                         {tabConfig.filters?.includes('type') && (
                             <select value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })}>

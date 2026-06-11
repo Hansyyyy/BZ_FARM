@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import axios from 'axios';
 import useFetch from '../hooks/useFetch';
+import { usePageSearch } from '../context/HeaderSearchContext';
 import PageState from '../components/ui/PageState';
 import SummaryCards from '../components/ui/SummaryCards';
 import Modal from '../components/ui/Modal';
@@ -137,6 +138,12 @@ export default function SalesPage() {
         ));
     }, [customers, customerSearch]);
 
+    const handleSearchChange = useCallback((value) => {
+        setSearch(value);
+    }, []);
+
+    usePageSearch('Search sales...', search, handleSearchChange);
+
     return (
         <PageState loading={loading} error={error} loadingLabel="Loading sales...">
             <SummaryCards fields={salesSummaryFields} summary={data?.summary} />
@@ -188,10 +195,6 @@ export default function SalesPage() {
 
             <div className="data-panel">
                 <div className="data-panel-toolbar">
-                    <div className="data-panel-search">
-                        <i className="bi bi-search"></i>
-                        <input type="text" placeholder="Search sales..." value={search} onChange={(e) => setSearch(e.target.value)} />
-                    </div>
                     <div className="data-panel-filters">
                         <button type="button" className="btn btn-outline" onClick={() => setShowExport(true)}>
                             <i className="bi bi-printer"></i> Export

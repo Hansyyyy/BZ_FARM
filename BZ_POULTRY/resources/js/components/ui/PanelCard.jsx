@@ -1,4 +1,12 @@
-export default function PanelCard({ title, subtitle, actionLabel, onAction, children, className = '', icon }) {
+import { Link } from 'react-router-dom';
+
+export default function PanelCard({ title, subtitle, actionLabel, actionTo, onAction, children, className = '', icon }) {
+    const action = actionLabel && (actionTo ? (
+        <Link to={actionTo} className="panel-link">{actionLabel}</Link>
+    ) : onAction ? (
+        <button type="button" className="panel-link" onClick={onAction}>{actionLabel}</button>
+    ) : null);
+
     return (
         <div className={`panel-card ${className}`}>
             {(title || actionLabel) && (
@@ -10,9 +18,7 @@ export default function PanelCard({ title, subtitle, actionLabel, onAction, chil
                             {subtitle && <p>{subtitle}</p>}
                         </div>
                     </div>
-                    {actionLabel && onAction && (
-                        <button type="button" className="panel-link" onClick={onAction}>{actionLabel}</button>
-                    )}
+                    {action}
                 </div>
             )}
             <div className="panel-card-body">{children}</div>
