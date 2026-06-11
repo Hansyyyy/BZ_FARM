@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class EggProduction extends Model
 {
     protected $fillable = [
-        'date', 'building_id', 'total_eggs', 'good_eggs',
-        'cracked_eggs', 'user_id',
+        'date', 'building_id', 'total_eggs', 'soft_shell_eggs',
+        'damaged_eggs', 'cracked_eggs', 'user_id',
     ];
 
     protected function casts(): array

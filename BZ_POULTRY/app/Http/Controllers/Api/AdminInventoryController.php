@@ -45,8 +45,12 @@ class AdminInventoryController extends Controller
         })->values();
 
         $productionTable = $eggRecords->map(function (EggProduction $record) {
+            $sellable = max(
+                $record->total_eggs - $record->soft_shell_eggs - $record->damaged_eggs - $record->cracked_eggs,
+                0
+            );
             $farmAverage = $record->total_eggs > 0
-                ? round(($record->good_eggs / $record->total_eggs) * 100, 2)
+                ? round(($sellable / $record->total_eggs) * 100, 2)
                 : 0;
 
             return [
@@ -58,7 +62,7 @@ class AdminInventoryController extends Controller
             ];
         })->values();
 
-        $totalProduction = round($eggRecords->sum('good_eggs'), 2);
+        $totalProduction = round($eggRecords->sum('total_eggs'), 2);
 
         $chickens = $activeFlocks->map(function (Flock $flock) {
             $rate = $flock->initial_quantity > 0
@@ -94,40 +98,35 @@ class AdminInventoryController extends Controller
 
         $gradingRows = $eggRecords->groupBy('building_id')->map(function ($records, $buildingId) {
             $buildingName = $records->first()->building?->name ?? 'Building '.$buildingId;
-            $good = (int) $records->sum('good_eggs');
+            $softShell = (int) $records->sum('soft_shell_eggs');
+            $damaged = (int) $records->sum('damaged_eggs');
             $cracked = (int) $records->sum('cracked_eggs');
-            $gradeAa = (int) round($good * 0.63);
-            $gradeA = (int) round($good * 0.27);
-            $gradeB = (int) max($good - $gradeAa - $gradeA, 0);
-            $dirty = max((int) $records->sum('total_eggs') - $good - $cracked, 0);
             $total = (int) $records->sum('total_eggs');
+            $sellable = max($total - $softShell - $damaged - $cracked, 0);
 
             return [
                 'building' => $buildingName,
-                'grade_aa' => $gradeAa,
-                'grade_a' => $gradeA,
-                'grade_b' => $gradeB,
+                'soft_shell' => $softShell,
+                'damaged' => $damaged,
                 'cracked' => $cracked,
-                'dirty' => $dirty,
+                'sellable' => $sellable,
                 'total' => $total,
             ];
         })->values();
 
         $gradeTotals = [
-            'grade_aa' => (int) $gradingRows->sum('grade_aa'),
-            'grade_a' => (int) $gradingRows->sum('grade_a'),
-            'grade_b' => (int) $gradingRows->sum('grade_b'),
+            'soft_shell' => (int) $gradingRows->sum('soft_shell'),
+            'damaged' => (int) $gradingRows->sum('damaged'),
             'cracked' => (int) $gradingRows->sum('cracked'),
-            'dirty' => (int) $gradingRows->sum('dirty'),
+            'sellable' => (int) $gradingRows->sum('sellable'),
         ];
         $onHandTotal = array_sum($gradeTotals);
 
         $gradeBreakdown = collect([
-            ['key' => 'grade_aa', 'label' => 'Grade AA', 'color' => 'green', 'value' => $gradeTotals['grade_aa']],
-            ['key' => 'grade_a', 'label' => 'Grade A', 'color' => 'blue', 'value' => $gradeTotals['grade_a']],
-            ['key' => 'grade_b', 'label' => 'Grade B', 'color' => 'yellow', 'value' => $gradeTotals['grade_b']],
+            ['key' => 'sellable', 'label' => 'Sellable', 'color' => 'green', 'value' => $gradeTotals['sellable']],
+            ['key' => 'soft_shell', 'label' => 'Soft Shell', 'color' => 'yellow', 'value' => $gradeTotals['soft_shell']],
+            ['key' => 'damaged', 'label' => 'Damaged', 'color' => 'red', 'value' => $gradeTotals['damaged']],
             ['key' => 'cracked', 'label' => 'Cracked', 'color' => 'orange', 'value' => $gradeTotals['cracked']],
-            ['key' => 'dirty', 'label' => 'Dirty', 'color' => 'red', 'value' => $gradeTotals['dirty']],
         ])->map(function (array $grade) use ($onHandTotal) {
             $grade['percent'] = $onHandTotal > 0 ? round(($grade['value'] / $onHandTotal) * 100) : 0;
 
@@ -154,7 +153,7 @@ class AdminInventoryController extends Controller
                 'id' => $building->id,
                 'name' => $building->name,
                 'population' => $record?->total_eggs ?? 0,
-                'production' => $record?->good_eggs ?? 0,
+                'production' => $record?->total_eggs ?? 0,
                 'assigned_flocks' => $activeFlocks->count() > 0
                     ? (int) ceil($activeFlocks->count() / max(Building::count(), 1))
                     : 0,

@@ -40,9 +40,8 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // Create default buildings for infrastructure
-        Building::create(['name' => 'Building 1']);
-        Building::create(['name' => 'Building 2']);
-        Building::create(['name' => 'Building 3']);
-        Building::create(['name' => 'Building 4']);
+        for ($i = 1; $i <= 11; $i++) {
+            Building::create(['name' => "Building {$i}"]);
+        }
     }
 }

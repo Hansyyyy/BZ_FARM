@@ -1,0 +1,3 @@
+- [x] Update RowActionButtons to remove `btn-sm` so View/Edit use normal size.
+- [x] Add scoped CSS for `.row-actions .btn` in `public/css/farm.css` to improve button size and readability.
+- [x] Mark completion after edits.

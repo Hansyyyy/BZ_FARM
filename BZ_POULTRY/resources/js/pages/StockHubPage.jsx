@@ -15,8 +15,7 @@ import DynamicForm from '../components/forms/DynamicForm';
 import RowActionButtons from '../components/ui/RowActionButtons';
 import { exportTableData } from '../utils/exportData';
 import { stockTabs, getStockResource } from '../config/stockTabs';
-import { needsMedication } from '../config/medicationAlerts';
-import MedicationAlertModal from '../components/ui/MedicationAlertModal';
+import MedicationNoticeBanner from '../components/ui/MedicationNoticeBanner';
 
 const PAGE_SIZE = 8;
 
@@ -35,6 +34,10 @@ function prepareFormItem(item, fields) {
 
     if (prepared.mortality === undefined) {
         prepared.mortality = 0;
+    }
+
+    if (prepared.building?.id !== undefined) {
+        prepared.building_id = String(prepared.building.id);
     }
 
     return prepared;
@@ -63,7 +66,7 @@ export default function StockHubPage() {
     const resource = getStockResource(activeTab);
 
     const { data, loading, error, reload, setError } = useFetch(resource.endpoint);
-    const { reload: reloadFlocks } = useFetch('/api/flocks', { immediate: false });
+    const { data: flockSnapshot, reload: reloadFlocks } = useFetch('/api/flocks', { immediate: false });
     const [search, setSearch] = useState('');
     const [filters, setFilters] = useState({ type: '', breed: '', status: '', category: '', building: '' });
     const [page, setPage] = useState(1);
@@ -72,11 +75,27 @@ export default function StockHubPage() {
     const [viewItem, setViewItem] = useState(null);
     const [isFormOpen, setFormOpen] = useState(false);
     const [isExportOpen, setExportOpen] = useState(false);
-    const [medicationAlert, setMedicationAlert] = useState(null);
-    const [medicationAlertShownForForm, setMedicationAlertShownForForm] = useState(false);
+    const [medicationBannerDismissed, setMedicationBannerDismissed] = useState(false);
 
     const activeFields = editingId && resource.editFormFields ? resource.editFormFields : resource.formFields;
     const isEditing = Boolean(editingId);
+
+    const resolvedFields = useMemo(() => activeFields.map((field) => {
+        if (field.optionsKey === 'buildings' && data?.buildings) {
+            const valueKey = field.optionValue || 'id';
+            const labelKey = field.optionLabel || 'name';
+
+            return {
+                ...field,
+                options: data.buildings.map((building) => ({
+                    value: String(building[valueKey]),
+                    label: building[labelKey],
+                })),
+            };
+        }
+
+        return field;
+    }), [activeFields, data]);
 
     useEffect(() => {
         setSearch('');
@@ -101,7 +120,9 @@ export default function StockHubPage() {
         if (filters.breed) rows = rows.filter((item) => item.breed === filters.breed);
         if (filters.status) rows = rows.filter((item) => item.status === filters.status);
         if (filters.category) rows = rows.filter((item) => item.category === filters.category);
-        if (filters.building) rows = rows.filter((item) => String(item.building_name || '').includes(filters.building));
+        if (filters.building) {
+            rows = rows.filter((item) => String(item.building?.name || '').includes(filters.building));
+        }
 
         return rows;
     }, [data, search, filters, resource]);
@@ -112,62 +133,36 @@ export default function StockHubPage() {
     const breedOptions = useMemo(() => [...new Set((data?.items || []).map((item) => item.breed).filter(Boolean))], [data]);
     const categoryOptions = useMemo(() => [...new Set((data?.items || []).map((item) => item.category).filter(Boolean))], [data]);
 
-    const showMedicationAlert = (alert) => {
-        setMedicationAlert(alert);
-    };
+    const medicationDueFlocks = useMemo(() => {
+        if (activeTab === 'chicken' && data?.medicationDue) {
+            return data.medicationDue;
+        }
+
+        return flockSnapshot?.medicationDue || [];
+    }, [activeTab, data, flockSnapshot]);
+
+    const medicationBannerKey = useMemo(
+        () => medicationDueFlocks.map((flock) => flock.id).join('-'),
+        [medicationDueFlocks],
+    );
+
+    const tabsWithBadges = useMemo(() => stockTabs.map((tab) => (
+        tab.id === 'medicine' && medicationDueFlocks.length
+            ? { ...tab, badge: medicationDueFlocks.length }
+            : tab
+    )), [medicationDueFlocks]);
+
+    useEffect(() => {
+        reloadFlocks();
+    }, [reloadFlocks]);
+
+    useEffect(() => {
+        setMedicationBannerDismissed(false);
+    }, [medicationBannerKey]);
 
     const updateField = (key, value) => {
-        const previousAge = Number(form.age_weeks) || 0;
-        const nextAge = key === 'age_weeks' ? Number(value) : previousAge;
-
         setForm((previous) => ({ ...previous, [key]: value }));
-
-        if (
-            activeTab === 'chicken'
-            && key === 'age_weeks'
-            && needsMedication(nextAge)
-            && !needsMedication(previousAge)
-        ) {
-            setMedicationAlertShownForForm(true);
-            showMedicationAlert({
-                ageWeeks: nextAge,
-                batchNo: form.batch_no || 'this flock',
-                flocks: [],
-            });
-        }
     };
-
-    useEffect(() => {
-        if (!isFormOpen) {
-            setMedicationAlertShownForForm(false);
-        }
-    }, [isFormOpen]);
-
-    useEffect(() => {
-        if (activeTab !== 'medicine') {
-            return undefined;
-        }
-
-        let cancelled = false;
-
-        reloadFlocks().then((payload) => {
-            if (cancelled) {
-                return;
-            }
-
-            const needing = (payload?.items || []).filter(
-                (item) => item.status === 'active' && needsMedication(item.age_weeks),
-            );
-
-            if (needing.length) {
-                showMedicationAlert({ flocks: needing });
-            }
-        });
-
-        return () => {
-            cancelled = true;
-        };
-    }, [activeTab, reloadFlocks]);
 
     const closeForm = () => {
         setFormOpen(false);
@@ -202,18 +197,11 @@ export default function StockHubPage() {
                 await axios.post(resource.endpoint, formData);
             }
 
-            const savedAge = Number(payload.age_weeks ?? form.age_weeks);
-            const savedBatch = form.batch_no;
-
             closeForm();
             await reload();
 
-            if (activeTab === 'chicken' && needsMedication(savedAge) && !medicationAlertShownForForm) {
-                showMedicationAlert({
-                    ageWeeks: savedAge,
-                    batchNo: savedBatch || 'this flock',
-                    flocks: [],
-                });
+            if (activeTab === 'chicken') {
+                await reloadFlocks();
             }
         } catch (err) {
             setError(err.response?.data?.message || err.message);
@@ -239,8 +227,16 @@ export default function StockHubPage() {
                 <SummaryCards fields={resource.summaryFields} summary={data?.summary} />
             )}
 
+            {!medicationBannerDismissed && (
+                <MedicationNoticeBanner
+                    flocks={medicationDueFlocks}
+                    onGoToMedicine={() => setSearchParams({ tab: 'medicine' })}
+                    onDismiss={() => setMedicationBannerDismissed(true)}
+                />
+            )}
+
             <div className="data-panel">
-                <ModuleTabs tabs={stockTabs} activeTab={activeTab} onChange={setTab} />
+                <ModuleTabs tabs={tabsWithBadges} activeTab={activeTab} onChange={setTab} />
 
                 <div className="data-panel-toolbar">
                     <div className="data-panel-search">
@@ -281,6 +277,14 @@ export default function StockHubPage() {
                             <select value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })}>
                                 <option value="">All Category</option>
                                 {categoryOptions.map((category) => <option key={category} value={category}>{category}</option>)}
+                            </select>
+                        )}
+                        {tabConfig.filters?.includes('building') && (
+                            <select value={filters.building} onChange={(e) => setFilters({ ...filters, building: e.target.value })}>
+                                <option value="">All Buildings</option>
+                                {(data?.buildings || []).map((building) => (
+                                    <option key={building.id} value={building.name}>{building.name}</option>
+                                ))}
                             </select>
                         )}
                         <button type="button" className="btn btn-outline" onClick={() => setExportOpen(true)}>
@@ -382,7 +386,7 @@ export default function StockHubPage() {
                     </>
                 )}
             >
-                <DynamicForm id="stock-form" fields={activeFields} values={form} onChange={updateField} onSubmit={submit} />
+                <DynamicForm id="stock-form" fields={resolvedFields} values={form} onChange={updateField} onSubmit={submit} />
             </Modal>
 
             <Modal
@@ -415,17 +419,6 @@ export default function StockHubPage() {
                 onExport={handleExport}
             />
 
-            <MedicationAlertModal
-                open={Boolean(medicationAlert)}
-                ageWeeks={medicationAlert?.ageWeeks}
-                batchNo={medicationAlert?.batchNo}
-                flocks={medicationAlert?.flocks || []}
-                onClose={() => setMedicationAlert(null)}
-                onGoToMedicine={() => {
-                    setMedicationAlert(null);
-                    setSearchParams({ tab: 'medicine' });
-                }}
-            />
         </PageState>
     );
 }

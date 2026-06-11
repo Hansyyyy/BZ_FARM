@@ -9,9 +9,12 @@ use App\Models\StockTransaction;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class FeedController extends Controller
 {
+    private const CATEGORIES = ['starter feeds', 'grower feeds', 'layer feeds'];
+
     public function index()
     {
         $feeds = FeedItem::latest()->paginate(10);
@@ -49,17 +52,17 @@ class FeedController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name' => 'required|string',
-            'category' => 'required|string',
+            'category' => ['required', 'string', Rule::in(self::CATEGORIES)],
             'stock' => 'required|numeric|min:0',
             'reorder_level' => 'required|numeric|min:0',
             'expiry_date' => 'nullable|date',
             'cost_per_kg' => 'required|numeric|min:0',
         ]);
 
+        $data['name'] = $data['category'];
         $data['last_stock_in'] = now();
         $feedItem = FeedItem::create($data);
-        ActivityLogger::log('created', 'Feed Inventory', "Added feed item {$data['name']}");
+        ActivityLogger::log('created', 'Feed Inventory', "Added feed item {$data['category']}");
 
         return response()->json(['message' => 'Feed item added.', 'item' => $feedItem], 201);
     }
@@ -67,25 +70,25 @@ class FeedController extends Controller
     public function update(Request $request, FeedItem $feed)
     {
         $data = $request->validate([
-            'name' => 'required|string',
-            'category' => 'required|string',
+            'category' => ['required', 'string', Rule::in(self::CATEGORIES)],
             'stock' => 'required|numeric|min:0',
             'reorder_level' => 'required|numeric|min:0',
             'expiry_date' => 'nullable|date',
             'cost_per_kg' => 'required|numeric|min:0',
         ]);
 
+        $data['name'] = $data['category'];
         $feed->update($data);
-        ActivityLogger::log('updated', 'Feed Inventory', "Updated feed item {$data['name']}");
+        ActivityLogger::log('updated', 'Feed Inventory', "Updated feed item {$data['category']}");
 
         return response()->json(['message' => 'Feed item updated.', 'item' => $feed]);
     }
 
     public function destroy(FeedItem $feed)
     {
-        $name = $feed->name;
+        $category = $feed->category;
         $feed->delete();
-        ActivityLogger::log('deleted', 'Feed Inventory', "Deleted feed item {$name}");
+        ActivityLogger::log('deleted', 'Feed Inventory', "Deleted feed item {$category}");
 
         return response()->json(['message' => 'Feed item deleted.']);
     }

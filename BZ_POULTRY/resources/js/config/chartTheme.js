@@ -6,8 +6,9 @@ export const chartColors = {
     layers: '#1f7d47',
     pullets: '#f4b942',
     roosters: '#4a90d9',
-    good: '#2d9d5f',
-    cracked: '#d93f45',
+    softShell: '#f59e0b',
+    damaged: '#d93f45',
+    cracked: '#9333ea',
     gradeAa: '#2d9d5f',
     gradeA: '#2563eb',
     gradeB: '#f59e0b',
@@ -48,7 +49,8 @@ export function buildFlockSegments(distribution = {}) {
 
 export function buildEggQualitySegments(eggQuality = {}) {
     return [
-        { key: 'good', label: 'Good Eggs', value: eggQuality.good || 0, color: chartColors.good },
+        { key: 'soft_shell', label: 'Soft Shell', value: eggQuality.soft_shell || 0, color: chartColors.softShell },
+        { key: 'damaged', label: 'Damaged', value: eggQuality.damaged || 0, color: chartColors.damaged },
         { key: 'cracked', label: 'Cracked', value: eggQuality.cracked || 0, color: chartColors.cracked },
     ];
 }
@@ -64,11 +66,14 @@ export function buildEggSummaryBars(eggSummary = {}) {
 
 export function buildGradeSegments(breakdown = []) {
     const colorMap = {
+        sellable: chartColors.gradeAa,
+        soft_shell: chartColors.softShell,
+        damaged: chartColors.damaged,
+        cracked: chartColors.cracked,
         grade_aa: chartColors.gradeAa,
         grade_a: chartColors.gradeA,
         grade_b: chartColors.gradeB,
-        cracked: chartColors.cracked,
-        dirty: chartColors.dirty,
+        dirty: chartColors.damaged,
     };
 
     return breakdown.map((grade) => ({

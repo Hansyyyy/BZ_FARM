@@ -23,10 +23,10 @@ class SalesController extends Controller
         Sale::where('sale_date', '<', Carbon::now()->subDays(30))->delete();
 
         $eggsToday = EggProduction::whereDate('date', $today)->sum('total_eggs');
-        $calTotal = EggProduction::whereDate('date', $today)->sum('good_eggs');
+        $calTotal = EggProduction::whereDate('date', $today)->sum('total_eggs');
         $crackedToday = EggProduction::whereDate('date', $today)->sum('cracked_eggs');
-        $weekTotal = EggProduction::where('date', '>=', $weekStart)->sum('good_eggs');
-        $monthTotal = EggProduction::where('date', '>=', $monthStart)->sum('good_eggs');
+        $weekTotal = EggProduction::where('date', '>=', $weekStart)->sum('total_eggs');
+        $monthTotal = EggProduction::where('date', '>=', $monthStart)->sum('total_eggs');
 
         $sales = Sale::with(['customer', 'product'])->latest('sale_date')->paginate(10);
 

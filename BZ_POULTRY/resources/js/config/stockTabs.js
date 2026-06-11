@@ -18,7 +18,7 @@ export const stockTabs = [
         resourceKey: 'feed',
         listTitle: 'Feed List',
         addLabel: 'Add New Feed',
-        searchPlaceholder: 'search by name or category...',
+        searchPlaceholder: 'search by category...',
         filters: ['category', 'status'],
     },
     {

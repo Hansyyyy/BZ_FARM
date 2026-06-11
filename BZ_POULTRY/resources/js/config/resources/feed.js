@@ -1,3 +1,5 @@
+const feedCategories = ['starter feeds', 'grower feeds', 'layer feeds'];
+
 export default {
     title: 'Feed Inventory',
     endpoint: '/api/feed',
@@ -9,7 +11,6 @@ export default {
         { key: 'feedCost', label: 'Feed Cost' },
     ],
     columns: [
-        { key: 'name', label: 'Name' },
         { key: 'category', label: 'Category' },
         { key: 'stock', label: 'Stock' },
         { key: 'reorder_level', label: 'Reorder Level' },
@@ -17,8 +18,7 @@ export default {
         { key: 'status', label: 'Status' },
     ],
     formFields: [
-        { key: 'name', label: 'Name', type: 'text' },
-        { key: 'category', label: 'Category', type: 'text' },
+        { key: 'category', label: 'Category', type: 'select', options: feedCategories },
         { key: 'stock', label: 'Stock', type: 'number' },
         { key: 'reorder_level', label: 'Reorder Level', type: 'number' },
         { key: 'expiry_date', label: 'Expiry Date', type: 'date' },

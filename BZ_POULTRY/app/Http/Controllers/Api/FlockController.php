@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Helpers\ActivityLogger;
 use App\Http\Controllers\Controller;
 use App\Models\Activity;
+use App\Models\Building;
 use App\Models\Flock;
 use Illuminate\Http\Request;
 
@@ -19,6 +20,10 @@ class FlockController extends Controller
         $layers = Flock::where('type', 'layers')->where('status', 'active')->sum('quantity');
         $pullets = Flock::where('type', 'pullets')->where('status', 'active')->sum('quantity');
         $roosters = Flock::where('type', 'roosters')->where('status', 'active')->sum('quantity');
+        $medicationDue = Flock::where('status', 'active')
+            ->where('age_weeks', '>=', 4)
+            ->orderBy('batch_no')
+            ->get(['id', 'batch_no', 'age_weeks', 'type']);
 
         return response()->json([
             'items' => $flocks->items(),
@@ -30,6 +35,8 @@ class FlockController extends Controller
             ],
             'summary' => compact('totalFlocks', 'totalPoultry', 'layers', 'pullets', 'roosters'),
             'distribution' => compact('layers', 'pullets', 'roosters'),
+            'buildings' => Building::all(),
+            'medicationDue' => $medicationDue,
             'recentActivities' => Activity::where('module', 'Poultry Stock')->latest()->take(5)->get(),
         ]);
     }

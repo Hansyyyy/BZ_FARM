@@ -9,7 +9,7 @@ export default {
         { key: 'roosters', label: 'Roosters', percentOf: 'totalPoultry' },
     ],
     columns: [
-        { key: 'batch_no', label: 'Building No.' },
+        { key: 'batch_no', label: 'Building' },
         { key: 'type', label: 'Type', render: (item) => String(item.type || '').replace(/^\w/, (c) => c.toUpperCase()) },
         { key: 'quantity', label: 'Quantity' },
         { key: 'age_days', label: 'Age(Days)', render: (item) => (item.age_weeks || 0) * 7 },
@@ -28,7 +28,14 @@ export default {
         { key: 'status', label: 'Status', badge: true },
     ],
     formFields: [
-        { key: 'batch_no', label: 'Building / Batch No.', type: 'text' },
+        {
+            key: 'batch_no',
+            label: 'Building',
+            type: 'select',
+            optionsKey: 'buildings',
+            optionValue: 'name',
+            optionLabel: 'name',
+        },
         { key: 'type', label: 'Type', type: 'select', options: ['layers', 'pullets', 'roosters'] },
         { key: 'breed', label: 'Breed', type: 'text' },
         { key: 'quantity', label: 'Quantity', type: 'number' },
@@ -36,7 +43,7 @@ export default {
         { key: 'date_in', label: 'Date In', type: 'date' },
     ],
     editFormFields: [
-        { key: 'batch_no', label: 'Building / Batch No.', type: 'text', readOnly: true },
+        { key: 'batch_no', label: 'Building', type: 'text', readOnly: true },
         { key: 'type', label: 'Type', type: 'select', options: ['layers', 'pullets', 'roosters'] },
         { key: 'breed', label: 'Breed', type: 'text' },
         { key: 'quantity', label: 'Quantity', type: 'number' },

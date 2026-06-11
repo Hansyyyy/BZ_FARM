@@ -63,9 +63,10 @@ export default function AdminInventoryPage() {
     const summaryCards = useMemo(() => {
         if (activeTab === 'egg-productions') {
             const inventory = eggProductions.inventory || {};
-            const gradeAa = inventory.grade_breakdown?.find((g) => g.key === 'grade_aa')?.value || 0;
-            const rejected = (inventory.grade_breakdown?.find((g) => g.key === 'cracked')?.value || 0)
-                + (inventory.grade_breakdown?.find((g) => g.key === 'dirty')?.value || 0);
+            const sellable = inventory.grade_breakdown?.find((g) => g.key === 'sellable')?.value || 0;
+            const rejected = (inventory.grade_breakdown?.find((g) => g.key === 'soft_shell')?.value || 0)
+                + (inventory.grade_breakdown?.find((g) => g.key === 'damaged')?.value || 0)
+                + (inventory.grade_breakdown?.find((g) => g.key === 'cracked')?.value || 0);
             const rejectedRate = inventory.total_on_hand > 0
                 ? `${Math.round((rejected / inventory.total_on_hand) * 100)}%`
                 : '0%';
@@ -73,7 +74,7 @@ export default function AdminInventoryPage() {
             return [
                 { key: 'layer-birds', label: 'Total Active Layer Birds', value: formatNumber(overview.layer_count), tone: 'default' },
                 { key: 'on-hand', label: 'On Hand Inventory', value: formatNumber(inventory.total_on_hand), tone: 'default' },
-                { key: 'grade-aa', label: 'Grade AA', value: formatNumber(gradeAa), tone: 'success' },
+                { key: 'sellable', label: 'Sellable Eggs', value: formatNumber(sellable), tone: 'success' },
                 { key: 'rejected-rate', label: 'Rejected Rate', value: rejectedRate, tone: 'danger' },
             ];
         }
@@ -309,11 +310,10 @@ export default function AdminInventoryPage() {
                                         <thead>
                                             <tr>
                                                 <th>Building</th>
-                                                <th className="grade-aa">Grade AA</th>
-                                                <th className="grade-a">Grade A</th>
-                                                <th className="grade-b">Grade B</th>
+                                                <th className="grade-aa">Sellable</th>
+                                                <th className="grade-a">Soft Shell</th>
+                                                <th className="grade-b">Damaged</th>
                                                 <th className="grade-cracked">Cracked</th>
-                                                <th className="grade-dirty">Dirty</th>
                                                 <th>Total</th>
                                             </tr>
                                         </thead>
@@ -321,15 +321,14 @@ export default function AdminInventoryPage() {
                                             {eggProductions.grading?.length ? eggProductions.grading.map((row, index) => (
                                                 <tr key={`${row.building}-${index}`}>
                                                     <td>{row.building}</td>
-                                                    <td>{formatNumber(row.grade_aa)}</td>
-                                                    <td>{formatNumber(row.grade_a)}</td>
-                                                    <td>{formatNumber(row.grade_b)}</td>
+                                                    <td>{formatNumber(row.sellable)}</td>
+                                                    <td>{formatNumber(row.soft_shell)}</td>
+                                                    <td>{formatNumber(row.damaged)}</td>
                                                     <td>{formatNumber(row.cracked)}</td>
-                                                    <td>{formatNumber(row.dirty)}</td>
                                                     <td>{formatNumber(row.total)}</td>
                                                 </tr>
                                             )) : (
-                                                <tr><td colSpan="7" className="empty-state">No grading data for this date.</td></tr>
+                                                <tr><td colSpan="6" className="empty-state">No grading data for this date.</td></tr>
                                             )}
                                         </tbody>
                                     </table>
@@ -408,7 +407,7 @@ export default function AdminInventoryPage() {
                                         <th>Building</th>
                                         <th>Assigned Flocks</th>
                                         <th>Today's Collection</th>
-                                        <th>Good Eggs</th>
+                                        <th>Total Production</th>
                                     </tr>
                                 </thead>
                                 <tbody>

@@ -22,10 +22,11 @@ class EggProductionController extends Controller
         EggProduction::where('date', '<', Carbon::now()->subDays(30))->delete();
 
         $eggsToday = EggProduction::whereDate('date', $today)->sum('total_eggs');
-        $goodToday = EggProduction::whereDate('date', $today)->sum('good_eggs');
+        $softShellToday = EggProduction::whereDate('date', $today)->sum('soft_shell_eggs');
+        $damagedToday = EggProduction::whereDate('date', $today)->sum('damaged_eggs');
         $crackedToday = EggProduction::whereDate('date', $today)->sum('cracked_eggs');
-        $weekTotal = EggProduction::where('date', '>=', $weekStart)->sum('good_eggs');
-        $monthTotal = EggProduction::where('date', '>=', $monthStart)->sum('good_eggs');
+        $weekTotal = EggProduction::where('date', '>=', $weekStart)->sum('total_eggs');
+        $monthTotal = EggProduction::where('date', '>=', $monthStart)->sum('total_eggs');
 
         $records = EggProduction::with('building')->latest('date')->paginate(10);
 
@@ -37,18 +38,24 @@ class EggProductionController extends Controller
                 'per_page' => $records->perPage(),
                 'total' => $records->total(),
             ],
-            'summary' => compact('eggsToday', 'goodToday', 'crackedToday', 'weekTotal', 'monthTotal'),
+            'summary' => compact('eggsToday', 'softShellToday', 'damagedToday', 'crackedToday', 'weekTotal', 'monthTotal'),
             'buildings' => Building::all(),
             'dailyTrend' => EggProduction::where('date', '>=', $monthStart)
-                ->select('date', DB::raw('SUM(good_eggs) as good'), DB::raw('SUM(cracked_eggs) as cracked'))
+                ->select(
+                    'date',
+                    DB::raw('SUM(soft_shell_eggs) as soft_shell'),
+                    DB::raw('SUM(damaged_eggs) as damaged'),
+                    DB::raw('SUM(cracked_eggs) as cracked')
+                )
                 ->groupBy('date')->orderBy('date')->get(),
             'qualityRate' => [
-                'good' => EggProduction::where('date', '>=', $monthStart)->sum('good_eggs'),
+                'soft_shell' => EggProduction::where('date', '>=', $monthStart)->sum('soft_shell_eggs'),
+                'damaged' => EggProduction::where('date', '>=', $monthStart)->sum('damaged_eggs'),
                 'cracked' => EggProduction::where('date', '>=', $monthStart)->sum('cracked_eggs'),
             ],
             'byBuilding' => EggProduction::where('date', '>=', $monthStart)
                 ->join('buildings', 'egg_productions.building_id', '=', 'buildings.id')
-                ->select('buildings.name', DB::raw('SUM(good_eggs) as total'))
+                ->select('buildings.name', DB::raw('SUM(total_eggs) as total'))
                 ->groupBy('buildings.name')->get(),
             'recentActivities' => Activity::where('module', 'Egg Production')->latest()->take(5)->get(),
         ]);
@@ -60,7 +67,8 @@ class EggProductionController extends Controller
             'date' => 'required|date',
             'building_id' => 'required|exists:buildings,id',
             'total_eggs' => 'required|integer|min:1',
-            'good_eggs' => 'required|integer|min:0',
+            'soft_shell_eggs' => 'required|integer|min:0',
+            'damaged_eggs' => 'required|integer|min:0',
             'cracked_eggs' => 'required|integer|min:0',
         ]);
 
@@ -68,7 +76,7 @@ class EggProductionController extends Controller
         $record = EggProduction::create($data);
         ActivityLogger::log('created', 'Egg Production', "Added production record for {$data['date']}");
 
-        return response()->json(['message' => 'Production record added.', 'item' => $record], 201);
+        return response()->json(['message' => 'Production record added.', 'item' => $record->load('building')], 201);
     }
 
     public function update(Request $request, EggProduction $egg)
@@ -77,14 +85,15 @@ class EggProductionController extends Controller
             'date' => 'required|date',
             'building_id' => 'required|exists:buildings,id',
             'total_eggs' => 'required|integer|min:1',
-            'good_eggs' => 'required|integer|min:0',
+            'soft_shell_eggs' => 'required|integer|min:0',
+            'damaged_eggs' => 'required|integer|min:0',
             'cracked_eggs' => 'required|integer|min:0',
         ]);
 
         $egg->update($data);
         ActivityLogger::log('updated', 'Egg Production', "Updated production record for {$data['date']}");
 
-        return response()->json(['message' => 'Production record updated.', 'item' => $egg]);
+        return response()->json(['message' => 'Production record updated.', 'item' => $egg->load('building')]);
     }
 
     public function destroy(EggProduction $egg)

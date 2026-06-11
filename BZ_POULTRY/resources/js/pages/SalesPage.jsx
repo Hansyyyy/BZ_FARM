@@ -12,7 +12,7 @@ import { exportTableData } from '../utils/exportData';
 
 const salesSummaryFields = [
     { key: 'eggsToday', label: 'Eggs Collected Today', sub: 'Today', icon: 'bi-basket' },
-    { key: 'calTotal', label: 'Cal Total', sub: 'Good Eggs', icon: 'bi-check-circle' },
+    { key: 'calTotal', label: 'Cal Total', sub: 'Total Eggs', icon: 'bi-check-circle' },
     { key: 'crackedToday', label: 'Cracked Eggs', sub: 'Today', icon: 'bi-exclamation-circle', tone: 'warning' },
     { key: 'weekTotal', label: 'This Week', sub: 'Weekly Total', icon: 'bi-calendar-week' },
     { key: 'monthTotal', label: 'This Month', sub: 'Monthly Total', icon: 'bi-calendar-month' },

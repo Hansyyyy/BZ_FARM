@@ -21,7 +21,7 @@ class DashboardController extends Controller
         $weekStart = Carbon::now()->startOfWeek();
 
         $totalPoultry = Flock::where('status', 'active')->sum('quantity');
-        $eggsToday = EggProduction::whereDate('date', $today)->sum('good_eggs');
+        $eggsToday = EggProduction::whereDate('date', $today)->sum('total_eggs');
         $feedStock = FeedItem::sum('stock');
         $medicineStock = MedicineItem::sum('stock');
         $salesToday = Sale::whereDate('sale_date', $today)->sum('amount');
@@ -29,15 +29,15 @@ class DashboardController extends Controller
         $medicineLow = MedicineItem::whereColumn('stock', '<=', 'reorder_level')->count();
 
         $eggSummary = [
-            'today' => EggProduction::whereDate('date', $today)->sum('good_eggs'),
-            'week' => EggProduction::where('date', '>=', $weekStart)->sum('good_eggs'),
-            'month' => EggProduction::whereMonth('date', $today->month)->whereYear('date', $today->year)->sum('good_eggs'),
-            'daily_avg' => (int) EggProduction::whereMonth('date', $today->month)->avg('good_eggs'),
+            'today' => EggProduction::whereDate('date', $today)->sum('total_eggs'),
+            'week' => EggProduction::where('date', '>=', $weekStart)->sum('total_eggs'),
+            'month' => EggProduction::whereMonth('date', $today->month)->whereYear('date', $today->year)->sum('total_eggs'),
+            'daily_avg' => (int) EggProduction::whereMonth('date', $today->month)->avg('total_eggs'),
         ];
 
         $lowStockAlerts = collect()
             ->merge(FeedItem::whereColumn('stock', '<=', 'reorder_level')->get()->map(fn ($item) => [
-                'name' => $item->name,
+                'name' => $item->category,
                 'category' => 'Feed',
                 'days_left' => max(1, (int) ($item->stock / 50)),
             ]))
@@ -60,12 +60,13 @@ class DashboardController extends Controller
             return [
                 'prod_date' => $day->toDateString(),
                 'label' => $day->format('D'),
-                'total' => (int) EggProduction::whereDate('date', $day)->sum('good_eggs'),
+                'total' => (int) EggProduction::whereDate('date', $day)->sum('total_eggs'),
             ];
         })->values();
 
         $eggQuality = [
-            'good' => (int) EggProduction::where('date', '>=', $weekStart)->sum('good_eggs'),
+            'soft_shell' => (int) EggProduction::where('date', '>=', $weekStart)->sum('soft_shell_eggs'),
+            'damaged' => (int) EggProduction::where('date', '>=', $weekStart)->sum('damaged_eggs'),
             'cracked' => (int) EggProduction::where('date', '>=', $weekStart)->sum('cracked_eggs'),
         ];
 

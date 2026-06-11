@@ -42,7 +42,7 @@ export default function DashboardPage() {
                     <p>Weekly trends and distribution across your farm operations.</p>
                 </div>
                 <div className="grid-3 dashboard-infographics">
-                    <PanelCard title="Egg Production" subtitle="Good eggs collected this week" icon="bi-bar-chart-line">
+                    <PanelCard title="Egg Production" subtitle="Total eggs collected this week" icon="bi-bar-chart-line">
                         <div className="chart-container">
                             <VerticalBarChart
                                 data={dashboard?.weeklyProduction || []}
@@ -77,7 +77,7 @@ export default function DashboardPage() {
                     <p>Egg quality breakdown, production totals, and stock warnings.</p>
                 </div>
                 <div className="grid-3 dashboard-infographics">
-                    <PanelCard title="Egg Quality" subtitle="Good vs cracked this week" icon="bi-shield-check">
+                    <PanelCard title="Egg Quality" subtitle="Defect breakdown this week" icon="bi-shield-check">
                         <SegmentDonut
                             segments={buildEggQualitySegments(dashboard?.eggQuality)}
                             centerLabel="Eggs"
