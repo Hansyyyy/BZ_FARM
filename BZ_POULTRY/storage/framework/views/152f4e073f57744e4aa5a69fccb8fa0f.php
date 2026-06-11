@@ -15,14 +15,14 @@
 
         .login-card__main .form-group{margin-bottom:22px}
         .login-card__main .floating-field{position:relative}
-        .login-card__main .floating-input{width:100%;padding:20px 16px 10px;border-radius:14px;border:1px solid rgba(27,77,46,0.18);background:rgba(255,255,255,0.9);transition:all .25s ease, box-shadow .25s ease}
+        .login-card__main .floating-input{width:100%;padding:20px 16px 10px;border-radius:14px;border:1px solid rgba(27,77,46,0.18);background:rgba(255,255,255,0.9);transition:transform .35s cubic-bezier(.22,1,.36,1), box-shadow .35s cubic-bezier(.22,1,.36,1), border-color .35s cubic-bezier(.22,1,.36,1), background-color .35s cubic-bezier(.22,1,.36,1)}
         .login-card__main .floating-input::placeholder{color:transparent}
-        .login-card__main .floating-label{position:absolute;left:14px;top:50%;transform:translateY(-50%);pointer-events:none;background:rgba(255,255,255,0.9);padding:0 6px;color:#6c757d;transition:all .25s ease;border-radius:6px}
+        .login-card__main .floating-label{position:absolute;left:14px;top:50%;transform:translateY(-50%);pointer-events:none;background:rgba(255,255,255,0.9);padding:0 6px;color:#6c757d;transition:top .35s cubic-bezier(.22,1,.36,1), transform .35s cubic-bezier(.22,1,.36,1), color .35s ease, background-color .35s ease;border-radius:6px}
         .login-card__main .floating-input:focus + .floating-label,
         .login-card__main .floating-input:not(:placeholder-shown) + .floating-label,
         .login-card__main .floating-input:valid + .floating-label{top:0;transform:translateY(-50%) scale(0.92);color:var(--primary)}
-        .login-card__main .floating-field:hover .floating-input{transform:translateY(-2px);box-shadow:0 12px 24px rgba(27,77,46,0.12);border-color:var(--primary-light)}
-        .login-card__main .floating-field:focus-within .floating-input{transform:translateY(-2px);box-shadow:0 0 0 4px rgba(27,77,46,0.12);border-color:var(--primary)}
+        .login-card__main .floating-field:hover .floating-input{transform:translateY(-2px) scale(1.002);box-shadow:0 12px 24px rgba(27,77,46,0.12);border-color:var(--primary-light)}
+        .login-card__main .floating-field:focus-within .floating-input{transform:translateY(-2px) scale(1.008);box-shadow:0 0 0 4px rgba(27,77,46,0.12);border-color:var(--primary)}
         .login-card__main .btn-primary{transition:transform .2s ease, box-shadow .2s ease, background .2s ease}
         .login-card__main .btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 20px rgba(27,77,46,0.18)}
         .login-card__main .btn-primary:active{transform:translateY(0) scale(0.98)}
@@ -44,8 +44,7 @@
 
         <div class="login-card__main">
             <div class="login-form-header">
-                <h2>Welcome back!</h2>
-             
+                <h2 style="display:block !important; visibility:visible !important; color:#000000 !important; font-size:2.1rem !important; font-weight:700 !important; margin:0 !important; line-height:1.2 !important;">Welcome</h2>
             </div>
 
             <?php if($errors->any()): ?>
