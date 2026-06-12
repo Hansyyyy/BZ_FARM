@@ -18,6 +18,9 @@ class AdminInventoryController extends Controller
     public function index(Request $request)
     {
         $date = Carbon::parse($request->get('date', now()->toDateString()))->startOfDay();
+        $buildings = Building::orderedList();
+        $buildingsById = $buildings->keyBy('id');
+        $buildingsByName = $buildings->keyBy('name');
         $activeFlocks = Flock::where('status', 'active')->get();
         $eggRecords = EggProduction::with(['building', 'user'])
             ->whereDate('date', $date)
@@ -31,36 +34,47 @@ class AdminInventoryController extends Controller
         $growerCount = (int) $activeFlocks->where('type', 'pullets')->sum('quantity');
         $layerCount = (int) $activeFlocks->where('type', 'layers')->sum('quantity');
 
-        $populationTable = $activeFlocks->map(function (Flock $flock) {
-            $average = $flock->initial_quantity > 0
-                ? round((($flock->initial_quantity - $flock->mortality) / $flock->initial_quantity) * 100, 2)
-                : 0;
+        $populationTable = $activeFlocks
+            ->groupBy(fn (Flock $flock) => $this->resolveFlockBuildingName($flock, $buildingsById, $buildingsByName))
+            ->map(function ($flocks, $buildingName) {
+                $totalInitial = (int) $flocks->sum('initial_quantity');
+                $totalRemaining = (int) $flocks->sum(fn (Flock $flock) => $flock->initial_quantity - $flock->mortality);
+                $average = $totalInitial > 0
+                    ? round(($totalRemaining / $totalInitial) * 100, 2)
+                    : 0;
 
-            return [
-                'building_no' => $flock->batch_no,
-                'population' => $flock->quantity,
-                'average' => $average,
-                'remarks' => ucfirst($flock->type),
-            ];
-        })->values();
+                return [
+                    'building_no' => $buildingName,
+                    'population' => (int) $flocks->sum('quantity'),
+                    'average' => $average,
+                    'remarks' => $flocks->pluck('type')->unique()->map(fn ($type) => ucfirst($type))->implode(', '),
+                ];
+            })
+            ->sortBy('building_no')
+            ->values();
 
-        $productionTable = $eggRecords->map(function (EggProduction $record) {
-            $sellable = max(
-                $record->total_eggs - $record->soft_shell_eggs - $record->damaged_eggs - $record->cracked_eggs,
-                0
-            );
-            $farmAverage = $record->total_eggs > 0
-                ? round(($sellable / $record->total_eggs) * 100, 2)
-                : 0;
+        $productionTable = $eggRecords
+            ->groupBy('building_id')
+            ->map(function ($records) {
+                $totalEggs = (int) $records->sum('total_eggs');
+                $sellable = (int) $records->sum(fn (EggProduction $record) => max(
+                    $record->total_eggs - $record->soft_shell_eggs - $record->damaged_eggs - $record->cracked_eggs,
+                    0
+                ));
+                $farmAverage = $totalEggs > 0
+                    ? round(($sellable / $totalEggs) * 100, 2)
+                    : 0;
 
-            return [
-                'building_no' => $record->building?->name ?? 'N/A',
-                'population' => $record->total_eggs,
-                'production_average' => $farmAverage,
-                'farm_average' => $farmAverage,
-                'recorded_by' => $record->user?->name,
-            ];
-        })->values();
+                return [
+                    'building_no' => $records->first()->building?->name ?? 'N/A',
+                    'population' => $totalEggs,
+                    'production_average' => $farmAverage,
+                    'farm_average' => $farmAverage,
+                    'recorded_by' => $records->pluck('user.name')->filter()->unique()->implode(', ') ?: null,
+                ];
+            })
+            ->sortBy('building_no')
+            ->values();
 
         $totalProduction = round($eggRecords->sum('total_eggs'), 2);
 
@@ -71,7 +85,7 @@ class AdminInventoryController extends Controller
 
             return [
                 'id' => $flock->id,
-                'building_no' => $flock->batch_no,
+                'building_no' => $this->resolveFlockBuildingName($flock, $buildingsById, $buildingsByName),
                 'type' => ucfirst($flock->type === 'pullets' ? 'Grower' : $flock->type),
                 'current_population' => $flock->quantity,
                 'age' => "{$flock->age_weeks} week(s)",
@@ -83,18 +97,24 @@ class AdminInventoryController extends Controller
             ];
         })->values();
 
-        $dailyByBuilding = $eggRecords->map(function (EggProduction $record) use ($eggsToday) {
-            $share = $eggsToday > 0 ? round(($record->total_eggs / $eggsToday) * 100, 1) : 0;
+        $dailyByBuilding = $eggRecords
+            ->groupBy('building_id')
+            ->map(function ($records) use ($eggsToday) {
+                $totalEggs = (int) $records->sum('total_eggs');
+                $share = $eggsToday > 0 ? round(($totalEggs / $eggsToday) * 100, 1) : 0;
+                $latest = $records->sortByDesc('created_at')->first();
 
-            return [
-                'building' => $record->building?->name ?? 'N/A',
-                'flock' => 'FL-'.$record->building_id,
-                'eggs_collected' => $record->total_eggs,
-                'share_of_day' => $share,
-                'collection_time' => $record->created_at?->format('g:i A') ?? '—',
-                'recorded_by' => $record->user?->name,
-            ];
-        })->values();
+                return [
+                    'building' => $records->first()->building?->name ?? 'N/A',
+                    'flock' => 'FL-'.$records->first()->building_id,
+                    'eggs_collected' => $totalEggs,
+                    'share_of_day' => $share,
+                    'collection_time' => $latest?->created_at?->format('g:i A') ?? '—',
+                    'recorded_by' => $records->pluck('user.name')->filter()->unique()->implode(', ') ?: '—',
+                ];
+            })
+            ->sortBy('building')
+            ->values();
 
         $gradingRows = $eggRecords->groupBy('building_id')->map(function ($records, $buildingId) {
             $buildingName = $records->first()->building?->name ?? 'Building '.$buildingId;
@@ -146,17 +166,19 @@ class AdminInventoryController extends Controller
             ];
         })->values();
 
-        $buildings = Building::all()->map(function (Building $building) use ($eggRecords, $activeFlocks) {
-            $record = $eggRecords->firstWhere('building_id', $building->id);
+        $buildingsList = $buildings->map(function (Building $building) use ($eggRecords, $activeFlocks, $buildingsById, $buildingsByName) {
+            $records = $eggRecords->where('building_id', $building->id);
+            $totalEggs = (int) $records->sum('total_eggs');
+            $assignedFlocks = $activeFlocks->filter(
+                fn (Flock $flock) => $this->flockBelongsToBuilding($flock, $building, $buildingsById, $buildingsByName)
+            )->count();
 
             return [
                 'id' => $building->id,
                 'name' => $building->name,
-                'population' => $record?->total_eggs ?? 0,
-                'production' => $record?->total_eggs ?? 0,
-                'assigned_flocks' => $activeFlocks->count() > 0
-                    ? (int) ceil($activeFlocks->count() / max(Building::count(), 1))
-                    : 0,
+                'population' => $totalEggs,
+                'production' => $totalEggs,
+                'assigned_flocks' => $assignedFlocks,
             ];
         })->values();
 
@@ -217,11 +239,33 @@ class AdminInventoryController extends Controller
                     'inventory_table' => $inventoryTable,
                 ],
             ],
-            'buildings' => $buildings,
+            'buildings' => $buildingsList,
             'medications' => $medications,
             'feeds' => $feeds,
             'manager_activities' => $managerActivities,
             'managers' => $managers,
         ]);
+    }
+
+    private function resolveFlockBuildingName(Flock $flock, $buildingsById, $buildingsByName): string
+    {
+        if ($buildingsById->has($flock->batch_no)) {
+            return $buildingsById->get($flock->batch_no)->name;
+        }
+
+        if ($buildingsByName->has($flock->batch_no)) {
+            return $flock->batch_no;
+        }
+
+        return $flock->batch_no;
+    }
+
+    private function flockBelongsToBuilding(Flock $flock, Building $building, $buildingsById, $buildingsByName): bool
+    {
+        if ((string) $flock->batch_no === (string) $building->id) {
+            return true;
+        }
+
+        return $flock->batch_no === $building->name;
     }
 }

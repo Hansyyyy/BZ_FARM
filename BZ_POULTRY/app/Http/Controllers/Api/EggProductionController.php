@@ -39,7 +39,7 @@ class EggProductionController extends Controller
                 'total' => $records->total(),
             ],
             'summary' => compact('eggsToday', 'softShellToday', 'damagedToday', 'crackedToday', 'weekTotal', 'monthTotal'),
-            'buildings' => Building::all(),
+            'buildings' => Building::orderedList(),
             'dailyTrend' => EggProduction::where('date', '>=', $monthStart)
                 ->select(
                     'date',

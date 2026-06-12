@@ -6,6 +6,7 @@ import PageState from '../components/ui/PageState';
 import SummaryCards from '../components/ui/SummaryCards';
 import PanelCard from '../components/ui/PanelCard';
 import Modal from '../components/ui/Modal';
+import AnimatedDatePicker from '../components/ui/AnimatedDatePicker';
 
 const isAdmin = window.Laravel?.user?.role === 'admin';
 
@@ -302,14 +303,14 @@ export default function ReportsPage() {
             )}
 
             <div className="page-toolbar daily-report-toolbar">
-                <div className="page-date-picker">
-                    <i className="bi bi-calendar3"></i>
-                    <input
-                        type="date"
+                <div className="page-date-picker daily-report-date-picker">
+                    <AnimatedDatePicker
                         value={selectedDate}
-                        onChange={(event) => setSelectedDate(event.target.value)}
+                        onChange={setSelectedDate}
+                        placeholder="Select date"
+                        allowClear={false}
                     />
-                    <span>{formatDisplayDate(selectedDate)}</span>
+                    <span className="daily-report-date-label">{formatDisplayDate(selectedDate)}</span>
                 </div>
                 {!isAdmin && canSubmit && (
                     <button type="submit" className="btn btn-primary" form="daily-report-form" disabled={submitting}>

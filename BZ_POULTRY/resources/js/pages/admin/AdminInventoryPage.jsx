@@ -4,6 +4,7 @@ import { usePageSearch } from '../../context/HeaderSearchContext';
 import PageState from '../../components/ui/PageState';
 import SummaryCards from '../../components/ui/SummaryCards';
 import ModuleTabs from '../../components/ui/ModuleTabs';
+import AnimatedDatePicker from '../../components/ui/AnimatedDatePicker';
 import SegmentDonut from '../../components/ui/SegmentDonut';
 import { buildGradeSegments } from '../../config/chartTheme';
 
@@ -76,9 +77,9 @@ export default function AdminInventoryPage() {
         }
     }, [activeTab]);
 
-    const handleDateChange = useCallback((event) => {
+    const handleDateChange = useCallback((date) => {
         setTabSwitching(true);
-        setSelectedDate(event.target.value);
+        setSelectedDate(date);
     }, []);
 
     const summary = data?.summary || {};
@@ -136,14 +137,16 @@ export default function AdminInventoryPage() {
 
                 <div className="page-toolbar">
                     <ModuleTabs tabs={MAIN_TABS} activeTab={activeTab} onChange={handleTabChange} />
-                    <div className="page-date-picker">
-                        <i className="bi bi-calendar3"></i>
-                        <input
-                            type="date"
+                    <div className="page-date-picker daily-report-date-picker admin-date-picker">
+                        <AnimatedDatePicker
                             value={formatDateInputValue(data?.date || selectedDate)}
                             onChange={handleDateChange}
+                            placeholder="Select date"
+                            allowClear={false}
                         />
-                        <span>{formatDisplayDate(data?.date || selectedDate)}</span>
+                        <span className="daily-report-date-label">
+                            {formatDisplayDate(data?.date || selectedDate)}
+                        </span>
                     </div>
                 </div>
 

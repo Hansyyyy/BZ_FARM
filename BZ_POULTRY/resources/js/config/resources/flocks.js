@@ -9,7 +9,7 @@ export default {
         { key: 'roosters', label: 'Roosters', percentOf: 'totalPoultry' },
     ],
     columns: [
-        { key: 'batch_no', label: 'Building' },
+        { key: 'building_name', label: 'Building', render: (item) => item.building_name || item.batch_no || '' },
         { key: 'type', label: 'Type', render: (item) => String(item.type || '').replace(/^\w/, (c) => c.toUpperCase()) },
         { key: 'quantity', label: 'Quantity' },
         { key: 'age_days', label: 'Age(Days)', render: (item) => (item.age_weeks || 0) * 7 },

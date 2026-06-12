@@ -15,6 +15,7 @@ import ExportModal from '../components/ui/ExportModal';
 import DynamicForm from '../components/forms/DynamicForm';
 import RowActionButtons from '../components/ui/RowActionButtons';
 import AnimatedSelect from '../components/ui/AnimatedSelect';
+import AnimatedDatePicker from '../components/ui/AnimatedDatePicker';
 import { exportTableData } from '../utils/exportData';
 import { stockTabs, getStockResource } from '../config/stockTabs';
 
@@ -240,59 +241,60 @@ export default function StockHubPage() {
                 <ModuleTabs tabs={stockTabs} activeTab={activeTab} onChange={setTab} />
 
                 <div className="data-panel-toolbar">
-                    <div className="data-panel-filters">
-                        {tabConfig.filters?.includes('type') && (
-                            <AnimatedSelect
-                                value={filters.type}
-                                onChange={(option) => setFilters({ ...filters, type: option })}
-                                options={typeOptions}
-                                placeholder="All Type"
-                            />
-                        )}
-                        {tabConfig.filters?.includes('breed') && (
-                            <AnimatedSelect
-                                value={filters.breed}
-                                onChange={(option) => setFilters({ ...filters, breed: option })}
-                                options={breedSelectOptions}
-                                placeholder="All Breeds"
-                            />
-                        )}
-                        {tabConfig.filters?.includes('status') && (
-                            <AnimatedSelect
-                                value={filters.status}
-                                onChange={(option) => setFilters({ ...filters, status: option })}
-                                options={statusOptions}
-                                placeholder="All Status"
-                            />
-                        )}
-                        {tabConfig.filters?.includes('category') && (
-                            <AnimatedSelect
-                                value={filters.category}
-                                onChange={(option) => setFilters({ ...filters, category: option })}
-                                options={categorySelectOptions}
-                                placeholder="All Category"
-                            />
-                        )}
-                        {tabConfig.filters?.includes('building') && (
-                            <AnimatedSelect
-                                value={filters.building}
-                                onChange={(option) => setFilters({ ...filters, building: option })}
-                                options={buildingOptions}
-                                placeholder="All Buildings"
-                            />
-                        )}
-                        {tabConfig.filters?.includes('date') && (
-                            <input
-                                type="date"
-                                value={filters.date}
-                                onChange={(e) => setFilters({ ...filters, date: e.target.value })}
-                                className="date-filter"
-                            />
-                        )}
-                        <button type="button" className="btn btn-outline" onClick={() => setExportOpen(true)}>
-                            <i className="bi bi-printer"></i> Export
-                        </button>
-                        <button type="button" className="btn btn-primary" onClick={openCreate}>
+                    <div className="data-panel-filters data-panel-filters--stacked">
+                        <div className="data-panel-filter-group">
+                            {tabConfig.filters?.includes('type') && (
+                                <AnimatedSelect
+                                    value={filters.type}
+                                    onChange={(option) => setFilters({ ...filters, type: option })}
+                                    options={typeOptions}
+                                    placeholder="All Type"
+                                />
+                            )}
+                            {tabConfig.filters?.includes('breed') && (
+                                <AnimatedSelect
+                                    value={filters.breed}
+                                    onChange={(option) => setFilters({ ...filters, breed: option })}
+                                    options={breedSelectOptions}
+                                    placeholder="All Breeds"
+                                />
+                            )}
+                            {tabConfig.filters?.includes('status') && (
+                                <AnimatedSelect
+                                    value={filters.status}
+                                    onChange={(option) => setFilters({ ...filters, status: option })}
+                                    options={statusOptions}
+                                    placeholder="All Status"
+                                />
+                            )}
+                            {tabConfig.filters?.includes('category') && (
+                                <AnimatedSelect
+                                    value={filters.category}
+                                    onChange={(option) => setFilters({ ...filters, category: option })}
+                                    options={categorySelectOptions}
+                                    placeholder="All Category"
+                                />
+                            )}
+                            {tabConfig.filters?.includes('building') && (
+                                <AnimatedSelect
+                                    value={filters.building}
+                                    onChange={(option) => setFilters({ ...filters, building: option })}
+                                    options={buildingOptions}
+                                    placeholder="All Buildings"
+                                />
+                            )}
+                            {tabConfig.filters?.includes('date') && (
+                                <AnimatedDatePicker
+                                    value={filters.date}
+                                    onChange={(date) => setFilters({ ...filters, date })}
+                                    placeholder="All Dates"
+                                />
+                            )}
+                            <button type="button" className="btn btn-outline data-panel-export-btn" onClick={() => setExportOpen(true)}>
+                                <i className="bi bi-printer"></i> Export
+                            </button>
+                        </div>
+                        <button type="button" className="btn btn-primary data-panel-add-btn" onClick={openCreate}>
                             <i className="bi bi-plus-lg"></i> {tabConfig.addLabel}
                         </button>
                     </div>

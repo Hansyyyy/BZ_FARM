@@ -9,6 +9,11 @@ class Building extends Model
 {
     protected $fillable = ['name'];
 
+    public static function orderedList()
+    {
+        return static::query()->orderBy('name')->get();
+    }
+
     public function eggProductions(): HasMany
     {
         return $this->hasMany(EggProduction::class);

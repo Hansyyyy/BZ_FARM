@@ -13,7 +13,17 @@ class FlockController extends Controller
 {
     public function index()
     {
+        $buildings = Building::orderedList();
+        $buildingsById = $buildings->keyBy('id');
+        $buildingsByName = $buildings->keyBy('name');
         $flocks = Flock::latest('date_in')->paginate(10);
+        $items = collect($flocks->items())->map(function (Flock $flock) use ($buildingsById, $buildingsByName) {
+            $building = $buildingsById->get($flock->batch_no)
+                ?? $buildingsByName->get($flock->batch_no);
+            $flock->building_name = $building?->name ?? $flock->batch_no;
+
+            return $flock;
+        })->all();
 
         $totalFlocks = Flock::where('status', 'active')->count();
         $totalPoultry = Flock::where('status', 'active')->sum('quantity');
@@ -26,7 +36,7 @@ class FlockController extends Controller
             ->get(['id', 'batch_no', 'age_weeks', 'type']);
 
         return response()->json([
-            'items' => $flocks->items(),
+            'items' => $items,
             'pagination' => [
                 'current_page' => $flocks->currentPage(),
                 'last_page' => $flocks->lastPage(),
@@ -35,7 +45,7 @@ class FlockController extends Controller
             ],
             'summary' => compact('totalFlocks', 'totalPoultry', 'layers', 'pullets', 'roosters'),
             'distribution' => compact('layers', 'pullets', 'roosters'),
-            'buildings' => Building::all(),
+            'buildings' => Building::orderedList(),
             'medicationDue' => $medicationDue,
             'recentActivities' => Activity::where('module', 'Poultry Stock')->latest()->take(5)->get(),
         ]);
