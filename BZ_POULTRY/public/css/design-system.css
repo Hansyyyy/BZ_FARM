@@ -985,13 +985,47 @@ body {
 .searchable-select-trigger {
     border-color: var(--border) !important;
     border-radius: 12px !important;
-    background: rgba(255, 255, 255, 0.9) !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease, background-color 180ms ease;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    min-width: 180px;
+    min-height: 44px;
+}
+
+.searchable-select-trigger:hover {
+    transform: translateY(-1px);
 }
 
 .searchable-select-trigger:focus,
 .searchable-select.open .searchable-select-trigger {
     border-color: var(--coach-teal-dark) !important;
     box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12) !important;
+    background: #ffffff !important;
+}
+
+.searchable-select-trigger i {
+    transition: transform 180ms ease;
+}
+
+.searchable-select.open .searchable-select-trigger i {
+    transform: rotate(180deg);
+}
+
+.searchable-select-panel {
+    opacity: 0;
+    transform: translateY(-6px);
+    animation: searchable-select-dropdown 180ms ease-out forwards;
+}
+
+@keyframes searchable-select-dropdown {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .searchable-select-option.active,

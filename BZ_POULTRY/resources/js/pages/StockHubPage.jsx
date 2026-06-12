@@ -14,6 +14,7 @@ import Modal from '../components/ui/Modal';
 import ExportModal from '../components/ui/ExportModal';
 import DynamicForm from '../components/forms/DynamicForm';
 import RowActionButtons from '../components/ui/RowActionButtons';
+import AnimatedSelect from '../components/ui/AnimatedSelect';
 import { exportTableData } from '../utils/exportData';
 import { stockTabs, getStockResource } from '../config/stockTabs';
 
@@ -134,6 +135,37 @@ export default function StockHubPage() {
     const breedOptions = useMemo(() => [...new Set((data?.items || []).map((item) => item.breed).filter(Boolean))], [data]);
     const categoryOptions = useMemo(() => [...new Set((data?.items || []).map((item) => item.category).filter(Boolean))], [data]);
 
+    const typeOptions = [
+        { value: '', label: 'All Type' },
+        { value: 'layers', label: 'Layers' },
+        { value: 'pullets', label: 'Pullets' },
+        { value: 'roosters', label: 'Roosters' },
+    ];
+
+    const statusOptions = [
+        { value: '', label: 'All Status' },
+        { value: 'active', label: 'Active' },
+        { value: 'inactive', label: 'Inactive' },
+    ];
+
+    const buildingOptions = useMemo(() => [
+        { value: '', label: 'All Buildings' },
+        ...((data?.buildings || []).map((building) => ({
+            value: String(building.id),
+            label: building.name,
+        }))),
+    ], [data]);
+
+    const breedSelectOptions = useMemo(() => [
+        { value: '', label: 'All Breeds' },
+        ...breedOptions.map((breed) => ({ value: breed, label: breed })),
+    ], [breedOptions]);
+
+    const categorySelectOptions = useMemo(() => [
+        { value: '', label: 'All Category' },
+        ...categoryOptions.map((category) => ({ value: category, label: category })),
+    ], [categoryOptions]);
+
     const handleSearchChange = useCallback((value) => {
         setSearch(value);
         setPage(1);
@@ -210,39 +242,44 @@ export default function StockHubPage() {
                 <div className="data-panel-toolbar">
                     <div className="data-panel-filters">
                         {tabConfig.filters?.includes('type') && (
-                            <select value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })}>
-                                <option value="">All Type</option>
-                                <option value="layers">Layers</option>
-                                <option value="pullets">Pullets</option>
-                                <option value="roosters">Roosters</option>
-                            </select>
+                            <AnimatedSelect
+                                value={filters.type}
+                                onChange={(option) => setFilters({ ...filters, type: option })}
+                                options={typeOptions}
+                                placeholder="All Type"
+                            />
                         )}
                         {tabConfig.filters?.includes('breed') && (
-                            <select value={filters.breed} onChange={(e) => setFilters({ ...filters, breed: e.target.value })}>
-                                <option value="">All Breeds</option>
-                                {breedOptions.map((breed) => <option key={breed} value={breed}>{breed}</option>)}
-                            </select>
+                            <AnimatedSelect
+                                value={filters.breed}
+                                onChange={(option) => setFilters({ ...filters, breed: option })}
+                                options={breedSelectOptions}
+                                placeholder="All Breeds"
+                            />
                         )}
                         {tabConfig.filters?.includes('status') && (
-                            <select value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })}>
-                                <option value="">All Status</option>
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
+                            <AnimatedSelect
+                                value={filters.status}
+                                onChange={(option) => setFilters({ ...filters, status: option })}
+                                options={statusOptions}
+                                placeholder="All Status"
+                            />
                         )}
                         {tabConfig.filters?.includes('category') && (
-                            <select value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })}>
-                                <option value="">All Category</option>
-                                {categoryOptions.map((category) => <option key={category} value={category}>{category}</option>)}
-                            </select>
+                            <AnimatedSelect
+                                value={filters.category}
+                                onChange={(option) => setFilters({ ...filters, category: option })}
+                                options={categorySelectOptions}
+                                placeholder="All Category"
+                            />
                         )}
                         {tabConfig.filters?.includes('building') && (
-                            <select value={filters.building} onChange={(e) => setFilters({ ...filters, building: e.target.value })}>
-                                <option value="">All Buildings</option>
-                                {(data?.buildings || []).map((building) => (
-                                    <option key={building.id} value={String(building.id)}>{building.name}</option>
-                                ))}
-                            </select>
+                            <AnimatedSelect
+                                value={filters.building}
+                                onChange={(option) => setFilters({ ...filters, building: option })}
+                                options={buildingOptions}
+                                placeholder="All Buildings"
+                            />
                         )}
                         {tabConfig.filters?.includes('date') && (
                             <input
