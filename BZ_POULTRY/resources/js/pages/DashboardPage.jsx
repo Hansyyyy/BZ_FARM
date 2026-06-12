@@ -4,16 +4,10 @@ import PageState from '../components/ui/PageState';
 import SummaryCards from '../components/ui/SummaryCards';
 import PanelCard from '../components/ui/PanelCard';
 import RecentActivities from '../components/ui/RecentActivities';
-import SegmentDonut from '../components/ui/SegmentDonut';
 import VerticalBarChart from '../components/ui/VerticalBarChart';
-import HorizontalStatBars from '../components/ui/HorizontalStatBars';
-import {
-    buildEggQualitySegments,
-    buildEggSummaryBars,
-    buildFlockSegments,
-    buildInventorySegments,
-    chartColors,
-} from '../config/chartTheme';
+import FarmCalendar from '../components/ui/FarmCalendar';
+import DashboardMiniStats from '../components/ui/DashboardMiniStats';
+import { buildInventorySegments, chartColors } from '../config/chartTheme';
 
 const dashboardFields = [
     { key: 'totalPoultry', label: 'Total Poultry', sub: 'Birds in Stock', icon: 'bi-egg-fried' },
@@ -35,15 +29,6 @@ function formatTxnDate(value) {
     return new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-function formatTodayLabel() {
-    return new Date().toLocaleDateString('en-US', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-    });
-}
-
 function buildSummaryItems(summary) {
     return dashboardFields.map((field) => ({
         key: field.key,
@@ -55,48 +40,50 @@ function buildSummaryItems(summary) {
     }));
 }
 
+function buildMiniStats(summary, eggSummary, flockDistribution, eggQuality) {
+    const defects = (eggQuality?.soft_shell || 0) + (eggQuality?.damaged || 0) + (eggQuality?.cracked || 0);
+    const weekEggs = eggSummary?.week || 0;
+    const qualityRate = weekEggs > 0
+        ? Math.max(0, Math.round(((weekEggs - defects) / weekEggs) * 100))
+        : 100;
+
+    return [
+        { key: 'week-eggs', label: 'Week Eggs', value: eggSummary?.week, icon: 'bi-calendar-week', tone: 'teal', suffix: ' eggs' },
+        { key: 'month-eggs', label: 'Month Eggs', value: eggSummary?.month, icon: 'bi-calendar3', tone: 'green', suffix: ' eggs' },
+        { key: 'daily-avg', label: 'Daily Average', value: eggSummary?.daily_avg, icon: 'bi-graph-up-arrow', tone: 'blue', suffix: ' eggs' },
+        { key: 'quality-rate', label: 'Quality Rate', value: qualityRate, icon: 'bi-shield-check', tone: 'purple', suffix: '%', hint: 'This week' },
+        { key: 'defects', label: 'Defect Eggs', value: defects, icon: 'bi-exclamation-circle', tone: 'orange', suffix: ' eggs', hint: 'This week' },
+        { key: 'roosters', label: 'Roosters', value: flockDistribution?.roosters, icon: 'bi-egg', tone: 'pink' },
+    ];
+}
+
 export default function DashboardPage() {
     const { data: dashboard, loading, error } = useFetch('/api/dashboard');
     const summary = dashboard?.summary || {};
     const eggSummary = summary.eggSummary || {};
     const flockDistribution = dashboard?.flockDistribution || {};
     const inventoryRows = buildInventorySegments(dashboard?.inventoryBreakdown);
+    const miniStats = buildMiniStats(summary, eggSummary, flockDistribution, dashboard?.eggQuality);
 
     return (
         <PageState loading={loading} error={error ? `Unable to load dashboard: ${error}` : null} loadingLabel="Loading dashboard...">
             <SummaryCards items={buildSummaryItems(summary)} columns={5} />
 
+            <PanelCard
+                title="Farm Calendar"
+                subtitle="Click any date to add or edit a note"
+                icon="bi-calendar3"
+                className="farm-calendar-card"
+                collapsible
+                defaultCollapsed
+            >
+                <FarmCalendar />
+            </PanelCard>
+
+            <DashboardMiniStats items={miniStats} />
+
             <div className="dashboard-coach">
                 <div className="dashboard-col dashboard-col-left">
-                    <PanelCard
-                        title="Today's Snapshot"
-                        actionLabel="View reports"
-                        actionTo="/daily-reports"
-                        className="snapshot-card"
-                    >
-                        <div className="snapshot-meta">
-                            <span className="snapshot-tag">Daily Operations</span>
-                            <span className="snapshot-date">{formatTodayLabel()}</span>
-                        </div>
-                        <div className="snapshot-stats-row">
-                            <div className="snapshot-stat">
-                                <div className="snapshot-team-icon"><i className="bi bi-basket"></i></div>
-                                <strong>{Number(summary.eggsToday || 0).toLocaleString()}</strong>
-                                <span>Eggs Collected</span>
-                            </div>
-                            <div className="snapshot-stat">
-                                <div className="snapshot-team-icon snapshot-team-icon-alt"><i className="bi bi-cash-stack"></i></div>
-                                <strong>₱{Number(summary.salesToday || 0).toLocaleString()}</strong>
-                                <span>Sales Revenue</span>
-                            </div>
-                            <div className="snapshot-stat">
-                                <div className="snapshot-team-icon snapshot-team-icon-feed"><i className="bi bi-egg-fried"></i></div>
-                                <strong>{Number(summary.totalPoultry || 0).toLocaleString()}</strong>
-                                <span>Active Birds</span>
-                            </div>
-                        </div>
-                    </PanelCard>
-
                     <PanelCard
                         title="Inventory Overview"
                         actionLabel="View all"
@@ -154,15 +141,6 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="dashboard-col dashboard-col-right">
-                    <PanelCard
-                        title="Production Summary"
-                        actionLabel="View all"
-                        actionTo="/daily-reports"
-                        className="production-stat-card"
-                    >
-                        <HorizontalStatBars items={buildEggSummaryBars(eggSummary)} />
-                    </PanelCard>
-
                     <div className="metric-tiles-grid">
                         {quickMetrics.map((tile) => {
                             const raw = tile.source === 'flock'
@@ -192,57 +170,27 @@ export default function DashboardPage() {
                         </div>
                     </div>
 
-                    <div className="dashboard-charts-grid">
-                        <PanelCard title="Inventory Mix" subtitle="Stock by category">
-                            <SegmentDonut
-                                segments={inventoryRows}
-                                centerLabel="Stock"
-                            />
+                    <div className="dashboard-alerts-grid">
+                        <PanelCard title="Low Stock Alerts" subtitle="Items needing attention">
+                            <ul className="recent-activities">
+                                {dashboard?.lowStockAlerts?.length ? dashboard.lowStockAlerts.map((alert, index) => (
+                                    <li key={index}>
+                                        <span className="activity-icon activity-icon-red"></span>
+                                        <div className="activity-content">
+                                            <strong>{alert.name}</strong>
+                                            <p>{alert.category} · {alert.days_left} days left</p>
+                                        </div>
+                                    </li>
+                                )) : <li className="empty-state">No low stock alerts</li>}
+                            </ul>
                         </PanelCard>
 
-                        <PanelCard title="Poultry Distribution" subtitle="Active birds by type">
-                            <SegmentDonut
-                                segments={buildFlockSegments(flockDistribution)}
-                                total={summary.totalPoultry}
-                                centerLabel="Birds"
-                            />
+                        <PanelCard title="Recent Activities" subtitle="Latest manager actions">
+                            <RecentActivities activities={dashboard?.recentActivities} />
                         </PanelCard>
                     </div>
                 </div>
             </div>
-
-            <section className="page-section">
-                <div className="section-heading">
-                    <h2>Quality & Alerts</h2>
-                    <p>Egg quality breakdown and stock warnings.</p>
-                </div>
-                <div className="grid-3 dashboard-infographics">
-                    <PanelCard title="Egg Quality" subtitle="Defect breakdown this week">
-                        <SegmentDonut
-                            segments={buildEggQualitySegments(dashboard?.eggQuality)}
-                            centerLabel="Eggs"
-                        />
-                    </PanelCard>
-
-                    <PanelCard title="Low Stock Alerts" subtitle="Items needing attention">
-                        <ul className="recent-activities">
-                            {dashboard?.lowStockAlerts?.length ? dashboard.lowStockAlerts.map((alert, index) => (
-                                <li key={index}>
-                                    <span className="activity-icon activity-icon-red"></span>
-                                    <div className="activity-content">
-                                        <strong>{alert.name}</strong>
-                                        <p>{alert.category} · {alert.days_left} days left</p>
-                                    </div>
-                                </li>
-                            )) : <li className="empty-state">No low stock alerts</li>}
-                        </ul>
-                    </PanelCard>
-
-                    <PanelCard title="Recent Activities" subtitle="Latest manager actions">
-                        <RecentActivities activities={dashboard?.recentActivities} />
-                    </PanelCard>
-                </div>
-            </section>
 
             <section className="page-section">
                 <div className="section-heading">

@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'google_holidays' => [
+        'calendar_url' => env(
+            'GOOGLE_HOLIDAYS_CALENDAR_URL',
+            'https://calendar.google.com/calendar/ical/en.philippines%23holiday%40group.v.calendar.google.com/public/basic.ics'
+        ),
+    ],
+
 ];

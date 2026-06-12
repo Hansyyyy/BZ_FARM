@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AdminInventoryController;
+use App\Http\Controllers\Api\CalendarNoteController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\EggProductionController;
@@ -18,6 +19,11 @@ Route::prefix('api')->group(function () {
     Route::get('/user', fn () => auth()->user());
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('api.dashboard');
+
+    Route::get('/calendar-notes', [CalendarNoteController::class, 'index'])->name('api.calendar-notes.index');
+    Route::post('/calendar-notes', [CalendarNoteController::class, 'store'])->name('api.calendar-notes.store');
+    Route::put('/calendar-notes/{calendarNote}', [CalendarNoteController::class, 'update'])->name('api.calendar-notes.update');
+    Route::delete('/calendar-notes/{calendarNote}', [CalendarNoteController::class, 'destroy'])->name('api.calendar-notes.destroy');
 
     Route::get('/flocks', [FlockController::class, 'index'])->name('api.flocks.index');
     Route::post('/flocks', [FlockController::class, 'store'])->name('api.flocks.store');

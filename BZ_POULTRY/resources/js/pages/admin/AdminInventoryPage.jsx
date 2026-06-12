@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import useFetch from '../../hooks/useFetch';
 import { usePageSearch } from '../../context/HeaderSearchContext';
 import PageState from '../../components/ui/PageState';
@@ -21,6 +21,14 @@ const EGG_SUB_TABS = [
     { id: 'inventory', label: 'Egg Inventory' },
 ];
 
+const TAB_LOADING_LABELS = {
+    overview: 'Loading overview...',
+    chickens: 'Loading chicken records...',
+    'egg-productions': 'Loading egg production data...',
+    buildings: 'Loading buildings...',
+    medications: 'Loading medications...',
+};
+
 function formatNumber(value) {
     return Number(value || 0).toLocaleString();
 }
@@ -41,6 +49,7 @@ export default function AdminInventoryPage() {
     const [eggSubTab, setEggSubTab] = useState('daily');
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
     const [search, setSearch] = useState('');
+    const [tabSwitching, setTabSwitching] = useState(false);
 
     const handleSearchChange = useCallback((value) => {
         setSearch(value);
@@ -52,7 +61,25 @@ export default function AdminInventoryPage() {
         handleSearchChange,
     );
 
-    const { data, loading, error } = useFetch(`/api/admin/inventory?date=${selectedDate}`);
+    const { data, loading, error } = useFetch(`/api/admin/inventory?date=${selectedDate}&tab=${activeTab}`);
+
+    useEffect(() => {
+        if (!loading) {
+            setTabSwitching(false);
+        }
+    }, [loading]);
+
+    const handleTabChange = useCallback((tabId) => {
+        if (tabId !== activeTab) {
+            setTabSwitching(true);
+            setActiveTab(tabId);
+        }
+    }, [activeTab]);
+
+    const handleDateChange = useCallback((event) => {
+        setTabSwitching(true);
+        setSelectedDate(event.target.value);
+    }, []);
 
     const summary = data?.summary || {};
     const overview = data?.overview || {};
@@ -99,18 +126,22 @@ export default function AdminInventoryPage() {
     }, [activeTab, eggProductions, overview.layer_count, summary]);
 
     return (
-        <PageState loading={loading} error={error ? `Unable to load inventory dashboard: ${error}` : null} loadingLabel="Loading inventory dashboard...">
+        <PageState
+            loading={loading || tabSwitching}
+            error={error ? `Unable to load inventory dashboard: ${error}` : null}
+            loadingLabel={TAB_LOADING_LABELS[activeTab] || 'Loading inventory dashboard...'}
+        >
             <div className="admin-inventory">
                 <SummaryCards items={summaryCards} columns={4} />
 
                 <div className="page-toolbar">
-                    <ModuleTabs tabs={MAIN_TABS} activeTab={activeTab} onChange={setActiveTab} />
+                    <ModuleTabs tabs={MAIN_TABS} activeTab={activeTab} onChange={handleTabChange} />
                     <div className="page-date-picker">
                         <i className="bi bi-calendar3"></i>
                         <input
                             type="date"
                             value={formatDateInputValue(data?.date || selectedDate)}
-                            onChange={(event) => setSelectedDate(event.target.value)}
+                            onChange={handleDateChange}
                         />
                         <span>{formatDisplayDate(data?.date || selectedDate)}</span>
                     </div>
