@@ -34,7 +34,7 @@
     <div class="login-card split-card">
         <div class="login-card__aside">
             <div class="aside-top">
-                <div class="login-logo"><img src="{{ asset('images/BZ LOGO.png') }}" alt="BZ Logo"></div>
+                <div class="login-logo"><img src="{{ asset('images/BZ_LOGO_W.png') }}" alt="BZ Farm Logo"></div>
             </div>
             <div class="aside-body">
                 <h1>Your next poultry adventure awaits!</h1>
