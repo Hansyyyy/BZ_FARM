@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AdminInventoryController;
 use App\Http\Controllers\Api\CalendarNoteController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\DailyReportController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\EggProductionController;
 use App\Http\Controllers\Api\FeedController;
@@ -60,6 +61,11 @@ Route::prefix('api')->group(function () {
 
     Route::get('/reports', [ReportsController::class, 'index'])->name('api.reports.index');
     Route::post('/reports/generate', [ReportsController::class, 'generate'])->name('api.reports.generate');
+
+    Route::get('/daily-reports', [DailyReportController::class, 'index'])->name('api.daily-reports.index');
+    Route::get('/daily-reports/snapshot', [DailyReportController::class, 'snapshot'])->name('api.daily-reports.snapshot');
+    Route::post('/daily-reports', [DailyReportController::class, 'store'])->name('api.daily-reports.store');
+    Route::put('/daily-reports/{dailyReport}/review', [DailyReportController::class, 'review'])->name('api.daily-reports.review');
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('api.notifications.index');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('api.notifications.read-all');

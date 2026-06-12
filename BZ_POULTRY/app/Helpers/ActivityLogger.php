@@ -51,6 +51,10 @@ class ActivityLogger
             return '/sales';
         }
 
+        if (str_contains($module, 'daily report')) {
+            return '/daily-reports';
+        }
+
         return '/dashboard';
     }
 }

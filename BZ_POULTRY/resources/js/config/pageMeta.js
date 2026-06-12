@@ -11,10 +11,15 @@ export const pageMeta = {
             title: 'Dashboard',
             description: 'Overview of your farm operations',
         },
-    '/daily-reports': {
-        title: 'Daily Reports',
-        description: 'View and generate daily farm reports',
-    },
+    '/daily-reports': isAdmin
+        ? {
+            title: 'Daily Reports',
+            description: 'Review manager-submitted end-of-day farm reports',
+        }
+        : {
+            title: 'Daily Reports',
+            description: 'Review and submit your end-of-day farm report',
+        },
     '/inventory-stock': {
         title: 'Inventory Stock',
         description: 'Manage poultry, feed, medicine, eggs, and supplies',
