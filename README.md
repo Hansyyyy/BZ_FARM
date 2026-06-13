@@ -1,4 +1,4 @@
-# BZ FARM - Poultry Management System
+# BZ FARM - Poultry Inventory Management System
 
 ## Project Members
 - Abdulla
@@ -27,7 +27,7 @@
 ### 1. Clone the Repository
 
 ```bash
-git clone <repository-url>
+git clone [<repository-url>](https://github.com/Hansyyyy/BZ_FARM.git)
 cd BZ_POULTRY
 ```
 
@@ -42,7 +42,7 @@ composer install
 cp .env.example .env
 ```
 
-Edit the `.env` file:
+Edit the `.env` file or copy:
 
 ```env
 DB_CONNECTION=mysql
@@ -72,7 +72,7 @@ npm install
 npm run build
 ```
 
-### When should I run `npm run build`?
+### When should you run `npm run build`?
 
 Run it whenever you make changes to React/Vite frontend files and want the latest changes to be reflected in the Laravel application.
 
