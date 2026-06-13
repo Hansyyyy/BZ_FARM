@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Flock extends Model
 {
     protected $fillable = [
-        'batch_no', 'type', 'breed', 'initial_quantity', 'quantity',
+        'batch_no', 'building_name', 'type', 'initial_quantity', 'quantity',
         'age_weeks', 'date_in', 'mortality', 'status',
     ];
 

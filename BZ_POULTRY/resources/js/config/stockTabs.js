@@ -7,10 +7,10 @@ export const stockTabs = [
         resourceKey: 'flocks',
         listTitle: 'Chicken List',
         addLabel: 'Add New Chicken',
-        searchPlaceholder: 'search by batch no, breed, or type...',
+        searchPlaceholder: 'search by batch no or type...',
         showDistribution: true,
         showActivities: true,
-        filters: ['type', 'building', 'status'],
+        filters: ['type', 'status'],
     },
     {
         id: 'feeds',

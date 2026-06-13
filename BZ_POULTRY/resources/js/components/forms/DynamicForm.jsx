@@ -10,6 +10,7 @@ export default function DynamicForm({ id, fields, values, onChange, onSubmit }) 
                                 className="form-control"
                                 value={values[field.key] || ''}
                                 onChange={(event) => onChange(field.key, event.target.value)}
+                                disabled={field.readOnly}
                             >
                                 <option value="">Select {field.label}</option>
                                 {(field.options || []).map((option) => {
