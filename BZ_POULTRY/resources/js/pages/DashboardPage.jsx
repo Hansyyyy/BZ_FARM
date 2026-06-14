@@ -21,7 +21,7 @@ const quickMetrics = [
     { key: 'feedLow', label: 'Low Feed Items', icon: 'bi-exclamation-triangle', tone: 'orange' },
     { key: 'medicineLow', label: 'Low Medicine Items', icon: 'bi-capsule', tone: 'pink' },
     { key: 'layers', label: 'Layer Birds', icon: 'bi-diagram-3', tone: 'purple', source: 'flock' },
-    { key: 'pullets', label: 'Pullet Birds', icon: 'bi-egg-fried', tone: 'blue', source: 'flock' },
+    { key: 'growers', label: 'Grower Birds', icon: 'bi-egg-fried', tone: 'blue', source: 'flock' },
 ];
 
 function formatTxnDate(value) {

@@ -21,6 +21,14 @@ import { stockTabs, getStockResource } from '../config/stockTabs';
 
 const PAGE_SIZE = 11;
 
+function getAgeWeeks(item) {
+    if (!item.date_in) return 0;
+    const now = new Date();
+    const dateIn = new Date(item.date_in);
+    const days = Math.floor((now - dateIn) / (1000 * 60 * 60 * 24));
+    return Math.floor(days / 7);
+}
+
 function prepareFormItem(item, fields) {
     const prepared = { ...item };
 
@@ -415,8 +423,11 @@ export default function StockHubPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {pagedItems.length ? pagedItems.map((item) => (
-                                <tr key={item.id || item.batch_no || item.item_code || item.name}>
+                            {pagedItems.length ? pagedItems.map((item) => {
+                                const isMature = activeTab === 'chicken' && item.type === 'Growers' && getAgeWeeks(item) >= 18;
+                                const dueforCull= activeTab === 'chicken' && item.type === 'Layers' && getAgeWeeks(item) >= 100;
+                                return (
+                                    <tr key={item.id || item.batch_no || item.item_code || item.name} className={[isMature && 'row-mature', dueforCull && 'row-cull'].filter(Boolean).join(' ')}>
                                     {resource.columns.map((col) => {
                                         const value = col.render ? col.render(item) : item[col.key] ?? '';
                                         if (col.badge) {
@@ -435,7 +446,8 @@ export default function StockHubPage() {
                                         />
                                     </td>
                                 </tr>
-                            )) : (
+                                );
+                            }) : (
                                 <tr><td colSpan={resource.columns.length + 1}>No records found.</td></tr>
                             )}
                         </tbody>

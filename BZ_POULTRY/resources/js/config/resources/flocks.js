@@ -5,7 +5,7 @@ export default {
         { key: 'totalFlocks', label: 'Total Chickens', sub: 'Active Chickens' },
         { key: 'totalPoultry', label: 'Total Poultry', sub: 'Birds in Stock' },
         { key: 'layers', label: 'Layers', percentOf: 'totalPoultry' },
-        { key: 'pullets', label: 'Pullets', percentOf: 'totalPoultry' },
+        { key: 'growers', label: 'Growers', percentOf: 'totalPoultry' },
         { key: 'roosters', label: 'Roosters', percentOf: 'totalPoultry' },
     ],
     columns: [

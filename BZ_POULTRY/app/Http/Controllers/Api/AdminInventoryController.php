@@ -31,8 +31,8 @@ class AdminInventoryController extends Controller
         $mortality = (int) $activeFlocks->sum('mortality');
         $cull = (int) $eggRecords->sum('cracked_eggs');
 
-        $growerCount = (int) $activeFlocks->where('type', 'pullets')->sum('quantity');
-        $layerCount = (int) $activeFlocks->where('type', 'layers')->sum('quantity');
+        $growerCount = (int) $activeFlocks->where('type', 'Growers')->sum('quantity');
+        $layerCount = (int) $activeFlocks->where('type', 'Layers')->sum('quantity');
 
         $populationTable = $activeFlocks
             ->groupBy(fn (Flock $flock) => $this->resolveFlockBuildingName($flock, $buildingsById, $buildingsByName))
@@ -86,7 +86,7 @@ class AdminInventoryController extends Controller
             return [
                 'id' => $flock->id,
                 'building_no' => $this->resolveFlockBuildingName($flock, $buildingsById, $buildingsByName),
-                'type' => ucfirst($flock->type === 'pullets' ? 'Grower' : $flock->type),
+                'type' => $flock->type,
                 'current_population' => $flock->quantity,
                 'age' => "{$flock->age_weeks} week(s)",
                 'cull' => max(0, (int) round($flock->mortality * 0.1)),

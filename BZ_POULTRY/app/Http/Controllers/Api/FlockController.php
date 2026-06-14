@@ -19,9 +19,9 @@ class FlockController extends Controller
 
         $totalFlocks = Flock::where('status', 'active')->count();
         $totalPoultry = Flock::where('status', 'active')->sum('quantity');
-        $layers = Flock::where('type', 'layers')->where('status', 'active')->sum('quantity');
-        $pullets = Flock::where('type', 'pullets')->where('status', 'active')->sum('quantity');
-        $roosters = Flock::where('type', 'roosters')->where('status', 'active')->sum('quantity');
+        $layers = Flock::where('type', 'Layers')->where('status', 'active')->sum('quantity');
+        $growers = Flock::where('type', 'Growers')->where('status', 'active')->sum('quantity');
+        $roosters = 0;
         $medicationDue = Flock::where('status', 'active')
             ->where('age_weeks', '>=', 4)
             ->orderBy('batch_no')
@@ -35,8 +35,8 @@ class FlockController extends Controller
                 'per_page' => $flocks->perPage(),
                 'total' => $flocks->total(),
             ],
-            'summary' => compact('totalFlocks', 'totalPoultry', 'layers', 'pullets', 'roosters'),
-            'distribution' => compact('layers', 'pullets', 'roosters'),
+            'summary' => compact('totalFlocks', 'totalPoultry', 'layers', 'growers', 'roosters'),
+            'distribution' => compact('layers', 'growers', 'roosters'),
             'buildings' => Building::orderedList(),
             'medicationDue' => $medicationDue,
             'recentActivities' => Activity::where('module', 'Poultry Stock')->latest()->take(5)->get(),
@@ -48,7 +48,7 @@ class FlockController extends Controller
         $data = $request->validate([
             'batch_no' => 'required|unique:flocks',
             'building_name' => 'required|string',
-            'type' => 'required|in:layers,pullets,roosters,Layers,Growers',
+            'type' => 'required|in:Layers,Growers',
             'quantity' => 'required|integer|min:1',
             'date_in' => 'required|date',
         ]);
@@ -86,7 +86,7 @@ class FlockController extends Controller
     public function update(Request $request, Flock $flock)
     {
         $data = $request->validate([
-            'type' => 'required|in:layers,pullets,roosters',
+            'type' => 'required|in:Layers,Growers',
             'quantity' => 'required|integer|min:0',
             'age_weeks' => 'required|integer|min:0',
             'mortality' => 'nullable|integer|min:0',
