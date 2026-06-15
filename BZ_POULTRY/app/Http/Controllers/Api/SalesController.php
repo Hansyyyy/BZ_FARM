@@ -65,15 +65,58 @@ class SalesController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'invoice_no' => ['required', 'string', 'unique:sales', 'regex:/^(SI#|DR#).+/'],
+            'invoice_prefix' => ['required', 'string', 'in:SI#,DR#'],
             'customer_id' => 'required|exists:customers,id',
             'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
+            'sale_category' => 'required|in:egg,chicken',
+            'egg_type' => 'nullable|string|max:255|required_if:sale_category,egg',
+            'chicken_type' => 'nullable|string|max:255|required_if:sale_category,chicken',
+            'quantity' => 'nullable|integer|min:0',
+            'quantity_heads' => 'nullable|integer|min:1|required_if:sale_category,chicken',
+            'quantity_trays' => 'nullable|integer|min:0',
+            'quantity_pieces' => 'nullable|integer|min:0',
+            'pricing_unit' => 'nullable|in:per_head,per_tray,per_piece|required_if:sale_category,egg|required_if:sale_category,chicken',
             'unit_price' => 'required|numeric|min:0',
             'payment_method' => 'required|in:cash,credit',
             'status' => 'required|in:paid,unpaid',
             'sale_date' => 'required|date',
         ]);
+
+        $prefix = $data['invoice_prefix'];
+        $latestInvoice = Sale::where('invoice_no', 'like', $prefix . '%')
+            ->orderByDesc('id')
+            ->value('invoice_no');
+
+        $nextNumber = 1;
+        if ($latestInvoice && str_starts_with($latestInvoice, $prefix)) {
+            $numericPart = substr($latestInvoice, strlen($prefix));
+            if (ctype_digit($numericPart)) {
+                $nextNumber = (int) $numericPart + 1;
+            }
+        }
+
+        $data['invoice_no'] = $prefix . str_pad((string) $nextNumber, 2, '0', STR_PAD_LEFT);
+        unset($data['invoice_prefix']);
+
+        if (($data['sale_category'] ?? null) === 'chicken') {
+            $data['quantity'] = (int) ($data['quantity_heads'] ?? 0);
+            $data['pricing_unit'] = 'per_head';
+            $data['egg_type'] = null;
+            $data['quantity_trays'] = null;
+            $data['quantity_pieces'] = null;
+        } else {
+            $pricingUnit = $data['pricing_unit'] ?? 'per_tray';
+
+            if ($pricingUnit === 'per_piece') {
+                $data['quantity'] = (int) ($data['quantity_pieces'] ?? 0);
+            } else {
+                $data['quantity'] = (int) ($data['quantity_trays'] ?? 0);
+                $data['pricing_unit'] = 'per_tray';
+            }
+
+            $data['chicken_type'] = null;
+            $data['quantity_heads'] = null;
+        }
 
         $data['amount'] = $data['quantity'] * $data['unit_price'];
         $data['user_id'] = auth()->id();
@@ -89,12 +132,39 @@ class SalesController extends Controller
             'invoice_no' => ['required', 'string', 'unique:sales,invoice_no,'.$sale->id, 'regex:/^(SI#|DR#).+/'],
             'customer_id' => 'required|exists:customers,id',
             'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
+            'sale_category' => 'required|in:egg,chicken',
+            'egg_type' => 'nullable|string|max:255|required_if:sale_category,egg',
+            'chicken_type' => 'nullable|string|max:255|required_if:sale_category,chicken',
+            'quantity' => 'nullable|integer|min:0',
+            'quantity_heads' => 'nullable|integer|min:1|required_if:sale_category,chicken',
+            'quantity_trays' => 'nullable|integer|min:0',
+            'quantity_pieces' => 'nullable|integer|min:0',
+            'pricing_unit' => 'nullable|in:per_head,per_tray,per_piece|required_if:sale_category,egg|required_if:sale_category,chicken',
             'unit_price' => 'required|numeric|min:0',
             'payment_method' => 'required|in:cash,credit',
             'status' => 'required|in:paid,unpaid',
             'sale_date' => 'required|date',
         ]);
+
+        if (($data['sale_category'] ?? null) === 'chicken') {
+            $data['quantity'] = (int) ($data['quantity_heads'] ?? 0);
+            $data['pricing_unit'] = 'per_head';
+            $data['egg_type'] = null;
+            $data['quantity_trays'] = null;
+            $data['quantity_pieces'] = null;
+        } else {
+            $pricingUnit = $data['pricing_unit'] ?? 'per_tray';
+
+            if ($pricingUnit === 'per_piece') {
+                $data['quantity'] = (int) ($data['quantity_pieces'] ?? 0);
+            } else {
+                $data['quantity'] = (int) ($data['quantity_trays'] ?? 0);
+                $data['pricing_unit'] = 'per_tray';
+            }
+
+            $data['chicken_type'] = null;
+            $data['quantity_heads'] = null;
+        }
 
         $data['amount'] = $data['quantity'] * $data['unit_price'];
         $sale->update($data);
