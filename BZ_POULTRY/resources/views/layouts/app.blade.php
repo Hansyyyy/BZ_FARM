@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{{ asset('css/farm.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    @viteReactRefresh
+    @vite(['resources/css/app.css', 'resources/js/main.jsx'])
     <style>
     /* Sidebar collapsed (icons only) */
     .sidebar.collapsed { width: 60px; }
