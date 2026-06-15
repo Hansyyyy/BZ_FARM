@@ -25,6 +25,12 @@ class EggProductionController extends Controller
         $softShellToday = EggProduction::whereDate('date', $today)->sum('soft_shell_eggs');
         $damagedToday = EggProduction::whereDate('date', $today)->sum('damaged_eggs');
         $crackedToday = EggProduction::whereDate('date', $today)->sum('cracked_eggs');
+        $smallEggsToday = EggProduction::whereDate('date', $today)->sum('small_eggs');
+        $mediumEggsToday = EggProduction::whereDate('date', $today)->sum('medium_eggs');
+        $largeEggsToday = EggProduction::whereDate('date', $today)->sum('large_eggs');
+        $extraLargeEggsToday = EggProduction::whereDate('date', $today)->sum('extra_large_eggs');
+        $jumboEggsToday = EggProduction::whereDate('date', $today)->sum('jumbo_eggs');
+        $superJumboEggsToday = EggProduction::whereDate('date', $today)->sum('super_jumbo_eggs');
         $weekTotal = EggProduction::where('date', '>=', $weekStart)->sum('total_eggs');
         $monthTotal = EggProduction::where('date', '>=', $monthStart)->sum('total_eggs');
 
@@ -38,7 +44,20 @@ class EggProductionController extends Controller
                 'per_page' => $records->perPage(),
                 'total' => $records->total(),
             ],
-            'summary' => compact('eggsToday', 'softShellToday', 'damagedToday', 'crackedToday', 'weekTotal', 'monthTotal'),
+            'summary' => compact(
+                'eggsToday',
+                'softShellToday',
+                'damagedToday',
+                'crackedToday',
+                'smallEggsToday',
+                'mediumEggsToday',
+                'largeEggsToday',
+                'extraLargeEggsToday',
+                'jumboEggsToday',
+                'superJumboEggsToday',
+                'weekTotal',
+                'monthTotal'
+            ),
             'buildings' => Building::orderedList(),
             'dailyTrend' => EggProduction::where('date', '>=', $monthStart)
                 ->select(
@@ -70,7 +89,20 @@ class EggProductionController extends Controller
             'soft_shell_eggs' => 'required|integer|min:0',
             'damaged_eggs' => 'required|integer|min:0',
             'cracked_eggs' => 'required|integer|min:0',
+            'small_eggs' => 'nullable|integer|min:0',
+            'medium_eggs' => 'nullable|integer|min:0',
+            'large_eggs' => 'nullable|integer|min:0',
+            'extra_large_eggs' => 'nullable|integer|min:0',
+            'jumbo_eggs' => 'nullable|integer|min:0',
+            'super_jumbo_eggs' => 'nullable|integer|min:0',
         ]);
+
+        $data['small_eggs'] = $data['small_eggs'] ?? 0;
+        $data['medium_eggs'] = $data['medium_eggs'] ?? 0;
+        $data['large_eggs'] = $data['large_eggs'] ?? 0;
+        $data['extra_large_eggs'] = $data['extra_large_eggs'] ?? 0;
+        $data['jumbo_eggs'] = $data['jumbo_eggs'] ?? 0;
+        $data['super_jumbo_eggs'] = $data['super_jumbo_eggs'] ?? 0;
 
         $data['user_id'] = auth()->id();
         $record = EggProduction::create($data);
@@ -88,7 +120,20 @@ class EggProductionController extends Controller
             'soft_shell_eggs' => 'required|integer|min:0',
             'damaged_eggs' => 'required|integer|min:0',
             'cracked_eggs' => 'required|integer|min:0',
+            'small_eggs' => 'nullable|integer|min:0',
+            'medium_eggs' => 'nullable|integer|min:0',
+            'large_eggs' => 'nullable|integer|min:0',
+            'extra_large_eggs' => 'nullable|integer|min:0',
+            'jumbo_eggs' => 'nullable|integer|min:0',
+            'super_jumbo_eggs' => 'nullable|integer|min:0',
         ]);
+
+        $data['small_eggs'] = $data['small_eggs'] ?? 0;
+        $data['medium_eggs'] = $data['medium_eggs'] ?? 0;
+        $data['large_eggs'] = $data['large_eggs'] ?? 0;
+        $data['extra_large_eggs'] = $data['extra_large_eggs'] ?? 0;
+        $data['jumbo_eggs'] = $data['jumbo_eggs'] ?? 0;
+        $data['super_jumbo_eggs'] = $data['super_jumbo_eggs'] ?? 0;
 
         $egg->update($data);
         ActivityLogger::log('updated', 'Egg Production', "Updated production record for {$data['date']}");

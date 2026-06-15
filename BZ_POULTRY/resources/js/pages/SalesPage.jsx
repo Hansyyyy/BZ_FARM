@@ -56,7 +56,12 @@ export default function SalesPage() {
 
     const openCreateSale = () => {
         setEditingId(null);
-        setForm({ invoice_prefix: 'SI#', invoice_number: '' });
+        setForm({
+            invoice_prefix: 'SI#',
+            invoice_number: '',
+            sale_category: '',
+            pricing_unit: 'per_tray',
+        });
         setShowForm(true);
     };
 
@@ -65,10 +70,18 @@ export default function SalesPage() {
 
         setEditingId(sale.id);
         setForm({
+            id: sale.id,
             invoice_prefix: invoice.invoice_prefix,
             invoice_number: invoice.invoice_number,
             customer_id: sale.customer_id || sale.customer?.id || '',
             product_id: sale.product_id || sale.product?.id || '',
+            sale_category: sale.sale_category || 'egg',
+            egg_type: sale.egg_type || '',
+            chicken_type: sale.chicken_type || '',
+            quantity_heads: sale.quantity_heads || '',
+            quantity_trays: sale.quantity_trays || '',
+            quantity_pieces: sale.quantity_pieces || '',
+            pricing_unit: sale.pricing_unit || 'per_tray',
             quantity: sale.quantity || '',
             unit_price: sale.unit_price || '',
             payment_method: sale.payment_method || '',
@@ -86,17 +99,19 @@ export default function SalesPage() {
                 return;
             }
 
-            const payload = {
-                ...form,
-                invoice_no: buildInvoiceNo(form.invoice_prefix, form.invoice_number),
-            };
-
-            delete payload.invoice_prefix;
-            delete payload.invoice_number;
+            const payload = { ...form };
 
             if (editingId) {
+                payload.invoice_no = buildInvoiceNo(form.invoice_prefix, form.invoice_number);
+                delete payload.invoice_prefix;
+                delete payload.invoice_number;
+                delete payload.id;
                 await axios.put(`/api/sales/${editingId}`, payload);
             } else {
+                payload.invoice_prefix = form.invoice_prefix || 'SI#';
+                delete payload.invoice_number;
+                delete payload.id;
+
                 const formData = new FormData();
                 Object.entries(payload).forEach(([key, value]) => formData.append(key, value));
                 await axios.post('/api/sales', formData);
