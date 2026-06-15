@@ -49,9 +49,9 @@ class DashboardController extends Controller
             ->take(5);
 
         $flockDistribution = [
-            'layers' => (int) Flock::where('type', 'layers')->where('status', 'active')->sum('quantity'),
-            'pullets' => (int) Flock::where('type', 'pullets')->where('status', 'active')->sum('quantity'),
-            'roosters' => (int) Flock::where('type', 'roosters')->where('status', 'active')->sum('quantity'),
+            'layers' => (int) Flock::where('type', 'Layers')->where('status', 'active')->sum('quantity'),
+            'growers' => (int) Flock::where('type', 'Growers')->where('status', 'active')->sum('quantity'),
+            'roosters' => 0,
         ];
 
         $weeklyProduction = collect(range(0, 6))->map(function (int $offset) use ($weekStart) {

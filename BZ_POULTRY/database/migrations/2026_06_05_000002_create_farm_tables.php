@@ -8,20 +8,29 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('flocks', function (Blueprint $table) {
+        // 1. BUILDINGS MUST BE CREATED FIRST (Parent table)
+        Schema::create('buildings', function (Blueprint $table) {
             $table->id();
-            $table->string('batch_no')->unique();
-            $table->enum('type', ['layers', 'pullets', 'roosters']);
-            $table->string('breed');
-            $table->unsignedInteger('initial_quantity');
-            $table->unsignedInteger('quantity');
-            $table->unsignedInteger('age_weeks')->default(0);
-            $table->date('date_in');
-            $table->unsignedInteger('mortality')->default(0);
-            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->string('name')->unique(); // Added unique constraint to protect deduplication
             $table->timestamps();
         });
 
+        // 2. FLOCKS CAN NOW BE SAFELY CREATED (Child table with foreign key)
+        Schema::create('flocks', function (Blueprint $table) {
+            $table->id();
+            $table->string('batch_no')->unique();
+            $table->foreignId('building_id')->nullable()->constrained('buildings')->onDelete('cascade');
+            $table->enum('type', ['Layers', 'Growers']);
+            $table->unsignedInteger('initial_quantity')->default(0); // Added default 0 for safety
+            $table->unsignedInteger('quantity')->default(0);        // Added default 0 for safety
+            $table->unsignedInteger('age_weeks')->default(0);
+            $table->date('date_in')->nullable();                    // Made nullable for your initial seeder
+            $table->unsignedInteger('mortality')->default(0);
+            $table->enum('status', ['active', 'inactive'])->default('inactive'); // Changed default to 'inactive' to match your initialization setup
+            $table->timestamps();
+        });
+
+        // 3. REST OF THE APP TABLES (Unchanged structure)
         Schema::create('feed_items', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -46,26 +55,6 @@ return new class extends Migration
             $table->date('expiry_date')->nullable();
             $table->date('last_stock_in')->nullable();
             $table->decimal('unit_price', 10, 2)->default(0);
-            $table->timestamps();
-        });
-
-        Schema::create('inventory_items', function (Blueprint $table) {
-            $table->id();
-            $table->string('item_code')->unique();
-            $table->string('name');
-            $table->string('category');
-            $table->decimal('stock', 10, 2)->default(0);
-            $table->string('unit')->default('pcs');
-            $table->decimal('reorder_level', 10, 2)->default(0);
-            $table->string('location')->nullable();
-            $table->decimal('unit_price', 10, 2)->default(0);
-            $table->timestamp('last_updated')->nullable();
-            $table->timestamps();
-        });
-
-        Schema::create('buildings', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
             $table->timestamps();
         });
 
@@ -147,6 +136,7 @@ return new class extends Migration
 
     public function down(): void
     {
+        // REVERSED ORDER TO PREVENT FOREIGN KEY DROP ERRORS
         Schema::dropIfExists('reports');
         Schema::dropIfExists('activities');
         Schema::dropIfExists('sales');
@@ -154,10 +144,13 @@ return new class extends Migration
         Schema::dropIfExists('customers');
         Schema::dropIfExists('egg_productions');
         Schema::dropIfExists('stock_transactions');
+        
+        // Drop flocks BEFORE dropping buildings!
+        Schema::dropIfExists('flocks');
         Schema::dropIfExists('buildings');
+        
         Schema::dropIfExists('inventory_items');
         Schema::dropIfExists('medicine_items');
         Schema::dropIfExists('feed_items');
-        Schema::dropIfExists('flocks');
     }
 };

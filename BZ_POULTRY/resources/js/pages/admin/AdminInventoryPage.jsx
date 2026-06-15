@@ -57,7 +57,7 @@ export default function AdminInventoryPage() {
     }, []);
 
     usePageSearch(
-        activeTab === 'chickens' ? 'Search batch ID, building, breed...' : '',
+        activeTab === 'chickens' ? 'Search batch ID or building...' : '',
         search,
         handleSearchChange,
     );

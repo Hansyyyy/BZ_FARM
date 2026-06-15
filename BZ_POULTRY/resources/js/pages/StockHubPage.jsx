@@ -19,7 +19,15 @@ import AnimatedDatePicker from '../components/ui/AnimatedDatePicker';
 import { exportTableData } from '../utils/exportData';
 import { stockTabs, getStockResource } from '../config/stockTabs';
 
-const PAGE_SIZE = 8;
+const PAGE_SIZE = 11;
+
+function getAgeWeeks(item) {
+    if (!item.date_in) return 0;
+    const now = new Date();
+    const dateIn = new Date(item.date_in);
+    const days = Math.floor((now - dateIn) / (1000 * 60 * 60 * 24));
+    return Math.floor(days / 7);
+}
 
 function prepareFormItem(item, fields) {
     const prepared = { ...item };
@@ -69,37 +77,74 @@ export default function StockHubPage() {
 
     const { data, loading, error, reload, setError } = useFetch(resource.endpoint);
     const [search, setSearch] = useState('');
-    const [filters, setFilters] = useState({ type: '', breed: '', status: '', category: '', building: '', date: '' });
+    const [filters, setFilters] = useState({ type: '', status: '', category: '', building: '', date: '' });
     const [page, setPage] = useState(1);
     const [form, setForm] = useState({});
     const [editingId, setEditingId] = useState(null);
     const [viewItem, setViewItem] = useState(null);
     const [isFormOpen, setFormOpen] = useState(false);
     const [isExportOpen, setExportOpen] = useState(false);
+    const [isTransferOpen, setTransferOpen] = useState(false);
+    const [transferForm, setTransferForm] = useState({ flock_id: '', destination_building: '' });
 
     const activeFields = editingId && resource.editFormFields ? resource.editFormFields : resource.formFields;
     const isEditing = Boolean(editingId);
 
-    const resolvedFields = useMemo(() => activeFields.map((field) => {
-        if (field.optionsKey === 'buildings' && data?.buildings) {
-            const valueKey = field.optionValue || 'id';
-            const labelKey = field.optionLabel || 'name';
+    const resolvedFields = useMemo(() => {
+        const occupiedNames = new Set(
+            (data?.items || [])
+                .filter((item) => item.status === 'active')
+                .flatMap((item) => [item.building_name, item.batch_no].filter(Boolean))
+        );
 
-            return {
-                ...field,
-                options: data.buildings.map((building) => ({
-                    value: String(building[valueKey]),
-                    label: building[labelKey],
-                })),
-            };
-        }
+        return activeFields.map((field) => {
+            if (field.optionsKey === 'buildings' && data?.buildings) {
+                const valueKey = field.optionValue || 'id';
+                const labelKey = field.optionLabel || 'name';
+                const availableBuildings = data.buildings.filter((b) => !occupiedNames.has(b.name));
 
-        return field;
-    }), [activeFields, data]);
+                return {
+                    ...field,
+                    options: availableBuildings.map((building) => ({
+                        value: String(building[valueKey]),
+                        label: building[labelKey],
+                    })),
+                };
+            }
+
+            if (field.key === 'type' && !editingId) {
+                const buildingValue = form.building_name;
+                if (buildingValue) {
+                    const selected = (data?.buildings || []).find(
+                        (b) => String(b.id) === String(buildingValue)
+                    );
+                    const bName = selected?.name || '';
+                    const match = bName.match(/B-(\d+)/);
+                    const num = match ? parseInt(match[1], 10) : 0;
+                    const autoType = num >= 1 && num <= 3 ? 'Growers' : num >= 4 ? 'Layers' : '';
+
+                    if (autoType) {
+                        return { ...field, readOnly: true, _autoValue: autoType };
+                    }
+                }
+                return { ...field, readOnly: false };
+            }
+
+            return field;
+        });
+    }, [activeFields, data, form.building_name, editingId]);
+
+    useEffect(() => {
+        resolvedFields.forEach((field) => {
+            if (field._autoValue && form[field.key] !== field._autoValue) {
+                setForm((prev) => ({ ...prev, [field.key]: field._autoValue }));
+            }
+        });
+    }, [resolvedFields, form]);
 
     useEffect(() => {
         setSearch('');
-        setFilters({ type: '', breed: '', status: '', category: '', building: '', date: '' });
+        setFilters({ type: '', status: '', category: '', building: '', date: '' });
         setPage(1);
         setForm({});
         setEditingId(null);
@@ -117,11 +162,10 @@ export default function StockHubPage() {
         }
 
         if (filters.type) rows = rows.filter((item) => item.type === filters.type);
-        if (filters.breed) rows = rows.filter((item) => item.breed === filters.breed);
         if (filters.status) rows = rows.filter((item) => item.status === filters.status);
         if (filters.category) rows = rows.filter((item) => item.category === filters.category);
         if (filters.building) {
-            rows = rows.filter((item) => String(item.batch_no || '') === filters.building);
+            rows = rows.filter((item) => String(item.building_name || item.batch_no || '') === filters.building);
         }
         if (filters.date) {
             rows = rows.filter((item) => String(item.date || '').slice(0, 10) === filters.date);
@@ -133,14 +177,12 @@ export default function StockHubPage() {
     const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
     const pagedItems = items.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-    const breedOptions = useMemo(() => [...new Set((data?.items || []).map((item) => item.breed).filter(Boolean))], [data]);
     const categoryOptions = useMemo(() => [...new Set((data?.items || []).map((item) => item.category).filter(Boolean))], [data]);
 
     const typeOptions = [
         { value: '', label: 'All Type' },
-        { value: 'layers', label: 'Layers' },
-        { value: 'pullets', label: 'Pullets' },
-        { value: 'roosters', label: 'Roosters' },
+        { value: 'Layers', label: 'Layers' },
+        { value: 'Growers', label: 'Growers' },
     ];
 
     const statusOptions = [
@@ -152,15 +194,10 @@ export default function StockHubPage() {
     const buildingOptions = useMemo(() => [
         { value: '', label: 'All Buildings' },
         ...((data?.buildings || []).map((building) => ({
-            value: String(building.id),
+            value: building.name,
             label: building.name,
         }))),
     ], [data]);
-
-    const breedSelectOptions = useMemo(() => [
-        { value: '', label: 'All Breeds' },
-        ...breedOptions.map((breed) => ({ value: breed, label: breed })),
-    ], [breedOptions]);
 
     const categorySelectOptions = useMemo(() => [
         { value: '', label: 'All Category' },
@@ -175,6 +212,18 @@ export default function StockHubPage() {
     usePageSearch(tabConfig.searchPlaceholder, search, handleSearchChange);
 
     const updateField = (key, value) => {
+        if (key === 'building_name' && !editingId) {
+            const selected = (data?.buildings || []).find(
+                (b) => String(b.id) === String(value)
+            );
+            const bName = selected?.name || '';
+            const match = bName.match(/B-(\d+)/);
+            const num = match ? parseInt(match[1], 10) : 0;
+            const autoType = num >= 1 && num <= 3 ? 'Growers' : num >= 4 ? 'Layers' : '';
+
+            setForm((prev) => ({ ...prev, building_name: value, type: autoType }));
+            return;
+        }
         setForm((previous) => ({ ...previous, [key]: value }));
     };
 
@@ -203,6 +252,24 @@ export default function StockHubPage() {
         try {
             const payload = buildPayload(form, activeFields);
 
+            if (!isEditing && form.age_days) {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const dateIn = new Date(today);
+                dateIn.setDate(dateIn.getDate() - parseInt(form.age_days, 10));
+                payload.date_in = dateIn.toISOString().slice(0, 10);
+                delete payload.age_days;
+            }
+
+            if (!isEditing && payload.building_name) {
+                const selected = (data?.buildings || []).find(
+                    (b) => String(b.id) === String(payload.building_name)
+                );
+                if (selected) {
+                    payload.building_name = selected.name;
+                }
+            }
+
             if (isEditing) {
                 await axios.put(`${resource.endpoint}/${editingId}`, payload);
             } else {
@@ -227,6 +294,47 @@ export default function StockHubPage() {
         });
     };
 
+    const transferableFlocks = useMemo(() => {
+        return (data?.items || []).filter((item) => {
+            if (item.status !== 'active') return false;
+            if (item.type !== 'Growers' && item.type !== 'growers') return false;
+            if (!item.date_in) return false;
+            const now = new Date();
+            const dateIn = new Date(item.date_in);
+            const days = Math.floor((now - dateIn) / (1000 * 60 * 60 * 24));
+            const weeks = Math.floor(days / 7);
+            return weeks >= 18;
+        });
+    }, [data]);
+
+    const availableLayerBuildings = useMemo(() => {
+        const occupiedNames = new Set(
+            (data?.items || [])
+                .filter((item) => item.status === 'active')
+                .map((item) => item.building_name)
+                .filter(Boolean)
+        );
+        return (data?.buildings || []).filter(
+            (b) => !occupiedNames.has(b.name) && /^B-(0[4-9]|1[01])$/.test(b.name)
+        );
+    }, [data]);
+
+    const handleTransfer = async () => {
+        if (!transferForm.flock_id || !transferForm.destination_building) {
+            setError('Please select both a flock and a destination building.');
+            return;
+        }
+
+        try {
+            await axios.post('/api/flocks/transfer', transferForm);
+            setTransferOpen(false);
+            setTransferForm({ flock_id: '', destination_building: '' });
+            await reload();
+        } catch (err) {
+            setError(err.response?.data?.message || err.message);
+        }
+    };
+
     const setTab = (tabId) => {
         setSearchParams({ tab: tabId });
     };
@@ -249,14 +357,6 @@ export default function StockHubPage() {
                                     onChange={(option) => setFilters({ ...filters, type: option })}
                                     options={typeOptions}
                                     placeholder="All Type"
-                                />
-                            )}
-                            {tabConfig.filters?.includes('breed') && (
-                                <AnimatedSelect
-                                    value={filters.breed}
-                                    onChange={(option) => setFilters({ ...filters, breed: option })}
-                                    options={breedSelectOptions}
-                                    placeholder="All Breeds"
                                 />
                             )}
                             {tabConfig.filters?.includes('status') && (
@@ -294,9 +394,21 @@ export default function StockHubPage() {
                                 <i className="bi bi-printer"></i> Export
                             </button>
                         </div>
-                        <button type="button" className="btn btn-primary data-panel-add-btn" onClick={openCreate}>
-                            <i className="bi bi-plus-lg"></i> {tabConfig.addLabel}
-                        </button>
+                        <div className="data-panel-actions">
+                            {activeTab === 'chicken' && (
+                                <button
+                                    type="button"
+                                    className="btn btn-outline"
+                                    onClick={() => setTransferOpen(true)}
+                                    disabled={transferableFlocks.length === 0 || availableLayerBuildings.length === 0}
+                                >
+                                    <i className="bi bi-arrow-left-right"></i> Transfer Chicken
+                                </button>
+                            )}
+                            <button type="button" className="btn btn-primary data-panel-add-btn" onClick={openCreate}>
+                                <i className="bi bi-plus-lg"></i> {tabConfig.addLabel}
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -311,8 +423,11 @@ export default function StockHubPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {pagedItems.length ? pagedItems.map((item) => (
-                                <tr key={item.id || item.batch_no || item.item_code || item.name}>
+                            {pagedItems.length ? pagedItems.map((item) => {
+                                const isMature = activeTab === 'chicken' && item.type === 'Growers' && getAgeWeeks(item) >= 18;
+                                const dueforCull= activeTab === 'chicken' && item.type === 'Layers' && getAgeWeeks(item) >= 100;
+                                return (
+                                    <tr key={item.id || item.batch_no || item.item_code || item.name} className={[isMature && 'row-mature', dueforCull && 'row-cull'].filter(Boolean).join(' ')}>
                                     {resource.columns.map((col) => {
                                         const value = col.render ? col.render(item) : item[col.key] ?? '';
                                         if (col.badge) {
@@ -331,7 +446,8 @@ export default function StockHubPage() {
                                         />
                                     </td>
                                 </tr>
-                            )) : (
+                                );
+                            }) : (
                                 <tr><td colSpan={resource.columns.length + 1}>No records found.</td></tr>
                             )}
                         </tbody>
@@ -422,6 +538,64 @@ export default function StockHubPage() {
                 onClose={() => setExportOpen(false)}
                 onExport={handleExport}
             />
+
+            <Modal
+                open={isTransferOpen}
+                title="Transfer Chicken to Layer Building"
+                size="landscape"
+                onClose={() => {
+                    setTransferOpen(false);
+                    setTransferForm({ flock_id: '', destination_building: '' });
+                }}
+                actions={(
+                    <>
+                        <button
+                            type="button"
+                            className="btn btn-outline"
+                            onClick={() => {
+                                setTransferOpen(false);
+                                setTransferForm({ flock_id: '', destination_building: '' });
+                            }}
+                        >
+                            Cancel
+                        </button>
+                        <button type="button" className="btn btn-primary" onClick={handleTransfer}>
+                            Transfer
+                        </button>
+                    </>
+                )}
+            >
+                <div className="modal-form-grid">
+                    <div className="form-group">
+                        <label>Select Grower Flock (18+ weeks)</label>
+                        <select
+                            className="form-control"
+                            value={transferForm.flock_id}
+                            onChange={(e) => setTransferForm({ ...transferForm, flock_id: e.target.value })}
+                        >
+                            <option value="">Select a flock</option>
+                            {transferableFlocks.map((flock) => (
+                                <option key={flock.id} value={flock.id}>
+                                    {flock.building_name} - {flock.batch_no} ({flock.quantity} birds)
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="form-group">
+                        <label>Destination Layer Building (B-04 to B-11)</label>
+                        <select
+                            className="form-control"
+                            value={transferForm.destination_building}
+                            onChange={(e) => setTransferForm({ ...transferForm, destination_building: e.target.value })}
+                        >
+                            <option value="">Select a building</option>
+                            {availableLayerBuildings.map((b) => (
+                                <option key={b.id} value={b.name}>{b.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+            </Modal>
 
         </PageState>
     );

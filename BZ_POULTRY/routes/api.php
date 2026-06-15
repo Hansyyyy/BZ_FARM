@@ -28,6 +28,7 @@ Route::prefix('api')->group(function () {
 
     Route::get('/flocks', [FlockController::class, 'index'])->name('api.flocks.index');
     Route::post('/flocks', [FlockController::class, 'store'])->name('api.flocks.store');
+    Route::post('/flocks/transfer', [FlockController::class, 'transfer'])->name('api.flocks.transfer');
     Route::put('/flocks/{flock}', [FlockController::class, 'update'])->name('api.flocks.update');
     Route::delete('/flocks/{flock}', [FlockController::class, 'destroy'])->name('api.flocks.destroy');
 

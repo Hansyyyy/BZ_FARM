@@ -4,7 +4,7 @@ export const chartColors = {
     tertiary: '#52b788',
     quaternary: '#95d5b2',
     layers: '#1f7d47',
-    pullets: '#f4b942',
+    growers: '#f4b942',
     roosters: '#4a90d9',
     softShell: '#f59e0b',
     damaged: '#d93f45',
@@ -42,8 +42,7 @@ export function buildInventorySegments(breakdown = {}) {
 export function buildFlockSegments(distribution = {}) {
     return [
         { key: 'layers', label: 'Layers', value: distribution.layers || 0, color: chartColors.layers },
-        { key: 'pullets', label: 'Pullets', value: distribution.pullets || 0, color: chartColors.pullets },
-        { key: 'roosters', label: 'Roosters', value: distribution.roosters || 0, color: chartColors.roosters },
+        { key: 'growers', label: 'Growers', value: distribution.growers || 0, color: chartColors.growers },
     ];
 }
 

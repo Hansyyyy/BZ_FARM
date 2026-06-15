@@ -39,9 +39,10 @@ class DatabaseSeeder extends Seeder
             'role' => 'manager',
         ]);
 
-        // Create default buildings for infrastructure
-        for ($i = 1; $i <= 11; $i++) {
-            Building::firstOrCreate(['name' => "Building {$i}"]);
-        }
+        // Seed buildings and flocks
+        $this->call([
+            BuildingsSeeder::class,
+            FlocksSeeder::class,
+        ]);
     }
 }

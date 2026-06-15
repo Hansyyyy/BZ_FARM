@@ -1,13 +1,13 @@
 const colors = {
     layers: '#2d6a4f',
-    pullets: '#f4b942',
+    growers: '#f4b942',
     roosters: '#4a90d9',
 };
 
 export default function DonutChart({ distribution = {}, total = 0 }) {
     const segments = [
         { key: 'layers', label: 'Layers', value: distribution.layers || 0, color: colors.layers },
-        { key: 'pullets', label: 'Pullets', value: distribution.pullets || 0, color: colors.pullets },
+        { key: 'growers', label: 'Growers', value: distribution.growers || 0, color: colors.growers },
         { key: 'roosters', label: 'Roosters', value: distribution.roosters || 0, color: colors.roosters },
     ];
 
