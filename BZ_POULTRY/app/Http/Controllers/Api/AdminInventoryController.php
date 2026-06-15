@@ -78,7 +78,7 @@ class AdminInventoryController extends Controller
 
         $totalProduction = round($eggRecords->sum('total_eggs'), 2);
 
-        $chickens = $activeFlocks->map(function (Flock $flock) {
+        $chickens = $activeFlocks->map(function (Flock $flock) use ($buildingsById, $buildingsByName) {
             $rate = $flock->initial_quantity > 0
                 ? round(($flock->mortality / $flock->initial_quantity) * 100, 1)
                 : 0;
@@ -249,6 +249,10 @@ class AdminInventoryController extends Controller
 
     private function resolveFlockBuildingName(Flock $flock, $buildingsById, $buildingsByName): string
     {
+        if (! empty($flock->building_name)) {
+            return $flock->building_name;
+        }
+
         if ($buildingsById->has($flock->batch_no)) {
             return $buildingsById->get($flock->batch_no)->name;
         }
@@ -257,11 +261,15 @@ class AdminInventoryController extends Controller
             return $flock->batch_no;
         }
 
-        return $flock->batch_no;
+        return $flock->batch_no ?: 'Unassigned';
     }
 
     private function flockBelongsToBuilding(Flock $flock, Building $building, $buildingsById, $buildingsByName): bool
     {
+        if ($flock->building_name && $flock->building_name === $building->name) {
+            return true;
+        }
+
         if ((string) $flock->batch_no === (string) $building->id) {
             return true;
         }

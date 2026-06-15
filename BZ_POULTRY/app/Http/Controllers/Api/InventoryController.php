@@ -9,11 +9,35 @@ use App\Models\StockTransaction;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class InventoryController extends Controller
 {
     public function index()
     {
+        if (! Schema::hasTable('inventory_items') || ! Schema::hasTable('stock_transactions')) {
+            return response()->json([
+                'items' => [],
+                'pagination' => [
+                    'current_page' => 1,
+                    'last_page' => 1,
+                    'per_page' => 10,
+                    'total' => 0,
+                ],
+                'summary' => [
+                    'totalItems' => 0,
+                    'totalValue' => 0,
+                    'lowStock' => 0,
+                    'stockIn' => 0,
+                    'stockOut' => 0,
+                ],
+                'byCategory' => [],
+                'recentTransactions' => [],
+                'lowStockAlerts' => [],
+                'monthlyMovement' => [],
+            ]);
+        }
+
         $items = InventoryItem::latest()->paginate(10);
         $monthStart = Carbon::now()->startOfMonth();
 

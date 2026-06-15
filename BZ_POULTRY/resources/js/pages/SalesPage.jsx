@@ -6,7 +6,7 @@ import PageState from '../components/ui/PageState';
 import SummaryCards from '../components/ui/SummaryCards';
 import Modal from '../components/ui/Modal';
 import ExportModal from '../components/ui/ExportModal';
-import SaleForm from '../components/forms/SaleForm';
+import SaleForm, { buildInvoiceNo, parseInvoiceNo } from '../components/forms/SaleForm';
 import CustomerForm from '../components/forms/CustomerForm';
 import RowActionButtons from '../components/ui/RowActionButtons';
 import { exportTableData } from '../utils/exportData';
@@ -56,14 +56,17 @@ export default function SalesPage() {
 
     const openCreateSale = () => {
         setEditingId(null);
-        setForm({});
+        setForm({ invoice_prefix: 'SI#', invoice_number: '' });
         setShowForm(true);
     };
 
     const openEdit = (sale) => {
+        const invoice = parseInvoiceNo(sale.invoice_no || '');
+
         setEditingId(sale.id);
         setForm({
-            invoice_no: sale.invoice_no || '',
+            invoice_prefix: invoice.invoice_prefix,
+            invoice_number: invoice.invoice_number,
             customer_id: sale.customer_id || sale.customer?.id || '',
             product_id: sale.product_id || sale.product?.id || '',
             quantity: sale.quantity || '',
@@ -83,7 +86,13 @@ export default function SalesPage() {
                 return;
             }
 
-            const payload = { ...form };
+            const payload = {
+                ...form,
+                invoice_no: buildInvoiceNo(form.invoice_prefix, form.invoice_number),
+            };
+
+            delete payload.invoice_prefix;
+            delete payload.invoice_number;
 
             if (editingId) {
                 await axios.put(`/api/sales/${editingId}`, payload);

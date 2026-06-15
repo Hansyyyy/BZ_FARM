@@ -33,6 +33,10 @@ function formatDateTime(value) {
     return new Date(value).toLocaleString();
 }
 
+function getTodayKey() {
+    return new Date().toISOString().slice(0, 10);
+}
+
 function buildSummaryCards(summary = {}) {
     return [
         { key: 'poultry', label: 'Total Poultry', value: formatNumber(summary.total_poultry), sub: 'Active birds', icon: 'bi-egg-fried' },
@@ -183,7 +187,7 @@ function SnapshotSections({ snapshot, notes, readOnly = false }) {
 }
 
 export default function ReportsPage() {
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
+    const [selectedDate, setSelectedDate] = useState(getTodayKey());
     const [notes, setNotes] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [search, setSearch] = useState('');
@@ -198,10 +202,19 @@ export default function ReportsPage() {
         reload: reloadSnapshot,
     } = useFetch(`/api/daily-reports/snapshot?date=${selectedDate}`);
 
+    const todayKey = getTodayKey();
     const existingReport = snapshotData?.report;
     const snapshot = existingReport?.snapshot || snapshotData?.snapshot;
     const isSubmitted = Boolean(existingReport);
-    const canSubmit = !isAdmin && !isSubmitted;
+    const todaySubmitted = Boolean(listData?.today?.submitted);
+    const isManagerDateLocked = !isAdmin && todaySubmitted;
+    const canSubmit = !isAdmin && !isSubmitted && selectedDate === todayKey;
+
+    useEffect(() => {
+        if (!isAdmin && selectedDate !== todayKey) {
+            setSelectedDate(todayKey);
+        }
+    }, [isAdmin, selectedDate, todayKey]);
 
     useEffect(() => {
         setNotes(existingReport?.notes || '');
@@ -281,8 +294,8 @@ export default function ReportsPage() {
                         <h3>{formatDisplayDate(selectedDate)}</h3>
                         <p>
                             {isSubmitted
-                                ? `Submitted by ${existingReport.submitted_by} on ${formatDateTime(existingReport.submitted_at)}`
-                                : 'This date has not been submitted yet. Review the snapshot below and submit before end of day.'}
+                                ? `Submitted by ${existingReport.submitted_by} on ${formatDateTime(existingReport.submitted_at)}. The date is locked until a new day starts.`
+                                : 'Review today\'s snapshot below and submit before end of day. The report date stays on today.'}
                         </p>
                     </div>
                     {isSubmitted && <StatusBadge status={existingReport.status} />}
@@ -309,6 +322,9 @@ export default function ReportsPage() {
                         onChange={setSelectedDate}
                         placeholder="Select date"
                         allowClear={false}
+                        disabled={isManagerDateLocked}
+                        minDate={!isAdmin ? todayKey : undefined}
+                        maxDate={!isAdmin ? todayKey : undefined}
                     />
                     <span className="daily-report-date-label">{formatDisplayDate(selectedDate)}</span>
                 </div>

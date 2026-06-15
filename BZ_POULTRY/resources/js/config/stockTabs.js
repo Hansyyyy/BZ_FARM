@@ -4,6 +4,7 @@ export const stockTabs = [
     {
         id: 'chicken',
         label: 'Chicken',
+        icon: 'bi-egg-fried',
         resourceKey: 'flocks',
         listTitle: 'Chicken List',
         addLabel: 'Add New Chicken',
@@ -15,6 +16,7 @@ export const stockTabs = [
     {
         id: 'feeds',
         label: 'Feeds',
+        icon: 'bi-bucket',
         resourceKey: 'feed',
         listTitle: 'Feed List',
         addLabel: 'Add New Feed',
@@ -24,6 +26,7 @@ export const stockTabs = [
     {
         id: 'medicine',
         label: 'Medicine & Vaccine',
+        icon: 'bi-capsule',
         resourceKey: 'medicine',
         listTitle: 'Medicine List',
         addLabel: 'Add New Item',
@@ -33,6 +36,7 @@ export const stockTabs = [
     {
         id: 'eggs',
         label: 'Eggs',
+        icon: 'bi-basket',
         resourceKey: 'eggs',
         listTitle: 'Egg Production List',
         addLabel: 'Add New Record',
@@ -42,6 +46,7 @@ export const stockTabs = [
     {
         id: 'medications',
         label: 'Medications',
+        icon: 'bi-box-seam',
         resourceKey: 'inventory',
         listTitle: 'Medications List',
         addLabel: 'Add New Item',

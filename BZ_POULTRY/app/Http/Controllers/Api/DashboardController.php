@@ -12,6 +12,7 @@ use App\Models\MedicineItem;
 use App\Models\Sale;
 use App\Models\StockTransaction;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Schema;
 
 class DashboardController extends Controller
 {
@@ -73,17 +74,26 @@ class DashboardController extends Controller
         $inventoryBreakdown = [
             'feed' => (float) FeedItem::sum('stock'),
             'medicine' => (float) MedicineItem::sum('stock'),
-            'supplies' => (float) InventoryItem::where('category', 'Supplies')->sum('stock'),
-            'others' => (float) InventoryItem::where('category', '!=', 'Supplies')->sum('stock'),
+            'supplies' => 0,
+            'others' => 0,
         ];
 
-        $recentTransactions = StockTransaction::with('user')->latest()->take(8)->get()->map(fn ($txn) => [
-            'id' => $txn->id,
-            'type' => $txn->type,
-            'quantity' => $txn->quantity,
-            'item_name' => $txn->item_name,
-            'created_at' => $txn->created_at,
-        ]);
+        if (Schema::hasTable('inventory_items')) {
+            $inventoryBreakdown['supplies'] = (float) InventoryItem::where('category', 'Supplies')->sum('stock');
+            $inventoryBreakdown['others'] = (float) InventoryItem::where('category', '!=', 'Supplies')->sum('stock');
+        }
+
+        $recentTransactions = collect();
+
+        if (Schema::hasTable('stock_transactions')) {
+            $recentTransactions = StockTransaction::with('user')->latest()->take(8)->get()->map(fn ($txn) => [
+                'id' => $txn->id,
+                'type' => $txn->type,
+                'quantity' => $txn->quantity,
+                'item_name' => $txn->item_name,
+                'created_at' => $txn->created_at,
+            ]);
+        }
 
         return response()->json([
             'summary' => compact('totalPoultry', 'eggsToday', 'feedStock', 'medicineStock', 'salesToday', 'feedLow', 'medicineLow', 'eggSummary'),

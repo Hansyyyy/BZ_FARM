@@ -1702,5 +1702,128 @@ body {
     .summary-cols-5,
     .summary-cols-4 { grid-template-columns: 1fr; }
     .admin-inventory-split { grid-template-columns: 1fr; }
-    .page-toolbar { flex-direction: column; align-items: stretch; }
+}
+
+/* Modal — clearer outlines for manager forms */
+.modal-overlay {
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+}
+
+.modal {
+    background: #ffffff;
+    border: 2px solid rgba(13, 148, 136, 0.45);
+    border-radius: 18px;
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.9),
+        0 24px 56px rgba(15, 23, 42, 0.22);
+}
+
+.modal-header {
+    padding: 20px 24px;
+    border-bottom: 2px solid rgba(148, 163, 184, 0.28);
+    background: linear-gradient(180deg, #f8fffe 0%, #ffffff 100%);
+}
+
+.modal-header h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.modal-body {
+    padding: 24px;
+    background: #ffffff;
+}
+
+.modal-footer {
+    padding: 16px 24px;
+    border-top: 2px solid rgba(148, 163, 184, 0.28);
+    background: #f8fafc;
+}
+
+.modal .form-control,
+.modal select.form-control {
+    border: 2px solid #b8d4c4;
+    border-radius: 10px;
+    background: #fff;
+    min-height: 44px;
+}
+
+.modal .form-control:focus,
+.modal select.form-control:focus {
+    border-color: var(--coach-teal-dark);
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
+.modal .form-group label {
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 8px;
+}
+
+.modal-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 18px;
+}
+
+.modal-form-grid .form-group {
+    margin-bottom: 0;
+    padding: 14px 16px;
+    border: 1px solid #cfe7d8;
+    border-radius: 12px;
+    background: #f8fbf9;
+}
+
+.modal-form-grid .form-group.span-2 {
+    grid-column: span 2;
+}
+
+.invoice-no-field {
+    display: grid;
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+}
+
+.invoice-no-prefix {
+    min-width: 0;
+    padding-left: 10px;
+    padding-right: 10px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.action-btn {
+    width: 36px;
+    height: 36px;
+    border: 2px solid rgba(148, 163, 184, 0.3);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.action-btn:hover {
+    border-color: var(--coach-teal-dark);
+    color: var(--coach-teal-dark);
+    background: #f0fdfa;
+}
+
+@media (max-width: 768px) {
+    .modal-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-form-grid .form-group.span-2 {
+        grid-column: span 1;
+    }
+
+    .invoice-no-field {
+        grid-template-columns: 1fr;
+    }
 }

@@ -17,6 +17,7 @@ import RowActionButtons from '../components/ui/RowActionButtons';
 import AnimatedSelect from '../components/ui/AnimatedSelect';
 import AnimatedDatePicker from '../components/ui/AnimatedDatePicker';
 import { exportTableData } from '../utils/exportData';
+import { formatApiError } from '../utils/formatApiError';
 import { stockTabs, getStockResource } from '../config/stockTabs';
 
 const PAGE_SIZE = 11;
@@ -75,7 +76,7 @@ export default function StockHubPage() {
     const tabConfig = stockTabs.find((tab) => tab.id === activeTab) || stockTabs[0];
     const resource = getStockResource(activeTab);
 
-    const { data, loading, error, reload, setError } = useFetch(resource.endpoint);
+    const { data, loading, error, reload } = useFetch(resource.endpoint);
     const [search, setSearch] = useState('');
     const [filters, setFilters] = useState({ type: '', status: '', category: '', building: '', date: '' });
     const [page, setPage] = useState(1);
@@ -86,6 +87,8 @@ export default function StockHubPage() {
     const [isExportOpen, setExportOpen] = useState(false);
     const [isTransferOpen, setTransferOpen] = useState(false);
     const [transferForm, setTransferForm] = useState({ flock_id: '', destination_building: '' });
+    const [formError, setFormError] = useState(null);
+    const [transferError, setTransferError] = useState(null);
 
     const activeFields = editingId && resource.editFormFields ? resource.editFormFields : resource.formFields;
     const isEditing = Boolean(editingId);
@@ -231,11 +234,13 @@ export default function StockHubPage() {
         setFormOpen(false);
         setForm({});
         setEditingId(null);
+        setFormError(null);
     };
 
     const openCreate = () => {
         setEditingId(null);
-        setForm({});
+        setForm(activeTab === 'chicken' ? { age_days: 0 } : {});
+        setFormError(null);
         setFormOpen(true);
     };
 
@@ -243,20 +248,27 @@ export default function StockHubPage() {
         const fields = resource.editFormFields || resource.formFields;
         setEditingId(item.id);
         setForm(prepareFormItem(item, fields));
+        setFormError(null);
         setFormOpen(true);
     };
 
     const submit = async (event) => {
         event.preventDefault();
+        setFormError(null);
 
         try {
             const payload = buildPayload(form, activeFields);
 
-            if (!isEditing && form.age_days) {
+            if (!isEditing) {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
                 const dateIn = new Date(today);
-                dateIn.setDate(dateIn.getDate() - parseInt(form.age_days, 10));
+                const ageDays = parseInt(form.age_days, 10);
+
+                if (!Number.isNaN(ageDays) && ageDays > 0) {
+                    dateIn.setDate(dateIn.getDate() - ageDays);
+                }
+
                 payload.date_in = dateIn.toISOString().slice(0, 10);
                 delete payload.age_days;
             }
@@ -281,7 +293,7 @@ export default function StockHubPage() {
             closeForm();
             await reload();
         } catch (err) {
-            setError(err.response?.data?.message || err.message);
+            setFormError(formatApiError(err, 'Unable to save record.'));
         }
     };
 
@@ -320,8 +332,10 @@ export default function StockHubPage() {
     }, [data]);
 
     const handleTransfer = async () => {
+        setTransferError(null);
+
         if (!transferForm.flock_id || !transferForm.destination_building) {
-            setError('Please select both a flock and a destination building.');
+            setTransferError('Please select both a flock and a destination building.');
             return;
         }
 
@@ -329,9 +343,10 @@ export default function StockHubPage() {
             await axios.post('/api/flocks/transfer', transferForm);
             setTransferOpen(false);
             setTransferForm({ flock_id: '', destination_building: '' });
+            setTransferError(null);
             await reload();
         } catch (err) {
-            setError(err.response?.data?.message || err.message);
+            setTransferError(formatApiError(err, 'Unable to transfer flock.'));
         }
     };
 
@@ -506,6 +521,7 @@ export default function StockHubPage() {
                     </>
                 )}
             >
+                {formError && <div className="alert-error">{formError}</div>}
                 <DynamicForm id="stock-form" fields={resolvedFields} values={form} onChange={updateField} onSubmit={submit} />
             </Modal>
 
@@ -546,6 +562,7 @@ export default function StockHubPage() {
                 onClose={() => {
                     setTransferOpen(false);
                     setTransferForm({ flock_id: '', destination_building: '' });
+                    setTransferError(null);
                 }}
                 actions={(
                     <>
@@ -555,6 +572,7 @@ export default function StockHubPage() {
                             onClick={() => {
                                 setTransferOpen(false);
                                 setTransferForm({ flock_id: '', destination_building: '' });
+                                setTransferError(null);
                             }}
                         >
                             Cancel
@@ -565,6 +583,7 @@ export default function StockHubPage() {
                     </>
                 )}
             >
+                {transferError && <div className="alert-error">{transferError}</div>}
                 <div className="modal-form-grid">
                     <div className="form-group">
                         <label>Select Grower Flock (18+ weeks)</label>

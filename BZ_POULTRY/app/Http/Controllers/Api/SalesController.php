@@ -65,7 +65,7 @@ class SalesController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'invoice_no' => 'required|unique:sales',
+            'invoice_no' => ['required', 'string', 'unique:sales', 'regex:/^(SI#|DR#).+/'],
             'customer_id' => 'required|exists:customers,id',
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|integer|min:1',
@@ -86,7 +86,7 @@ class SalesController extends Controller
     public function update(Request $request, Sale $sale)
     {
         $data = $request->validate([
-            'invoice_no' => 'required|unique:sales,invoice_no,'.$sale->id,
+            'invoice_no' => ['required', 'string', 'unique:sales,invoice_no,'.$sale->id, 'regex:/^(SI#|DR#).+/'],
             'customer_id' => 'required|exists:customers,id',
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|integer|min:1',

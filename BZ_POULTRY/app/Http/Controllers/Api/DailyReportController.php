@@ -8,11 +8,25 @@ use App\Models\DailyReport;
 use App\Services\DailyReportSnapshotService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class DailyReportController extends Controller
 {
     public function index()
     {
+        if (! Schema::hasTable('daily_reports')) {
+            return response()->json([
+                'reports' => [],
+                'today' => [
+                    'date' => Carbon::today()->toDateString(),
+                    'submitted' => false,
+                    'status' => null,
+                    'report_id' => null,
+                ],
+                'pending_review_count' => 0,
+            ]);
+        }
+
         $reports = DailyReport::with(['submitter', 'reviewer'])
             ->latest('report_date')
             ->take(30)
@@ -56,6 +70,13 @@ class DailyReportController extends Controller
         ]);
 
         $date = Carbon::parse($data['report_date'])->startOfDay();
+        $user = auth()->user();
+
+        if ($user && ! $user->isAdmin() && ! $date->isSameDay(Carbon::today())) {
+            return response()->json([
+                'message' => 'You can only submit a daily report for today.',
+            ], 422);
+        }
 
         if (DailyReport::whereDate('report_date', $date)->exists()) {
             return response()->json([

@@ -8,7 +8,8 @@ export default function ModuleTabs({ tabs, activeTab, onChange }) {
                     className={`module-tab ${activeTab === tab.id ? 'active' : ''}`}
                     onClick={() => onChange(tab.id)}
                 >
-                    {tab.label}
+                    {tab.icon ? <i className={`bi ${tab.icon}`} aria-hidden="true" /> : null}
+                    <span>{tab.label}</span>
                 </button>
             ))}
         </div>

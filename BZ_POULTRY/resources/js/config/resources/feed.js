@@ -1,4 +1,4 @@
-const feedCategories = ['starter feeds', 'grower feeds', 'layer feeds'];
+const feedCategories = ['Starter feeds', 'Grower feeds', 'Layer feeds'];
 
 export default {
     title: 'Feed Inventory',

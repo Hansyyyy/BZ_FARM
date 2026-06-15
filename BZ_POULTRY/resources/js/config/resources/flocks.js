@@ -56,7 +56,7 @@ export default {
         { key: 'batch_no', label: 'Batch Number', type: 'text' },
         { key: 'type', label: 'Type', type: 'select', options: ['Layers', 'Growers'], readOnly: false },
         { key: 'quantity', label: 'Quantity', type: 'number' },
-        { key: 'age_days', label: 'Age (Days)', type: 'number' },
+        { key: 'age_days', label: 'Age (Days)', type: 'number', defaultValue: 0 },
     ],
     editFormFields: [
         { key: 'batch_no', label: 'Building', type: 'text', readOnly: true },

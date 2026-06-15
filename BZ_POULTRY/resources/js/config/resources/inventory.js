@@ -1,3 +1,27 @@
+const getInventoryIcon = (item) => {
+    const category = String(item?.category || '').toLowerCase();
+
+    if (category.includes('feed')) {
+        return 'bi-bucket';
+    }
+
+    if (category.includes('medicine') || category.includes('vaccine')) {
+        return 'bi-capsule';
+    }
+
+    if (category.includes('egg')) {
+        return 'bi-basket';
+    }
+
+    if (category.includes('tool') || category.includes('equipment')) {
+        return 'bi-tools';
+    }
+
+    return 'bi-box-seam';
+};
+
+import React from 'react';
+
 export default {
     title: 'Inventory',
     endpoint: '/api/inventory',
@@ -10,7 +34,16 @@ export default {
     ],
     columns: [
         { key: 'item_code', label: 'Code' },
-        { key: 'name', label: 'Name' },
+        {
+            key: 'name',
+            label: 'Name',
+            render: (item) => React.createElement(
+                'span',
+                { className: 'inventory-item-name' },
+                React.createElement('i', { className: `bi ${getInventoryIcon(item)}`, 'aria-hidden': 'true' }),
+                React.createElement('span', null, item.name)
+            ),
+        },
         { key: 'category', label: 'Category' },
         { key: 'stock', label: 'Stock' },
         { key: 'unit', label: 'Unit' },

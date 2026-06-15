@@ -8,13 +8,21 @@ use App\Models\Activity;
 use App\Models\Building;
 use App\Models\Flock;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class FlockController extends Controller
 {
     public function index()
     {
-        $flocks = Flock::orderBy('building_name')
-            ->paginate(50);
+        $query = Flock::query();
+
+        if (Schema::hasColumn('flocks', 'building_name')) {
+            $query->orderBy('building_name');
+        } else {
+            $query->orderBy('batch_no');
+        }
+
+        $flocks = $query->paginate(50);
         $items = $flocks->items();
 
         $totalFlocks = Flock::where('status', 'active')->count();
@@ -46,12 +54,29 @@ class FlockController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'batch_no' => 'required|unique:flocks',
+            'batch_no' => 'required|unique:flocks,batch_no',
             'building_name' => 'required|string',
             'type' => 'required|in:Layers,Growers',
             'quantity' => 'required|integer|min:1',
-            'date_in' => 'required|date',
+            'date_in' => 'nullable|date',
         ]);
+
+        $data['date_in'] = $data['date_in'] ?? now()->toDateString();
+        $building = Building::where('name', $data['building_name'])->first();
+
+        if ($building) {
+            $data['building_id'] = $building->id;
+        }
+
+        $activeInBuilding = Flock::where('building_name', $data['building_name'])
+            ->where('status', 'active')
+            ->exists();
+
+        if ($activeInBuilding) {
+            return response()->json([
+                'message' => 'This building already has an active flock.',
+            ], 422);
+        }
 
         $placeholder = Flock::where('building_name', $data['building_name'])
             ->where('status', 'inactive')
@@ -60,6 +85,7 @@ class FlockController extends Controller
         if ($placeholder) {
             $placeholder->update([
                 'batch_no' => $data['batch_no'],
+                'building_id' => $data['building_id'] ?? $placeholder->building_id,
                 'type' => $data['type'],
                 'initial_quantity' => $data['quantity'],
                 'quantity' => $data['quantity'],
@@ -70,7 +96,7 @@ class FlockController extends Controller
 
             ActivityLogger::log('created', 'Poultry Stock', "Added new flock {$data['batch_no']} in {$data['building_name']}");
 
-            return response()->json(['message' => 'Flock added successfully.', 'item' => $placeholder], 201);
+            return response()->json(['message' => 'Flock added successfully.', 'item' => $placeholder->fresh()], 201);
         }
 
         $data['initial_quantity'] = $data['quantity'];
@@ -129,7 +155,6 @@ class FlockController extends Controller
             return response()->json(['message' => 'Destination building is not available.'], 422);
         }
 
-        // Save source data before resetting
         $transferData = [
             'batch_no' => $sourceFlock->batch_no,
             'type' => 'Layers',
@@ -140,9 +165,8 @@ class FlockController extends Controller
             'status' => 'active',
         ];
 
-        // Reset source flock FIRST (frees up the batch_no)
         $sourceFlock->update([
-            'batch_no' => $sourceFlock->building_name . '-INIT',
+            'batch_no' => $sourceFlock->building_name.'-INIT',
             'type' => 'Growers',
             'initial_quantity' => 0,
             'quantity' => 0,
@@ -151,7 +175,6 @@ class FlockController extends Controller
             'status' => 'inactive',
         ]);
 
-        // Then update destination placeholder
         $destinationPlaceholder->update($transferData);
 
         ActivityLogger::log('updated', 'Poultry Stock', "Transferred flock to {$data['destination_building']} as Layers");

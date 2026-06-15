@@ -75,12 +75,21 @@ function getInitialViewDate(value) {
     return new Date(today.getFullYear(), today.getMonth(), 1);
 }
 
+function isDateInRange(dateKey, minDate, maxDate) {
+    if (minDate && dateKey < minDate) return false;
+    if (maxDate && dateKey > maxDate) return false;
+    return true;
+}
+
 export default function AnimatedDatePicker({
     value,
     onChange,
     placeholder = 'All Dates',
     allowClear = true,
     className = '',
+    disabled = false,
+    minDate = null,
+    maxDate = null,
 }) {
     const wrapRef = useRef(null);
     const panelRef = useRef(null);
@@ -127,11 +136,19 @@ export default function AnimatedDatePicker({
     };
 
     const handleSelect = (dateKey) => {
+        if (disabled || !isDateInRange(dateKey, minDate, maxDate)) {
+            return;
+        }
+
         onChange(dateKey);
         setOpen(false);
     };
 
     const handleToday = () => {
+        if (disabled || !isDateInRange(todayKey, minDate, maxDate)) {
+            return;
+        }
+
         onChange(todayKey);
         setOpen(false);
     };
@@ -142,15 +159,21 @@ export default function AnimatedDatePicker({
     };
 
     const toggleOpen = () => {
+        if (disabled) {
+            return;
+        }
+
         setOpen((current) => !current);
     };
 
     return (
-        <div className={`animated-select animated-date-picker ${open ? 'is-open' : ''} ${className}`.trim()} ref={wrapRef}>
+        <div className={`animated-select animated-date-picker ${open ? 'is-open' : ''} ${disabled ? 'is-disabled' : ''} ${className}`.trim()} ref={wrapRef}>
             <button
                 type="button"
                 className={`animated-select-trigger ${open ? 'open' : ''} ${value ? 'has-value' : ''}`}
                 onClick={toggleOpen}
+                disabled={disabled}
+                aria-disabled={disabled}
             >
                 <span className={value ? 'animated-select-value' : 'animated-select-placeholder'}>
                     {value ? formatDisplayDate(value) : placeholder}
@@ -193,25 +216,36 @@ export default function AnimatedDatePicker({
                             key={`${viewDate.getFullYear()}-${viewDate.getMonth()}`}
                             className={`animated-date-grid ${slideDirection ? `slide-${slideDirection}` : ''}`}
                         >
-                            {calendarDays.map((cell) => (
-                                <button
-                                    key={cell.key}
-                                    type="button"
-                                    className={[
-                                        'animated-date-day',
-                                        cell.isCurrentMonth ? '' : 'animated-date-day-outside',
-                                        cell.key === todayKey ? 'animated-date-day-today' : '',
-                                        cell.key === value ? 'animated-date-day-selected' : '',
-                                    ].filter(Boolean).join(' ')}
-                                    onClick={() => handleSelect(cell.key)}
-                                >
-                                    {cell.day}
-                                </button>
-                            ))}
+                            {calendarDays.map((cell) => {
+                                const isSelectable = isDateInRange(cell.key, minDate, maxDate);
+
+                                return (
+                                    <button
+                                        key={cell.key}
+                                        type="button"
+                                        className={[
+                                            'animated-date-day',
+                                            cell.isCurrentMonth ? '' : 'animated-date-day-outside',
+                                            cell.key === todayKey ? 'animated-date-day-today' : '',
+                                            cell.key === value ? 'animated-date-day-selected' : '',
+                                            !isSelectable ? 'animated-date-day-disabled' : '',
+                                        ].filter(Boolean).join(' ')}
+                                        onClick={() => handleSelect(cell.key)}
+                                        disabled={!isSelectable}
+                                    >
+                                        {cell.day}
+                                    </button>
+                                );
+                            })}
                         </div>
 
                         <div className="animated-date-footer">
-                            <button type="button" className="animated-date-today-btn" onClick={handleToday}>
+                            <button
+                                type="button"
+                                className="animated-date-today-btn"
+                                onClick={handleToday}
+                                disabled={!isDateInRange(todayKey, minDate, maxDate)}
+                            >
                                 Today
                             </button>
                             {allowClear && value && (

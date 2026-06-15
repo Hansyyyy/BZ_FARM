@@ -1,12 +1,53 @@
 import SearchableSelect from '../ui/SearchableSelect';
 
+const INVOICE_PREFIXES = ['SI#', 'DR#'];
+
+export function parseInvoiceNo(invoiceNo) {
+    if (!invoiceNo) {
+        return { invoice_prefix: 'SI#', invoice_number: '' };
+    }
+
+    const matchedPrefix = INVOICE_PREFIXES.find((prefix) => invoiceNo.startsWith(prefix));
+
+    if (matchedPrefix) {
+        return {
+            invoice_prefix: matchedPrefix,
+            invoice_number: invoiceNo.slice(matchedPrefix.length),
+        };
+    }
+
+    return { invoice_prefix: 'SI#', invoice_number: invoiceNo };
+}
+
+export function buildInvoiceNo(prefix, number) {
+    return `${prefix || 'SI#'}${String(number || '').trim()}`;
+}
+
 export default function SaleForm({ id, form, onChange, onSubmit, customers = [], products = [] }) {
     return (
         <form id={id} onSubmit={onSubmit}>
             <div className="modal-form-grid">
                 <div className="form-group">
                     <label>Invoice No.</label>
-                    <input className="form-control" value={form.invoice_no || ''} onChange={(e) => onChange('invoice_no', e.target.value)} required />
+                    <div className="invoice-no-field">
+                        <select
+                            className="form-control invoice-no-prefix"
+                            value={form.invoice_prefix || 'SI#'}
+                            onChange={(event) => onChange('invoice_prefix', event.target.value)}
+                            required
+                        >
+                            {INVOICE_PREFIXES.map((prefix) => (
+                                <option key={prefix} value={prefix}>{prefix}</option>
+                            ))}
+                        </select>
+                        <input
+                            className="form-control"
+                            value={form.invoice_number || ''}
+                            onChange={(event) => onChange('invoice_number', event.target.value)}
+                            placeholder="Enter number"
+                            required
+                        />
+                    </div>
                 </div>
                 <div className="form-group">
                     <label>Sale Date</label>
