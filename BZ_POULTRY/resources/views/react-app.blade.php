@@ -22,6 +22,7 @@
             farmSettings: @json($farmSettings),
         };
     </script>
+    @viteReactRefresh
     @vite(['resources/css/app.css', 'resources/js/main.jsx'])
      <!-- PDF Export Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
