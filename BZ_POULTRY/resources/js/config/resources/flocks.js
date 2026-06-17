@@ -4,9 +4,6 @@ export default {
     summaryFields: [
         { key: 'totalFlocks', label: 'Total Chickens', sub: 'Active Chickens' },
         { key: 'totalPoultry', label: 'Total Poultry', sub: 'Birds in Stock' },
-        { key: 'layers', label: 'Layers', percentOf: 'totalPoultry' },
-        { key: 'growers', label: 'Growers', percentOf: 'totalPoultry' },
-        { key: 'roosters', label: 'Roosters', percentOf: 'totalPoultry' },
     ],
     columns: [
         { key: 'building_name', label: 'Building', render: (item) => item.building_name || '' },

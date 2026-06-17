@@ -48,12 +48,34 @@ function buildMiniStats(summary, eggSummary, flockDistribution, eggQuality) {
         : 100;
 
     return [
-        { key: 'week-eggs', label: 'Week Eggs', value: eggSummary?.week, icon: 'bi-calendar-week', tone: 'teal', suffix: ' eggs' },
-        { key: 'month-eggs', label: 'Month Eggs', value: eggSummary?.month, icon: 'bi-calendar3', tone: 'green', suffix: ' eggs' },
-        { key: 'daily-avg', label: 'Daily Average', value: eggSummary?.daily_avg, icon: 'bi-graph-up-arrow', tone: 'blue', suffix: ' eggs' },
-        { key: 'quality-rate', label: 'Quality Rate', value: qualityRate, icon: 'bi-shield-check', tone: 'purple', suffix: '%', hint: 'This week' },
-        { key: 'defects', label: 'Defect Eggs', value: defects, icon: 'bi-exclamation-circle', tone: 'orange', suffix: ' eggs', hint: 'This week' },
-        { key: 'roosters', label: 'Roosters', value: flockDistribution?.roosters, icon: 'bi-egg', tone: 'pink' },
+        {
+            key: 'weekEggs',
+            label: 'Weekly Eggs',
+            value: Number(weekEggs || 0).toLocaleString(),
+            hint: 'Last 7 days collection',
+            tone: 'blue',
+        },
+        {
+            key: 'defects',
+            label: 'Defective Eggs',
+            value: Number(defects || 0).toLocaleString(),
+            hint: 'Soft shell, damaged, cracked',
+            tone: defects > 0 ? 'orange' : 'green',
+        },
+        {
+            key: 'qualityRate',
+            label: 'Quality Rate',
+            value: `${qualityRate}%`,
+            hint: 'Good eggs vs weekly total',
+            tone: qualityRate >= 90 ? 'green' : qualityRate >= 75 ? 'yellow' : 'red',
+        },
+        {
+            key: 'activeBirds',
+            label: 'Active Birds',
+            value: Number(summary?.totalPoultry || 0).toLocaleString(),
+            hint: `Layers ${Number(flockDistribution?.layers || 0).toLocaleString()} • Growers ${Number(flockDistribution?.growers || 0).toLocaleString()}`,
+            tone: 'purple',
+        },
     ];
 }
 
@@ -126,18 +148,6 @@ export default function DashboardPage() {
                             </table>
                         </div>
                     </PanelCard>
-
-                    <PanelCard title="Egg Production" subtitle="Total eggs collected this week" actionLabel="View stock" actionTo="/chicken-stock?tab=eggs">
-                        <div className="chart-container">
-                            <VerticalBarChart
-                                data={dashboard?.weeklyProduction || []}
-                                valueKey="total"
-                                labelKey="label"
-                                color={chartColors.bar}
-                                emptyLabel="No egg production data this week."
-                            />
-                        </div>
-                    </PanelCard>
                 </div>
 
                 <div className="dashboard-col dashboard-col-right">
@@ -168,26 +178,6 @@ export default function DashboardPage() {
                         <div className="dashboard-cta-art" aria-hidden="true">
                             <span></span><span></span><span></span>
                         </div>
-                    </div>
-
-                    <div className="dashboard-alerts-grid">
-                        <PanelCard title="Low Stock Alerts" subtitle="Items needing attention">
-                            <ul className="recent-activities">
-                                {dashboard?.lowStockAlerts?.length ? dashboard.lowStockAlerts.map((alert, index) => (
-                                    <li key={index}>
-                                        <span className="activity-icon activity-icon-red"></span>
-                                        <div className="activity-content">
-                                            <strong>{alert.name}</strong>
-                                            <p>{alert.category} · {alert.days_left} days left</p>
-                                        </div>
-                                    </li>
-                                )) : <li className="empty-state">No low stock alerts</li>}
-                            </ul>
-                        </PanelCard>
-
-                        <PanelCard title="Recent Activities" subtitle="Latest manager actions">
-                            <RecentActivities activities={dashboard?.recentActivities} />
-                        </PanelCard>
                     </div>
                 </div>
             </div>

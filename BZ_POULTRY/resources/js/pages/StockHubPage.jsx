@@ -22,6 +22,13 @@ import { stockTabs, getStockResource } from '../config/stockTabs';
 
 const PAGE_SIZE = 11;
 
+const getDefaultDailyReportForm = () => ({
+    report_date: new Date().toISOString().slice(0, 10),
+    module_name: 'BZ Poultry Farm Management System',
+    manager_note: 'Daily operations are monitored through this stock hub. This temporary report helps managers summarize poultry movement, feed usage, and medicine readiness.',
+    poultry_status: 'Flock status stable. Continue tracking transfer-ready growers and low-stock alerts.',
+});
+
 function getAgeWeeks(item) {
     if (!item.date_in) return 0;
     const now = new Date();
@@ -86,7 +93,10 @@ export default function StockHubPage() {
     const [isFormOpen, setFormOpen] = useState(false);
     const [isExportOpen, setExportOpen] = useState(false);
     const [isTransferOpen, setTransferOpen] = useState(false);
+    const [isDailyReportOpen, setDailyReportOpen] = useState(false);
     const [transferForm, setTransferForm] = useState({ flock_id: '', destination_building: '' });
+    const [dailyReportForm, setDailyReportForm] = useState(getDefaultDailyReportForm);
+    const [dailyReportMessage, setDailyReportMessage] = useState(null);
     const [formError, setFormError] = useState(null);
     const [transferError, setTransferError] = useState(null);
 
@@ -350,6 +360,126 @@ export default function StockHubPage() {
         }
     };
 
+    const closeDailyReportModal = () => {
+        setDailyReportOpen(false);
+        setDailyReportMessage(null);
+        setDailyReportForm(getDefaultDailyReportForm());
+    };
+
+    const handleDailyReportSubmit = (event) => {
+        event.preventDefault();
+        setDailyReportMessage('Temporary daily report captured successfully. This is a demo form for manager workflow preview.');
+        setTimeout(() => {
+            closeDailyReportModal();
+        }, 1200);
+    };
+
+    const infographicContext = useMemo(() => {
+        const rows = items || [];
+        const lowStockRows = rows.filter((item) => {
+            const stock = Number(item.stock ?? item.quantity ?? item.total_eggs ?? 0);
+            const reorder = Number(item.reorder_level ?? 20);
+            return stock <= reorder;
+        }).slice(0, 5);
+
+        const expiringRows = rows
+            .filter((item) => item.expiry_date)
+            .map((item) => {
+                const expiry = new Date(item.expiry_date);
+                const today = new Date();
+                const diffDays = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+                return { ...item, _daysLeft: diffDays };
+            })
+            .filter((item) => item._daysLeft >= 0 && item._daysLeft <= 30)
+            .sort((a, b) => a._daysLeft - b._daysLeft)
+            .slice(0, 5);
+
+        const recentRows = [...rows].slice(0, 5).map((item, index) => ({
+            ...item,
+            _tone: index % 2 === 0 ? 'success' : 'danger',
+        }));
+
+        const weekLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        const chartRows = weekLabels.map((label, idx) => {
+            const row = rows[idx];
+            const fallback = Math.max(5, Math.round((rows.length || 1) * (0.55 + (idx * 0.06))));
+            if (!row) return { label, value: fallback };
+            const value = Number(
+                row.quantity ??
+                row.stock ??
+                row.total_eggs ??
+                row.used ??
+                row.mortality ??
+                fallback
+            );
+            return { label, value: Number.isFinite(value) ? value : fallback };
+        });
+
+        const maxValue = Math.max(...chartRows.map((c) => c.value), 1);
+        const kpiValue = chartRows.reduce((sum, c) => sum + c.value, 0);
+
+        return {
+            recentRows,
+            expiringRows,
+            lowStockRows,
+            chartRows,
+            maxValue,
+            kpiValue,
+        };
+    }, [items]);
+
+    const infographicCopy = useMemo(() => {
+        const map = {
+            chicken: {
+                recentTitle: 'Recent Chicken Transactions',
+                expiringTitle: 'Transfer-Ready (Within 30 Days)',
+                expiringSubtitle: 'Growers approaching transfer readiness',
+                lowTitle: 'Health & Low Stock Alerts',
+                chartTitle: 'Chicken Movement (This Week)',
+                kpiLabel: 'Total Bird Movement',
+                icon: 'bi-egg-fried',
+            },
+            feeds: {
+                recentTitle: 'Recent Feed Transactions',
+                expiringTitle: 'Usage Forecast (Within 30 Days)',
+                expiringSubtitle: 'Categories with projected demand',
+                lowTitle: 'Low Feed Stock Alerts',
+                chartTitle: 'Feed Usage (This Week)',
+                kpiLabel: 'Total Feed Used',
+                icon: 'bi-bucket',
+            },
+            medicine: {
+                recentTitle: 'Recent Medicine Transactions',
+                expiringTitle: 'Expiring Soon (Within 30 Days)',
+                expiringSubtitle: 'Items that need immediate consumption',
+                lowTitle: 'Low Medicine Stock Alerts',
+                chartTitle: 'Medicine & Vaccine Usage',
+                kpiLabel: 'Total Item Used',
+                icon: 'bi-capsule',
+            },
+            eggs: {
+                recentTitle: 'Recent Egg Production Entries',
+                expiringTitle: 'Upcoming Collection Focus',
+                expiringSubtitle: 'Buildings with lower recent output',
+                lowTitle: 'Production Quality Alerts',
+                chartTitle: 'Egg Collection (This Week)',
+                kpiLabel: 'Total Eggs Tracked',
+                icon: 'bi-basket',
+            },
+            medications: {
+                recentTitle: 'Recent Medication Transactions',
+                expiringTitle: 'Expiring Soon (Within 30 Days)',
+                expiringSubtitle: 'Medication items nearing expiry',
+                lowTitle: 'Low Medication Stock Alerts',
+                chartTitle: 'Medication Consumption (This Week)',
+                kpiLabel: 'Total Item Used',
+                icon: 'bi-box-seam',
+            },
+        };
+
+        return map[activeTab] || map.chicken;
+    }, [activeTab]);
+
     const setTab = (tabId) => {
         setSearchParams({ tab: tabId });
     };
@@ -359,6 +489,9 @@ export default function StockHubPage() {
             {resource.summaryFields && (
                 <SummaryCards fields={resource.summaryFields} summary={data?.summary} />
             )}
+
+
+ 
 
             <div className="data-panel">
                 <ModuleTabs tabs={stockTabs} activeTab={activeTab} onChange={setTab} />
@@ -411,14 +544,27 @@ export default function StockHubPage() {
                         </div>
                         <div className="data-panel-actions">
                             {activeTab === 'chicken' && (
-                                <button
-                                    type="button"
-                                    className="btn btn-outline"
-                                    onClick={() => setTransferOpen(true)}
-                                    disabled={transferableFlocks.length === 0 || availableLayerBuildings.length === 0}
-                                >
-                                    <i className="bi bi-arrow-left-right"></i> Transfer Chicken
-                                </button>
+                                <>
+                                    <button
+                                        type="button"
+                                        className="btn btn-outline"
+                                        onClick={() => {
+                                            setDailyReportForm(getDefaultDailyReportForm());
+                                            setDailyReportMessage(null);
+                                            setDailyReportOpen(true);
+                                        }}
+                                    >
+                                        <i className="bi bi-journal-check"></i> Create Daily Report
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="btn btn-outline"
+                                        onClick={() => setTransferOpen(true)}
+                                        disabled={transferableFlocks.length === 0 || availableLayerBuildings.length === 0}
+                                    >
+                                        <i className="bi bi-arrow-left-right"></i> Transfer Chicken
+                                    </button>
+                                </>
                             )}
                             <button type="button" className="btn btn-primary data-panel-add-btn" onClick={openCreate}>
                                 <i className="bi bi-plus-lg"></i> {tabConfig.addLabel}
@@ -507,6 +653,87 @@ export default function StockHubPage() {
                 </div>
             )}
 
+            <div className="stock-infographics">
+                <div className="stock-infographics-grid">
+                    <PanelCard title={infographicCopy.recentTitle} subtitle="View all" icon={infographicCopy.icon}>
+                        <ul className="stock-info-list">
+                            {infographicContext.recentRows.length ? infographicContext.recentRows.map((row, index) => (
+                                <li key={`recent-${row.id || row.name || row.batch_no || index}`}>
+                                    <span className={`stock-info-dot ${row._tone === 'danger' ? 'tone-danger' : 'tone-success'}`}></span>
+                                    <div>
+                                        <strong>{row.name || row.batch_no || row.category || `Item ${index + 1}`}</strong>
+                                        <small>{row.category || row.type || row.status || 'Updated recently'}</small>
+                                    </div>
+                                </li>
+                            )) : <li className="stock-info-empty">No recent records.</li>}
+                        </ul>
+                    </PanelCard>
+
+                    <PanelCard title={infographicCopy.expiringTitle} subtitle="View all" icon="bi-hourglass-split">
+                        <ul className="stock-info-list">
+                            {(infographicContext.expiringRows.length ? infographicContext.expiringRows : infographicContext.recentRows).map((row, index) => (
+                                <li key={`exp-${row.id || row.name || row.batch_no || index}`}>
+                                    <span className="stock-info-dot tone-warning"></span>
+                                    <div>
+                                        <strong>{row.name || row.batch_no || `Record ${index + 1}`}</strong>
+                                        <small>
+                                            {row._daysLeft !== undefined
+                                                ? `Expiry in ${row._daysLeft} day(s)`
+                                                : infographicCopy.expiringSubtitle}
+                                        </small>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    </PanelCard>
+
+                    <PanelCard title={infographicCopy.lowTitle} subtitle="View all" icon="bi-exclamation-triangle">
+                        <ul className="stock-info-list">
+                            {infographicContext.lowStockRows.length ? infographicContext.lowStockRows.map((row, index) => (
+                                <li key={`low-${row.id || row.name || row.batch_no || index}`}>
+                                    <span className="stock-info-dot tone-danger"></span>
+                                    <div>
+                                        <strong>{row.name || row.batch_no || row.category || `Item ${index + 1}`}</strong>
+                                        <small>
+                                            Current {(row.stock ?? row.quantity ?? row.total_eggs ?? 0)} | Reorder {(row.reorder_level ?? 20)}
+                                        </small>
+                                    </div>
+                                </li>
+                            )) : <li className="stock-info-empty">No low stock alerts.</li>}
+                        </ul>
+                    </PanelCard>
+                </div>
+
+                <PanelCard title={infographicCopy.chartTitle} subtitle="This month" icon="bi-bar-chart-line">
+                    <div className="stock-usage-wrap">
+                        <div className="stock-usage-chart">
+                            {infographicContext.chartRows.map((entry) => {
+                                const height = `${Math.max(8, (entry.value / infographicContext.maxValue) * 100)}%`;
+                                return (
+                                    <div className="stock-usage-bar-col" key={entry.label}>
+                                        <span className="stock-usage-value">{entry.value}</span>
+                                        <div className="stock-usage-track">
+                                            <span className="stock-usage-fill" style={{ height }}></span>
+                                        </div>
+                                        <span className="stock-usage-label">{entry.label}</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <aside className="stock-usage-kpi">
+                            <div className="stock-usage-kpi-icon">
+                                <i className={`bi ${infographicCopy.icon}`}></i>
+                            </div>
+                            <div>
+                                <span>{infographicCopy.kpiLabel}</span>
+                                <strong>{infographicContext.kpiValue}</strong>
+                                <small>↑ 12.5% vs last month</small>
+                            </div>
+                        </aside>
+                    </div>
+                </PanelCard>
+            </div>
+
             <Modal
                 open={isFormOpen}
                 title={isEditing ? `Update ${tabConfig.listTitle.replace(' List', '')}` : tabConfig.addLabel}
@@ -554,6 +781,76 @@ export default function StockHubPage() {
                 onClose={() => setExportOpen(false)}
                 onExport={handleExport}
             />
+
+            <Modal
+                open={isDailyReportOpen}
+                title="Create Daily Report"
+                size="landscape"
+                onClose={closeDailyReportModal}
+                actions={(
+                    <>
+                        <button
+                            type="button"
+                            className="btn btn-outline"
+                            onClick={closeDailyReportModal}
+                        >
+                            Cancel
+                        </button>
+                        <button type="submit" className="btn btn-primary" form="daily-report-form">
+                            Save Report
+                        </button>
+                    </>
+                )}
+            >
+                {dailyReportMessage && <div className="alert-success">{dailyReportMessage}</div>}
+                <form id="daily-report-form" onSubmit={handleDailyReportSubmit}>
+                    <div className="modal-form-grid daily-report-modal-grid">
+                        <div className="form-group">
+                            <label>Report Date</label>
+                            <input
+                                type="date"
+                                className="form-control"
+                                value={dailyReportForm.report_date}
+                                onChange={(e) => setDailyReportForm((prev) => ({ ...prev, report_date: e.target.value }))}
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>System Module</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                value={dailyReportForm.module_name}
+                                onChange={(e) => setDailyReportForm((prev) => ({ ...prev, module_name: e.target.value }))}
+                            />
+                        </div>
+                        <div className="form-group span-2">
+                            <label>Manager Note</label>
+                            <textarea
+                                className="form-control daily-report-textarea"
+                                value={dailyReportForm.manager_note}
+                                onChange={(e) => setDailyReportForm((prev) => ({ ...prev, manager_note: e.target.value }))}
+                            />
+                        </div>
+                        <div className="form-group span-2">
+                            <label>Poultry Status Snapshot</label>
+                            <textarea
+                                className="form-control daily-report-textarea"
+                                value={dailyReportForm.poultry_status}
+                                onChange={(e) => setDailyReportForm((prev) => ({ ...prev, poultry_status: e.target.value }))}
+                            />
+                        </div>
+                        <div className="form-group span-2">
+                            <div className="daily-report-info">
+                                <strong>About this system</strong>
+                                <p>
+                                    BZ Poultry Farm Management System helps managers oversee chicken stock, feed and medicine inventory,
+                                    transfer scheduling, and daily operations reporting in one dashboard.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </Modal>
 
             <Modal
                 open={isTransferOpen}
