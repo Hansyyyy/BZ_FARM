@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class FeedItem extends Model
 {
+    protected $appends = ['status'];
+
     protected $fillable = [
         'name', 'category', 'stock', 'unit', 'reorder_level',
         'expiry_date', 'last_stock_in', 'cost_per_kg',
@@ -25,12 +27,12 @@ class FeedItem extends Model
     public function getStatusAttribute(): string
     {
         if ($this->stock <= 0) {
-            return 'out_of_stock';
+            return 'No Stock';
         }
         if ($this->stock <= $this->reorder_level) {
-            return 'low_stock';
+            return 'Low Stock';
         }
 
-        return 'in_stock';
+        return 'In Stock';
     }
 }

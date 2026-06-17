@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import useFetch from '../hooks/useFetch';
@@ -99,6 +99,7 @@ export default function StockHubPage() {
     const [dailyReportMessage, setDailyReportMessage] = useState(null);
     const [formError, setFormError] = useState(null);
     const [transferError, setTransferError] = useState(null);
+    const [expandedRows, setExpandedRows] = useState(new Set());
 
     const activeFields = editingId && resource.editFormFields ? resource.editFormFields : resource.formFields;
     const isEditing = Boolean(editingId);
@@ -161,6 +162,7 @@ export default function StockHubPage() {
         setPage(1);
         setForm({});
         setEditingId(null);
+        setExpandedRows(new Set());
     }, [activeTab]);
 
     const items = useMemo(() => {
@@ -221,6 +223,18 @@ export default function StockHubPage() {
         setSearch(value);
         setPage(1);
     }, []);
+
+    const toggleRow = (id) => {
+        setExpandedRows((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
+    };
 
     usePageSearch(tabConfig.searchPlaceholder, search, handleSearchChange);
 
@@ -579,6 +593,7 @@ export default function StockHubPage() {
                     <table className="data-table mockup-table">
                         <thead>
                             <tr>
+                                {resource.expandable && <th style={{ width: 40 }}></th>}
                                 {resource.columns.map((col) => <th key={col.key}>{col.label}</th>)}
                                 <th>Action</th>
                             </tr>
@@ -587,14 +602,26 @@ export default function StockHubPage() {
                             {pagedItems.length ? pagedItems.map((item) => {
                                 const isMature = activeTab === 'chicken' && item.type === 'Growers' && getAgeWeeks(item) >= 18;
                                 const dueforCull= activeTab === 'chicken' && item.type === 'Layers' && getAgeWeeks(item) >= 100;
+                                const rowKey = item.id || item.batch_no || item.item_code || item.name;
+                                const isExpanded = expandedRows.has(rowKey);
+                                const colSpan = resource.columns.length + (resource.expandable ? 2 : 1);
                                 return (
-                                    <tr key={item.id || item.batch_no || item.item_code || item.name} className={[isMature && 'row-mature', dueforCull && 'row-cull'].filter(Boolean).join(' ')}>
+                                    <React.Fragment key={rowKey}>
+                                    <tr className={[isMature && 'row-mature', dueforCull && 'row-cull', resource.expandable && 'expandable-row', isExpanded && 'expanded'].filter(Boolean).join(' ')}>
+                                    {resource.expandable && (
+                                        <td>
+                                            <button type="button" className="expand-toggle" onClick={() => toggleRow(rowKey)}>
+                                                <i className={`bi bi-chevron-${isExpanded ? 'down' : 'right'}`}></i>
+                                            </button>
+                                        </td>
+                                    )}
                                     {resource.columns.map((col) => {
                                         const value = col.render ? col.render(item) : item[col.key] ?? '';
                                         if (col.badge) {
+                                            const slug = String(value || '').toLowerCase().replace(/\s+/g, '-');
                                             return (
                                                 <td key={col.key}>
-                                                    <span className={`status-pill status-${value || 'active'}`}>{value || 'active'}</span>
+                                                    <span className={`status-pill status-${slug || 'active'}`}>{value || 'active'}</span>
                                                 </td>
                                             );
                                         }
@@ -607,9 +634,44 @@ export default function StockHubPage() {
                                         />
                                     </td>
                                 </tr>
+                                {resource.expandable && isExpanded && (
+                                    <tr className="expand-detail-row">
+                                        <td colSpan={colSpan}>
+                                            <div className="expand-detail-grid">
+                                                <div className="expand-detail-section">
+                                                    <h4>Good Eggs</h4>
+                                                    <table className="expand-detail-table">
+                                                        <tbody>
+                                                            {(resource.goodEggBreakdown || []).map((b) => (
+                                                                <tr key={b.key}>
+                                                                    <td>{b.label}</td>
+                                                                    <td>{Number(item[b.key]) || 0}</td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                <div className="expand-detail-section">
+                                                    <h4>Defective Eggs</h4>
+                                                    <table className="expand-detail-table">
+                                                        <tbody>
+                                                            {(resource.defectiveEggBreakdown || []).map((b) => (
+                                                                <tr key={b.key}>
+                                                                    <td>{b.label}</td>
+                                                                    <td>{Number(item[b.key]) || 0}</td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )}
+                                </React.Fragment>
                                 );
                             }) : (
-                                <tr><td colSpan={resource.columns.length + 1}>No records found.</td></tr>
+                                <tr><td colSpan={resource.columns.length + (resource.expandable ? 2 : 1)}>No records found.</td></tr>
                             )}
                         </tbody>
                     </table>

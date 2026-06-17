@@ -39,10 +39,12 @@ class DatabaseSeeder extends Seeder
             'role' => 'manager',
         ]);
 
-        // Seed buildings and flocks
+        // Seed buildings, flocks, feed items, and egg production
         $this->call([
             BuildingsSeeder::class,
             FlocksSeeder::class,
+            FeedItemsSeeder::class,
+            EggProductionSeeder::class,
         ]);
     }
 }

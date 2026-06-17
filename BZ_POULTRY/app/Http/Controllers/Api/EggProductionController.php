@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Activity;
 use App\Models\Building;
 use App\Models\EggProduction;
+use App\Models\Flock;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,8 +19,6 @@ class EggProductionController extends Controller
         $today = Carbon::today();
         $weekStart = Carbon::now()->startOfWeek();
         $monthStart = Carbon::now()->startOfMonth();
-
-        EggProduction::where('date', '<', Carbon::now()->subDays(30))->delete();
 
         $eggsToday = EggProduction::whereDate('date', $today)->sum('total_eggs');
         $softShellToday = EggProduction::whereDate('date', $today)->sum('soft_shell_eggs');
@@ -36,8 +35,20 @@ class EggProductionController extends Controller
 
         $records = EggProduction::with('building')->latest('date')->paginate(10);
 
+        $items = collect($records->items())->map(function ($record) {
+            $buildingStatus = 'inactive';
+            if ($record->building) {
+                $hasActiveFlock = Flock::where('building_id', $record->building->id)
+                    ->where('status', 'active')
+                    ->exists();
+                $buildingStatus = $hasActiveFlock ? 'active' : 'inactive';
+            }
+            $record->building_status = $buildingStatus;
+            return $record;
+        });
+
         return response()->json([
-            'items' => $records->items(),
+            'items' => $items,
             'pagination' => [
                 'current_page' => $records->currentPage(),
                 'last_page' => $records->lastPage(),
@@ -58,7 +69,21 @@ class EggProductionController extends Controller
                 'weekTotal',
                 'monthTotal'
             ),
-            'buildings' => Building::orderedList(),
+            'buildings' => Building::where('name', 'REGEXP', '^B-(0[4-9]|1[01])$')
+                ->addSelect(['buildings.*'])
+                ->selectSub(
+                    Flock::select('status')
+                        ->whereColumn('flocks.building_id', 'buildings.id')
+                        ->where('flocks.status', 'active')
+                        ->limit(1),
+                    'flock_status'
+                )
+                ->orderBy('name')->get()
+                ->map(fn ($b) => [
+                    'id' => $b->id,
+                    'name' => $b->name,
+                    'status' => $b->flock_status ? 'active' : 'inactive',
+                ]),
             'dailyTrend' => EggProduction::where('date', '>=', $monthStart)
                 ->select(
                     'date',
@@ -83,12 +108,12 @@ class EggProductionController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'date' => 'required|date',
+            'date' => 'nullable|date',
             'building_id' => 'required|exists:buildings,id',
-            'total_eggs' => 'required|integer|min:1',
-            'soft_shell_eggs' => 'required|integer|min:0',
-            'damaged_eggs' => 'required|integer|min:0',
-            'cracked_eggs' => 'required|integer|min:0',
+            'total_eggs' => 'nullable|integer|min:0',
+            'soft_shell_eggs' => 'nullable|integer|min:0',
+            'damaged_eggs' => 'nullable|integer|min:0',
+            'cracked_eggs' => 'nullable|integer|min:0',
             'small_eggs' => 'nullable|integer|min:0',
             'medium_eggs' => 'nullable|integer|min:0',
             'large_eggs' => 'nullable|integer|min:0',
@@ -97,6 +122,10 @@ class EggProductionController extends Controller
             'super_jumbo_eggs' => 'nullable|integer|min:0',
         ]);
 
+        $data['total_eggs'] = $data['total_eggs'] ?? 0;
+        $data['soft_shell_eggs'] = $data['soft_shell_eggs'] ?? 0;
+        $data['damaged_eggs'] = $data['damaged_eggs'] ?? 0;
+        $data['cracked_eggs'] = $data['cracked_eggs'] ?? 0;
         $data['small_eggs'] = $data['small_eggs'] ?? 0;
         $data['medium_eggs'] = $data['medium_eggs'] ?? 0;
         $data['large_eggs'] = $data['large_eggs'] ?? 0;
@@ -106,7 +135,7 @@ class EggProductionController extends Controller
 
         $data['user_id'] = auth()->id();
         $record = EggProduction::create($data);
-        ActivityLogger::log('created', 'Egg Production', "Added production record for {$data['date']}");
+        ActivityLogger::log('created', 'Egg Production', "Added production record for building {$data['building_id']}");
 
         return response()->json(['message' => 'Production record added.', 'item' => $record->load('building')], 201);
     }
@@ -114,12 +143,12 @@ class EggProductionController extends Controller
     public function update(Request $request, EggProduction $egg)
     {
         $data = $request->validate([
-            'date' => 'required|date',
+            'date' => 'nullable|date',
             'building_id' => 'required|exists:buildings,id',
-            'total_eggs' => 'required|integer|min:1',
-            'soft_shell_eggs' => 'required|integer|min:0',
-            'damaged_eggs' => 'required|integer|min:0',
-            'cracked_eggs' => 'required|integer|min:0',
+            'total_eggs' => 'nullable|integer|min:0',
+            'soft_shell_eggs' => 'nullable|integer|min:0',
+            'damaged_eggs' => 'nullable|integer|min:0',
+            'cracked_eggs' => 'nullable|integer|min:0',
             'small_eggs' => 'nullable|integer|min:0',
             'medium_eggs' => 'nullable|integer|min:0',
             'large_eggs' => 'nullable|integer|min:0',
@@ -128,6 +157,10 @@ class EggProductionController extends Controller
             'super_jumbo_eggs' => 'nullable|integer|min:0',
         ]);
 
+        $data['total_eggs'] = $data['total_eggs'] ?? 0;
+        $data['soft_shell_eggs'] = $data['soft_shell_eggs'] ?? 0;
+        $data['damaged_eggs'] = $data['damaged_eggs'] ?? 0;
+        $data['cracked_eggs'] = $data['cracked_eggs'] ?? 0;
         $data['small_eggs'] = $data['small_eggs'] ?? 0;
         $data['medium_eggs'] = $data['medium_eggs'] ?? 0;
         $data['large_eggs'] = $data['large_eggs'] ?? 0;
@@ -136,7 +169,7 @@ class EggProductionController extends Controller
         $data['super_jumbo_eggs'] = $data['super_jumbo_eggs'] ?? 0;
 
         $egg->update($data);
-        ActivityLogger::log('updated', 'Egg Production', "Updated production record for {$data['date']}");
+        ActivityLogger::log('updated', 'Egg Production', "Updated production record for building {$data['building_id']}");
 
         return response()->json(['message' => 'Production record updated.', 'item' => $egg->load('building')]);
     }

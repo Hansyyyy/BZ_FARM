@@ -1810,11 +1810,68 @@ body {
     font-size: 11px;
     font-weight: 700;
 }
-.status-in_stock, .status-active, .status-paid { background: #d9f2df; color: #1e623f; }
-.status-low_stock, .status-unpaid { background: #fff6d9; color: #a66e0d; }
-.status-out_of_stock, .status-inactive { background: #fbe2e3; color: #9f3035; }
+.status-in_stock, .status-in-stock, .status-active, .status-paid { background: #d9f2df; color: #1e623f; }
+.status-low_stock, .status-low-stock, .status-unpaid { background: #fff6d9; color: #a66e0d; }
+.status-out_of_stock, .status-no-stock, .status-inactive { background: #fbe2e3; color: #9f3035; }
 .status-pending { background: #e8f2ff; color: #165aab; }
 .status-completed { background: #e2f7ef; color: #1b6b3c; }
+
+/* Expandable row styles */
+.expand-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    color: var(--text-muted);
+    font-size: 14px;
+    border-radius: 4px;
+    transition: background 0.15s;
+}
+.expand-toggle:hover {
+    background: var(--bg-hover, #f0f0f0);
+}
+.expandable-row {
+    cursor: pointer;
+}
+.expandable-row.expanded {
+    background: var(--bg-subtle, #f8f9fa);
+}
+.expand-detail-row td {
+    padding: 0 !important;
+    background: #f8fafc;
+    border-bottom: 2px solid var(--border);
+}
+.expand-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    padding: 16px 24px;
+}
+.expand-detail-section h4 {
+    margin: 0 0 8px 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary, #333);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+}
+.expand-detail-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.expand-detail-table td {
+    padding: 5px 12px;
+    font-size: 13px;
+    border: none;
+}
+.expand-detail-table td:last-child {
+    text-align: right;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+.expand-detail-table tr:nth-child(even) {
+    background: rgba(0,0,0,0.02);
+}
 
 .action-btns { display: flex; gap: 6px; }
 .action-btn {

@@ -13,7 +13,7 @@ use Illuminate\Validation\Rule;
 
 class FeedController extends Controller
 {
-    private const CATEGORIES = ['Starter feeds', 'Grower feeds', 'Layer feeds'];
+    private const CATEGORIES = ['Booster', 'Starter', 'Grower', 'Prelay', 'Layer 1', 'Layer 2'];
 
     public function index()
     {
@@ -52,17 +52,19 @@ class FeedController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'category' => ['required', 'string', Rule::in(self::CATEGORIES)],
+            'name' => 'required|string|max:255',
+            'category' => ['nullable', 'string', Rule::in(self::CATEGORIES)],
             'stock' => 'required|numeric|min:0',
+            'unit' => 'nullable|string|max:50',
             'reorder_level' => 'required|numeric|min:0',
             'expiry_date' => 'nullable|date',
+            'last_stock_in' => 'nullable|date',
             'cost_per_kg' => 'required|numeric|min:0',
         ]);
 
-        $data['name'] = $data['category'];
-        $data['last_stock_in'] = now();
+        $data['last_stock_in'] = $data['last_stock_in'] ?? now();
         $feedItem = FeedItem::create($data);
-        ActivityLogger::log('created', 'Feed Inventory', "Added feed item {$data['category']}");
+        ActivityLogger::log('created', 'Feed Inventory', "Added feed item {$data['name']}");
 
         return response()->json(['message' => 'Feed item added.', 'item' => $feedItem], 201);
     }
@@ -70,16 +72,18 @@ class FeedController extends Controller
     public function update(Request $request, FeedItem $feed)
     {
         $data = $request->validate([
-            'category' => ['required', 'string', Rule::in(self::CATEGORIES)],
+            'name' => 'required|string|max:255',
+            'category' => ['nullable', 'string', Rule::in(self::CATEGORIES)],
             'stock' => 'required|numeric|min:0',
+            'unit' => 'nullable|string|max:50',
             'reorder_level' => 'required|numeric|min:0',
             'expiry_date' => 'nullable|date',
+            'last_stock_in' => 'nullable|date',
             'cost_per_kg' => 'required|numeric|min:0',
         ]);
 
-        $data['name'] = $data['category'];
         $feed->update($data);
-        ActivityLogger::log('updated', 'Feed Inventory', "Updated feed item {$data['category']}");
+        ActivityLogger::log('updated', 'Feed Inventory', "Updated feed item {$data['name']}");
 
         return response()->json(['message' => 'Feed item updated.', 'item' => $feed]);
     }
