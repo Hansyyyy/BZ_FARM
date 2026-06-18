@@ -11,7 +11,7 @@ export const stockTabs = [
         searchPlaceholder: 'search by batch no or type...',
         showDistribution: true,
         showActivities: true,
-        filters: ['type', 'status'],
+        filters: ['type', 'status', 'date'],
     },
     {
         id: 'feeds',
@@ -21,7 +21,7 @@ export const stockTabs = [
         listTitle: 'Feed List',
         addLabel: 'Add New Feed',
         searchPlaceholder: 'search by category...',
-        filters: ['category', 'status'],
+        filters: ['category', 'status', 'date'],
     },
     {
         id: 'medicine',
@@ -31,7 +31,7 @@ export const stockTabs = [
         listTitle: 'Medicine List',
         addLabel: 'Add New Item',
         searchPlaceholder: 'search by name or category...',
-        filters: ['category', 'status'],
+        filters: ['category', 'status', 'date'],
     },
     {
         id: 'eggs',
@@ -51,7 +51,7 @@ export const stockTabs = [
         listTitle: 'Medications List',
         addLabel: 'Add New Item',
         searchPlaceholder: 'search by code or name...',
-        filters: ['category', 'status'],
+        filters: ['category', 'status', 'date'],
     },
 ];
 

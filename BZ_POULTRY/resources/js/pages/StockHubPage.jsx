@@ -77,6 +77,24 @@ function buildPayload(form, fields) {
     return payload;
 }
 
+function toDateOnly(value) {
+    if (!value) return '';
+    const text = String(value);
+    return text.includes('T') ? text.slice(0, 10) : text.slice(0, 10);
+}
+
+function getItemFilterDate(item) {
+    return (
+        toDateOnly(item?.date) ||
+        toDateOnly(item?.created_at) ||
+        toDateOnly(item?.updated_at) ||
+        toDateOnly(item?.date_in) ||
+        toDateOnly(item?.last_stock_in) ||
+        toDateOnly(item?.expiry_date) ||
+        ''
+    );
+}
+
 export default function StockHubPage() {
     const [searchParams, setSearchParams] = useSearchParams();
     const activeTab = searchParams.get('tab') || 'chicken';
@@ -183,7 +201,7 @@ export default function StockHubPage() {
             rows = rows.filter((item) => String(item.building_name || item.batch_no || '') === filters.building);
         }
         if (filters.date) {
-            rows = rows.filter((item) => String(item.date || '').slice(0, 10) === filters.date);
+            rows = rows.filter((item) => getItemFilterDate(item) === filters.date);
         }
 
         return rows;
@@ -390,6 +408,11 @@ export default function StockHubPage() {
 
     const infographicContext = useMemo(() => {
         const rows = items || [];
+        const referenceRows = data?.items || [];
+
+        const filteredReferenceRows = filters.date
+            ? referenceRows.filter((item) => getItemFilterDate(item) === filters.date)
+            : referenceRows;
         const lowStockRows = rows.filter((item) => {
             const stock = Number(item.stock ?? item.quantity ?? item.total_eggs ?? 0);
             const reorder = Number(item.reorder_level ?? 20);
@@ -413,21 +436,47 @@ export default function StockHubPage() {
             _tone: index % 2 === 0 ? 'success' : 'danger',
         }));
 
-        const weekLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-        const chartRows = weekLabels.map((label, idx) => {
-            const row = rows[idx];
-            const fallback = Math.max(5, Math.round((rows.length || 1) * (0.55 + (idx * 0.06))));
-            if (!row) return { label, value: fallback };
-            const value = Number(
-                row.quantity ??
-                row.stock ??
-                row.total_eggs ??
-                row.used ??
-                row.mortality ??
-                fallback
-            );
-            return { label, value: Number.isFinite(value) ? value : fallback };
-        });
+        const dateGrouped = filteredReferenceRows.reduce((acc, row) => {
+            const dateKey = getItemFilterDate(row);
+            if (!dateKey) return acc;
+            if (!acc[dateKey]) acc[dateKey] = [];
+            acc[dateKey].push(row);
+            return acc;
+        }, {});
+
+        const dateKeys = Object.keys(dateGrouped).sort().slice(-7);
+
+        const chartRows = dateKeys.length
+            ? dateKeys.map((dateKey) => {
+                const dayRows = dateGrouped[dateKey];
+                const value = dayRows.reduce((sum, row) => {
+                    const rowValue = Number(
+                        row.quantity ??
+                        row.stock ??
+                        row.total_eggs ??
+                        row.used ??
+                        row.mortality ??
+                        0
+                    );
+                    return sum + (Number.isFinite(rowValue) ? rowValue : 0);
+                }, 0);
+
+                return { label: dateKey.slice(5), value: Math.max(0, Math.round(value)) };
+            })
+            : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((label, idx) => {
+                const row = rows[idx];
+                const fallback = Math.max(5, Math.round((rows.length || 1) * (0.55 + (idx * 0.06))));
+                if (!row) return { label, value: fallback };
+                const value = Number(
+                    row.quantity ??
+                    row.stock ??
+                    row.total_eggs ??
+                    row.used ??
+                    row.mortality ??
+                    fallback
+                );
+                return { label, value: Number.isFinite(value) ? value : fallback };
+            });
 
         const maxValue = Math.max(...chartRows.map((c) => c.value), 1);
         const kpiValue = chartRows.reduce((sum, c) => sum + c.value, 0);
@@ -440,7 +489,7 @@ export default function StockHubPage() {
             maxValue,
             kpiValue,
         };
-    }, [items]);
+    }, [items, data, filters.date]);
 
     const infographicCopy = useMemo(() => {
         const map = {
@@ -638,27 +687,37 @@ export default function StockHubPage() {
                                     <tr className="expand-detail-row">
                                         <td colSpan={colSpan}>
                                             <div className="expand-detail-grid">
-                                                <div className="expand-detail-section">
-                                                    <h4>Good Eggs</h4>
+                                                <div className="expand-detail-section good-eggs-section">
+                                                    <div className="expand-detail-header">
+                                                        <h4><i className="bi bi-emoji-smile"></i> Good Eggs</h4>
+                                                        <span className="expand-detail-total">
+                                                            {(resource.goodEggBreakdown || []).reduce((sum, b) => sum + (Number(item[b.key]) || 0), 0)}
+                                                        </span>
+                                                    </div>
                                                     <table className="expand-detail-table">
                                                         <tbody>
                                                             {(resource.goodEggBreakdown || []).map((b) => (
                                                                 <tr key={b.key}>
                                                                     <td>{b.label}</td>
-                                                                    <td>{Number(item[b.key]) || 0}</td>
+                                                                    <td><span className="egg-count-pill good">{Number(item[b.key]) || 0}</span></td>
                                                                 </tr>
                                                             ))}
                                                         </tbody>
                                                     </table>
                                                 </div>
-                                                <div className="expand-detail-section">
-                                                    <h4>Defective Eggs</h4>
+                                                <div className="expand-detail-section defective-eggs-section">
+                                                    <div className="expand-detail-header">
+                                                        <h4><i className="bi bi-exclamation-triangle"></i> Defective Eggs</h4>
+                                                        <span className="expand-detail-total">
+                                                            {(resource.defectiveEggBreakdown || []).reduce((sum, b) => sum + (Number(item[b.key]) || 0), 0)}
+                                                        </span>
+                                                    </div>
                                                     <table className="expand-detail-table">
                                                         <tbody>
                                                             {(resource.defectiveEggBreakdown || []).map((b) => (
                                                                 <tr key={b.key}>
                                                                     <td>{b.label}</td>
-                                                                    <td>{Number(item[b.key]) || 0}</td>
+                                                                    <td><span className="egg-count-pill defective">{Number(item[b.key]) || 0}</span></td>
                                                                 </tr>
                                                             ))}
                                                         </tbody>

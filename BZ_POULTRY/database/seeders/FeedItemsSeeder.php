@@ -15,7 +15,7 @@ class FeedItemsSeeder extends Seeder
             FeedItem::updateOrCreate(
                 ['name' => $type],
                 [
-                    'category' => null,
+                    'category' => $type,
                     'stock' => 0,
                     'unit' => 'kg',
                     'reorder_level' => 0,

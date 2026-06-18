@@ -16,7 +16,7 @@ class EggProductionSeeder extends Seeder
 
         foreach ($layerBuildings as $building) {
             EggProduction::create([
-                'date' => null,
+                'date' => now()->toDateString(),
                 'building_id' => $building->id,
                 'total_eggs' => 0,
                 'soft_shell_eggs' => 0,

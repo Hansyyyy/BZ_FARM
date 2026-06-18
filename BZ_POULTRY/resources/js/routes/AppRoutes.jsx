@@ -5,6 +5,7 @@ import StockHubPage from '../pages/StockHubPage';
 import SalesPage from '../pages/SalesPage';
 import ReportsPage from '../pages/ReportsPage';
 import SettingsPage from '../pages/SettingsPage';
+import HistoryPage from '../pages/HistoryPage';
 import NotFoundPage from '../pages/NotFoundPage';
 
 const user = window.Laravel?.user;
@@ -19,6 +20,7 @@ export default function AppRoutes() {
             <Route path="/Inventory-stock" element={<Navigate to="/inventory-stock" replace />} />
             <Route path="/daily-reports" element={<ReportsPage />} />
             <Route path="/sales" element={<SalesPage />} />
+            <Route path="/history" element={<HistoryPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/poultry-stock" element={<Navigate to="/chicken-stock" replace />} />

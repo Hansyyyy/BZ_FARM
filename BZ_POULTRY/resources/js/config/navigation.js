@@ -3,11 +3,13 @@ export const managerNavItems = [
     { path: '/daily-reports', label: 'Daily Reports', icon: 'bi-calendar-day' },
     { path: '/inventory-stock', label: 'Inventory Stock', icon: 'bi-box-seam' },
     { path: '/sales', label: 'Sales Management', icon: 'bi-cash-stack' },
+    { path: '/history', label: 'History', icon: 'bi-clock-history' },
 ];
 
 export const adminNavItems = [
     { path: '/dashboard', label: 'Inventory Dashboard', icon: 'bi-grid-1x2' },
     { path: '/daily-reports', label: 'Daily Reports', icon: 'bi-calendar-day' },
+    { path: '/history', label: 'History', icon: 'bi-clock-history' },
     { path: '/settings', label: 'Settings', icon: 'bi-gear', adminOnly: true },
 ];
 

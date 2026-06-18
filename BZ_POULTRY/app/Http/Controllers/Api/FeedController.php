@@ -62,6 +62,23 @@ class FeedController extends Controller
             'cost_per_kg' => 'required|numeric|min:0',
         ]);
 
+        if (empty($data['category']) && in_array($data['name'], self::CATEGORIES, true)) {
+            $data['category'] = $data['name'];
+        }
+
+        $request->merge($data);
+
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'category' => ['required', 'string', Rule::in(self::CATEGORIES)],
+            'stock' => 'required|numeric|min:0',
+            'unit' => 'nullable|string|max:50',
+            'reorder_level' => 'required|numeric|min:0',
+            'expiry_date' => 'nullable|date',
+            'last_stock_in' => 'nullable|date',
+            'cost_per_kg' => 'required|numeric|min:0',
+        ]);
+
         $data['last_stock_in'] = $data['last_stock_in'] ?? now();
         $feedItem = FeedItem::create($data);
         ActivityLogger::log('created', 'Feed Inventory', "Added feed item {$data['name']}");
@@ -74,6 +91,23 @@ class FeedController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'category' => ['nullable', 'string', Rule::in(self::CATEGORIES)],
+            'stock' => 'required|numeric|min:0',
+            'unit' => 'nullable|string|max:50',
+            'reorder_level' => 'required|numeric|min:0',
+            'expiry_date' => 'nullable|date',
+            'last_stock_in' => 'nullable|date',
+            'cost_per_kg' => 'required|numeric|min:0',
+        ]);
+
+        if (empty($data['category']) && in_array($data['name'], self::CATEGORIES, true)) {
+            $data['category'] = $data['name'];
+        }
+
+        $request->merge($data);
+
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'category' => ['required', 'string', Rule::in(self::CATEGORIES)],
             'stock' => 'required|numeric|min:0',
             'unit' => 'nullable|string|max:50',
             'reorder_level' => 'required|numeric|min:0',
