@@ -1625,7 +1625,30 @@ body {
     font-weight: 600;
     cursor: pointer;
 }
-.panel-card-body { padding: 20px; }
+.panel-card-body {
+    padding: 20px;
+}
+
+/* ── Collapsible panel smooth dropdown animation ── */
+.panel-card-body-anim {
+    display: grid;
+    grid-template-rows: 1fr;
+    opacity: 1;
+    overflow: hidden;
+    padding: 14px 20px;
+    transition: grid-template-rows 280ms cubic-bezier(0.22, 1, 0.36, 1), opacity 240ms ease;
+}
+
+
+.panel-card-body-anim.is-collapsed {
+    grid-template-rows: 0fr;
+    opacity: 0;
+}
+
+.panel-card-body-inner {
+    min-height: 0;
+}
+
 
 .donut-chart-wrap {
     display: flex;
