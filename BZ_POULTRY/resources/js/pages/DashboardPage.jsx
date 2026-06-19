@@ -87,6 +87,8 @@ export default function DashboardPage() {
     const inventoryRows = buildInventorySegments(dashboard?.inventoryBreakdown);
     const miniStats = buildMiniStats(summary, eggSummary, flockDistribution, dashboard?.eggQuality);
 
+    
+    
     return (
         <PageState loading={loading} error={error ? `Unable to load dashboard: ${error}` : null} loadingLabel="Loading dashboard...">
             <SummaryCards items={buildSummaryItems(summary)} columns={5} />

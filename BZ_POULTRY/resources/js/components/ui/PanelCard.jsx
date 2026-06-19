@@ -65,7 +65,15 @@ export default function PanelCard({
                     {(action || collapsible) && headerActions}
                 </div>
             )}
-            {!collapsed && <div className="panel-card-body">{children}</div>}
+            <div
+                className={[
+                    'panel-card-body',
+                    'panel-card-body-anim',
+                    collapsed ? 'is-collapsed' : '',
+                ].filter(Boolean).join(' ')}
+            >
+                <div className="panel-card-body-inner">{children}</div>
+            </div>
         </div>
     );
 }
