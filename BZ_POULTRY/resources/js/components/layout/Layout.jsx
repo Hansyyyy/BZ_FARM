@@ -7,6 +7,15 @@ export default function Layout({ children }) {
     const [collapsed, setCollapsed] = useState(localStorage.getItem('sidebarCollapsed') === '1');
     const [mobileOpen, setMobileOpen] = useState(false);
     const [showLogout, setShowLogout] = useState(false);
+    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+
+    const toggleTheme = () => {
+        const next = theme === 'dark' ? 'light' : 'dark';
+        setTheme(next);
+        localStorage.setItem('theme', next);
+        document.documentElement.classList.toggle('dark-theme', next === 'dark');
+    };
+
 
     const toggleSidebar = () => {
         if (window.innerWidth <= 992) {
@@ -22,6 +31,17 @@ export default function Layout({ children }) {
     return (
         <div className="app-layout">
             <Sidebar collapsed={collapsed} mobileOpen={mobileOpen} onNavigate={() => setMobileOpen(false)} />
+
+            <button
+                type="button"
+                className="theme-toggle"
+                onClick={toggleTheme}
+                aria-label="Toggle dark mode"
+                title="Toggle dark mode"
+            >
+                <i className={`bi ${theme === 'dark' ? 'bi-moon-stars' : 'bi-sun'}`}></i>
+            </button>
+
             <div className={`main-content ${collapsed ? 'collapsed-margin' : ''}`}>
                 <Header onToggleSidebar={toggleSidebar} onLogout={() => setShowLogout(true)} />
                 <div className="page-content">{children}</div>
@@ -30,3 +50,4 @@ export default function Layout({ children }) {
         </div>
     );
 }
+
