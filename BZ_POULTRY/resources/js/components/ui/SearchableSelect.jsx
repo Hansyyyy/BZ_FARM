@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import FormLabel from '../forms/FormLabel';
 
 export default function SearchableSelect({
+    id,
     label,
     placeholder = 'Search and select...',
     options = [],
@@ -9,12 +11,14 @@ export default function SearchableSelect({
     getOptionLabel = (option) => option.name,
     getOptionValue = (option) => option.id,
     emptyMessage = 'No matches found.',
+    required = false,
 }) {
     const wrapRef = useRef(null);
     const panelRef = useRef(null);
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
     const [panelStyle, setPanelStyle] = useState({});
+    const inputId = id || `searchable-select-${label?.toLowerCase().replace(/\s+/g, '-') || 'field'}`;
 
     const selected = useMemo(
         () => options.find((option) => String(getOptionValue(option)) === String(value)),
@@ -72,11 +76,27 @@ export default function SearchableSelect({
 
     return (
         <div className={`searchable-select ${open ? 'is-open' : ''}`} ref={wrapRef}>
-            {label && <label className="searchable-select-label">{label}</label>}
+            {label && (
+                <FormLabel htmlFor={inputId} required={required}>
+                    {label}
+                </FormLabel>
+            )}
+            <input
+                id={inputId}
+                type="text"
+                className="searchable-select-validator"
+                value={value ?? ''}
+                onChange={() => {}}
+                required={required}
+                tabIndex={-1}
+                aria-hidden="true"
+            />
             <button
                 type="button"
-                className={`searchable-select-trigger ${open ? 'open' : ''}`}
+                className={`searchable-select-trigger ${open ? 'open' : ''} ${required && !value ? 'is-invalid' : ''}`}
                 onClick={() => setOpen((current) => !current)}
+                aria-required={required || undefined}
+                aria-invalid={required && !value ? true : undefined}
             >
                 <span className={selected ? 'searchable-select-value' : 'searchable-select-placeholder'}>
                     {selected ? getOptionLabel(selected) : placeholder}

@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\EggProductionController;
 use App\Http\Controllers\Api\FeedController;
 use App\Http\Controllers\Api\FlockController;
+use App\Http\Controllers\Api\HistoryController;
 use App\Http\Controllers\Api\InventoryController;
 use App\Http\Controllers\Api\MedicineController;
 use App\Http\Controllers\Api\NotificationController;
@@ -20,6 +21,8 @@ Route::prefix('api')->group(function () {
     Route::get('/user', fn () => auth()->user());
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('api.dashboard');
+
+    Route::get('/history', [HistoryController::class, 'index'])->name('api.history.index');
 
     Route::get('/calendar-notes', [CalendarNoteController::class, 'index'])->name('api.calendar-notes.index');
     Route::post('/calendar-notes', [CalendarNoteController::class, 'store'])->name('api.calendar-notes.store');

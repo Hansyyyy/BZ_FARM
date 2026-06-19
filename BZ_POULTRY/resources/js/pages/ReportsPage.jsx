@@ -7,6 +7,7 @@ import SummaryCards from '../components/ui/SummaryCards';
 import PanelCard from '../components/ui/PanelCard';
 import Modal from '../components/ui/Modal';
 import AnimatedDatePicker from '../components/ui/AnimatedDatePicker';
+import FormLabel from '../components/forms/FormLabel';
 
 const isAdmin = window.Laravel?.user?.role === 'admin';
 
@@ -344,7 +345,9 @@ export default function ReportsPage() {
                     {canSubmit && (
                         <PanelCard title="End-of-Day Notes" subtitle="Optional remarks for the admin">
                             <div className="form-group">
+                                <FormLabel htmlFor="daily-report-notes">Notes (optional)</FormLabel>
                                 <textarea
+                                    id="daily-report-notes"
                                     className="form-control"
                                     rows={4}
                                     value={notes}

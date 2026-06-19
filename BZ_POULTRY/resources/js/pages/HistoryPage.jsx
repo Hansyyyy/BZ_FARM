@@ -1,197 +1,187 @@
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import useFetch from '../hooks/useFetch';
+import { usePageSearch } from '../context/HeaderSearchContext';
+import PageState from '../components/ui/PageState';
+import ModuleTabs from '../components/ui/ModuleTabs';
+import ExportModal from '../components/ui/ExportModal';
 import { exportTableData } from '../utils/exportData';
 
-const historyBatches = [
-    {
-        id: 'BATCH-001',
-        batchDateIn: '2026-01-10',
-        batchEndDate: '2026-05-30',
-        cullCount: 18,
-        mortalities: 12,
-        medications: ['Vitamin AD3E (Jan 15 - Jan 22)', 'Doxycycline (Feb 02 - Feb 07)'],
-    },
-    {
-        id: 'BATCH-002',
-        batchDateIn: '2026-03-01',
-        batchEndDate: '2026-07-18',
-        cullCount: 9,
-        mortalities: 6,
-        medications: ['Newcastle Vaccine (Mar 05)', 'Multivitamin Boost (Mar 20 - Mar 27)'],
-    },
+const HISTORY_TABS = [
+    { id: 'inventory', label: 'Inventory Stock', icon: 'bi-box-seam' },
+    { id: 'sales', label: 'Sales Management', icon: 'bi-cash-stack' },
 ];
 
-const exportColumns = [
-    { key: 'id', label: 'Batch' },
-    { key: 'batchDateIn', label: 'Date In' },
-    { key: 'batchEndDate', label: 'End Date' },
-    { key: 'cullCount', label: '# of Cull' },
-    { key: 'mortalities', label: 'Mortalities' },
-    {
-        key: 'medications',
-        label: 'Medication History',
-        render: (row) => (Array.isArray(row.medications) ? row.medications.join(' | ') : ''),
-    },
+const inventoryColumns = [
+    { key: 'date', label: 'Date' },
+    { key: 'time', label: 'Time' },
+    { key: 'module', label: 'Module' },
+    { key: 'action', label: 'Action' },
+    { key: 'description', label: 'Details' },
+    { key: 'recorded_by', label: 'Recorded By' },
 ];
+
+const salesColumns = [
+    { key: 'sale_date', label: 'Date' },
+    { key: 'invoice_no', label: 'Invoice No.' },
+    { key: 'customer', label: 'Customer' },
+    { key: 'product', label: 'Product' },
+    { key: 'quantity', label: 'Qty' },
+    {
+        key: 'amount',
+        label: 'Amount',
+        render: (row) => `₱${Number(row.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+    },
+    { key: 'payment_method', label: 'Payment' },
+    { key: 'status', label: 'Status' },
+    { key: 'recorded_by', label: 'Recorded By' },
+];
+
+function actionClass(action) {
+    const value = String(action || '').toLowerCase();
+    if (value.includes('delete') || value.includes('out')) return 'history-pill history-pill-danger';
+    if (value.includes('create') || value.includes('in')) return 'history-pill history-pill-success';
+    return 'history-pill history-pill-warning';
+}
 
 export default function HistoryPage() {
-    const [exportError, setExportError] = useState('');
-    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-    const [selectedExportFormat, setSelectedExportFormat] = useState('pdf');
+    const [activeTab, setActiveTab] = useState('inventory');
+    const [search, setSearch] = useState('');
+    const [showExport, setShowExport] = useState(false);
 
-    const handleExport = (format) => {
-        try {
-            setExportError('');
-            exportTableData({
-                title: 'Batch History',
-                columns: exportColumns,
-                rows: historyBatches,
-                format,
-            });
-        } catch (error) {
-            setExportError(error?.message || 'Unable to export history data.');
-        }
-    };
+    const { data, loading, error } = useFetch(`/api/history?type=${activeTab}`);
 
-    const openExportModal = () => {
-        setExportError('');
-        setSelectedExportFormat('pdf');
-        setIsExportModalOpen(true);
-    };
+    const handleSearchChange = useCallback((value) => {
+        setSearch(value);
+    }, []);
 
-    const closeExportModal = () => {
-        setIsExportModalOpen(false);
-    };
+    usePageSearch('Search history records...', search, handleSearchChange);
 
-    const handleConfirmExport = () => {
-        handleExport(selectedExportFormat);
-        setIsExportModalOpen(false);
+    const items = data?.items || [];
+    const columns = activeTab === 'sales' ? salesColumns : inventoryColumns;
+
+    const filteredItems = useMemo(() => {
+        if (!search.trim()) return items;
+
+        const query = search.toLowerCase();
+        return items.filter((item) => Object.values(item).some((value) => String(value ?? '').toLowerCase().includes(query)));
+    }, [items, search]);
+
+    const exportTitle = activeTab === 'sales' ? 'Sales History' : 'Inventory Stock History';
+
+    const handleTabChange = (tabId) => {
+        setActiveTab(tabId);
+        setSearch('');
     };
 
     return (
-        <section className="card history-table-card">
-            <div className="card-body">
+        <PageState loading={loading} error={error} loadingLabel="Loading history...">
+            <div className="data-panel history-table-card">
                 <div className="history-table-header">
                     <div>
-                        <h2 className="history-title">Batch History</h2>
+                        <h2 className="history-title">History</h2>
                         <p className="history-subtitle mb-0">
-                            Track each batch date-in, end date, cull count, mortalities, and medication timeline.
+                            {activeTab === 'sales'
+                                ? 'Sales transactions recorded in Sales Management.'
+                                : 'Inventory updates logged from stock modules when managers add or edit records.'}
                         </p>
                     </div>
                     <div className="history-table-actions">
-                        <span className="history-batch-count">{historyBatches.length} batches</span>
-                        <button type="button" className="btn btn-primary btn-sm" onClick={openExportModal}>
-                            Export
+                        <span className="history-batch-count">{filteredItems.length} records</span>
+                        <button type="button" className="btn btn-outline" onClick={() => setShowExport(true)}>
+                            <i className="bi bi-printer"></i> Export
                         </button>
                     </div>
                 </div>
-                {exportError ? <div className="alert-error">{exportError}</div> : null}
+
+                <ModuleTabs tabs={HISTORY_TABS} activeTab={activeTab} onChange={handleTabChange} />
 
                 <div className="table-responsive">
-                    <table className="history-table">
-                        <thead>
-                            <tr>
-                                <th>Batch</th>
-                                <th>Date In</th>
-                                <th>End Date</th>
-                                <th># of Cull</th>
-                                <th>Mortalities</th>
-                                <th>Medication History</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {historyBatches.map((batch) => (
-                                <tr key={batch.id}>
-                                    <td>
-                                        <div className="history-batch-id">{batch.id}</div>
-                                    </td>
-                                    <td>{batch.batchDateIn}</td>
-                                    <td>{batch.batchEndDate}</td>
-                                    <td>
-                                        <span className="history-pill history-pill-warning">{batch.cullCount}</span>
-                                    </td>
-                                    <td>
-                                        <span className="history-pill history-pill-danger">{batch.mortalities}</span>
-                                    </td>
-                                    <td>
-                                        {batch.medications.length ? (
-                                            <div className="history-med-list">
-                                                {batch.medications.map((med) => (
-                                                    <span className="history-med-tag" key={`${batch.id}-${med}`}>
-                                                        {med}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <span className="text-muted">No medication records</span>
-                                        )}
-                                    </td>
+                    {activeTab === 'inventory' ? (
+                        <table className="history-table data-table mockup-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Module</th>
+                                    <th>Action</th>
+                                    <th>Details</th>
+                                    <th>Recorded By</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {filteredItems.length ? filteredItems.map((row) => (
+                                    <tr key={row.id}>
+                                        <td>{row.date}</td>
+                                        <td>{row.time}</td>
+                                        <td>{row.module}</td>
+                                        <td>
+                                            <span className={actionClass(row.action)}>{row.action}</span>
+                                        </td>
+                                        <td>{row.description}</td>
+                                        <td>{row.recorded_by}</td>
+                                    </tr>
+                                )) : (
+                                    <tr>
+                                        <td colSpan="6" className="empty-state">
+                                            No inventory history yet. Updates from Inventory Stock will appear here.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    ) : (
+                        <table className="history-table data-table mockup-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Invoice No.</th>
+                                    <th>Customer</th>
+                                    <th>Product</th>
+                                    <th>Qty</th>
+                                    <th>Amount</th>
+                                    <th>Payment</th>
+                                    <th>Status</th>
+                                    <th>Recorded By</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredItems.length ? filteredItems.map((row) => (
+                                    <tr key={row.id}>
+                                        <td>{row.sale_date}</td>
+                                        <td>{row.invoice_no}</td>
+                                        <td>{row.customer}</td>
+                                        <td>{row.product}</td>
+                                        <td>{Number(row.quantity || 0).toLocaleString()}</td>
+                                        <td>₱{Number(row.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                        <td>{row.payment_method}</td>
+                                        <td><span className="history-pill history-pill-success">{row.status}</span></td>
+                                        <td>{row.recorded_by}</td>
+                                    </tr>
+                                )) : (
+                                    <tr>
+                                        <td colSpan="9" className="empty-state">
+                                            No sales history yet. Sales recorded in Sales Management will appear here.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    )}
                 </div>
             </div>
 
-            {isExportModalOpen ? (
-                <div className="modal-overlay show" role="dialog" aria-modal="true" aria-labelledby="history-export-title">
-                    <div className="modal history-export-modal">
-                        <div className="history-export-header">
-                            <h3 id="history-export-title" className="history-export-title">Export Batch History</h3>
-                            <button type="button" className="history-export-close" onClick={closeExportModal} aria-label="Close export modal">
-                                <i className="bi bi-x-lg"></i>
-                            </button>
-                        </div>
-
-                        <p className="history-export-subtitle">Choose how you want to export your batch history.</p>
-
-                        <div className="history-export-grid">
-                            <button
-                                type="button"
-                                className={`history-export-option ${selectedExportFormat === 'pdf' ? 'active' : ''}`}
-                                onClick={() => setSelectedExportFormat('pdf')}
-                            >
-                                <i className="bi bi-file-earmark-pdf history-export-icon"></i>
-                                <span className="history-export-option-title">PDF</span>
-                                <span className="history-export-option-desc">Save as PDF document</span>
-                            </button>
-
-                            <button
-                                type="button"
-                                className={`history-export-option ${selectedExportFormat === 'csv' ? 'active' : ''}`}
-                                onClick={() => setSelectedExportFormat('csv')}
-                            >
-                                <i className="bi bi-file-earmark-spreadsheet history-export-icon"></i>
-                                <span className="history-export-option-title">CSV</span>
-                                <span className="history-export-option-desc">Download spreadsheet file</span>
-                            </button>
-
-                            <button
-                                type="button"
-                                className={`history-export-option ${selectedExportFormat === 'print' ? 'active' : ''}`}
-                                onClick={() => setSelectedExportFormat('print')}
-                            >
-                                <i className="bi bi-printer history-export-icon"></i>
-                                <span className="history-export-option-title">Print</span>
-                                <span className="history-export-option-desc">Send table to printer</span>
-                            </button>
-                        </div>
-
-                        <div className="history-export-footer">
-                            <button type="button" className="btn btn-outline" onClick={closeExportModal}>
-                                Cancel
-                            </button>
-                            <button type="button" className="btn btn-primary history-export-confirm-btn" onClick={handleConfirmExport}>
-                                <i className="bi bi-file-earmark-arrow-down"></i>
-                                {selectedExportFormat === 'print'
-                                    ? 'Print Table'
-                                    : selectedExportFormat === 'csv'
-                                        ? 'Export CSV'
-                                        : 'Export PDF'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            ) : null}
-        </section>
+            <ExportModal
+                open={showExport}
+                title={`Export ${exportTitle}`}
+                description={`Choose how you want to export your ${activeTab === 'sales' ? 'sales' : 'inventory stock'} history.`}
+                onClose={() => setShowExport(false)}
+                onExport={(format) => exportTableData({
+                    title: exportTitle,
+                    columns,
+                    rows: filteredItems,
+                    format,
+                })}
+            />
+        </PageState>
     );
 }

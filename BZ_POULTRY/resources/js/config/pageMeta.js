@@ -32,6 +32,10 @@ export const pageMeta = {
         title: 'Sales Management',
         description: 'Track sales and customer transactions',
     },
+    '/history': {
+        title: 'History',
+        description: 'View inventory stock and sales activity history',
+    },
     '/settings': {
         title: 'Settings',
         description: 'Farm and user account settings',

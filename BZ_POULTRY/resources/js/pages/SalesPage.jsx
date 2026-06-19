@@ -94,12 +94,6 @@ export default function SalesPage() {
     const submit = async (event) => {
         event.preventDefault();
         try {
-
-            if (!form.customer_id) {
-                setError('Please select a customer.');
-                return;
-            }
-
             const payload = { ...form };
 
             if (editingId) {

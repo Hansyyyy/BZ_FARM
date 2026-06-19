@@ -1,4 +1,5 @@
 import SearchableSelect from '../ui/SearchableSelect';
+import FormLabel from './FormLabel';
 
 export function parseInvoiceNo(invoiceNo) {
     if (!invoiceNo) {
@@ -65,10 +66,14 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
 
     return (
         <form id={id} onSubmit={onSubmit}>
+            <p className="form-required-note">
+                Fields marked with <span className="form-required-mark">*</span> are required.
+            </p>
             <div className="modal-form-grid">
                 <div className="form-group">
-                    <label>Invoice Type</label>
+                    <FormLabel htmlFor="sale-invoice-type" required>Invoice Type</FormLabel>
                     <select
+                        id="sale-invoice-type"
                         className="form-control"
                         value={(() => {
                             const { invoice_prefix } = parseInvoiceNo(form.invoice_no || '');
@@ -87,9 +92,10 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
                 </div>
 
                 <div className="form-group">
-                    <label>Invoice No.</label>
+                    <FormLabel htmlFor="sale-invoice-no" required>Invoice No.</FormLabel>
                     <div className="invoice-no-field">
                         <input
+                            id="sale-invoice-no"
                             className="form-control"
                             value={form.invoice_no || ''}
                             onChange={(event) => {
@@ -105,8 +111,9 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
 
 
                 <div className="form-group">
-                    <label>Sale Date</label>
+                    <FormLabel htmlFor="sale-date" required>Sale Date</FormLabel>
                     <input
+                        id="sale-date"
                         type="date"
                         className="form-control"
                         value={form.sale_date || ''}
@@ -117,6 +124,7 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
 
                 <div className="form-group span-2 searchable-select-field">
                     <SearchableSelect
+                        id="sale-customer"
                         label="Customer"
                         placeholder="Choose customer"
                         options={customers}
@@ -125,12 +133,14 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
                         getOptionLabel={(customer) => customer.name}
                         getOptionValue={(customer) => customer.id}
                         emptyMessage="No customers found. Add a customer first."
+                        required
                     />
                 </div>
 
                 <div className="form-group">
-                    <label>Choose Product Type First</label>
+                    <FormLabel htmlFor="sale-category" required>Choose Product Type First</FormLabel>
                     <select
+                        id="sale-category"
                         className="form-control"
                         value={form.sale_category || ''}
                         onChange={(e) => {
@@ -155,8 +165,9 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
                 {form.sale_category === 'chicken' ? (
                     <>
                         <div className="form-group">
-                            <label>Chicken Type</label>
+                            <FormLabel htmlFor="sale-chicken-type" required>Chicken Type</FormLabel>
                             <select
+                                id="sale-chicken-type"
                                 className="form-control"
                                 value={form.chicken_type || ''}
                         onChange={(e) => {
@@ -180,8 +191,9 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
                         </div>
 
                         <div className="form-group">
-                            <label>How many chickens?</label>
+                            <FormLabel htmlFor="sale-quantity-heads" required>How many chickens?</FormLabel>
                             <input
+                                id="sale-quantity-heads"
                                 type="number"
                                 className="form-control"
                                 value={form.quantity_heads || ''}
@@ -192,8 +204,9 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
                         </div>
 
                         <div className="form-group">
-                            <label>Unit Price (per head)</label>
+                            <FormLabel htmlFor="sale-chicken-unit-price" required>Unit Price (per head)</FormLabel>
                             <input
+                                id="sale-chicken-unit-price"
                                 type="number"
                                 step="0.01"
                                 className="form-control"
@@ -204,8 +217,8 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
                         </div>
 
                         <div className="form-group">
-                            <label>Total</label>
-                            <div className="form-control" style={{ display: 'flex', alignItems: 'center' }}>
+                            <FormLabel htmlFor="sale-chicken-total">Total</FormLabel>
+                            <div id="sale-chicken-total" className="form-control" style={{ display: 'flex', alignItems: 'center' }}>
                                 <strong style={{ marginRight: 8 }}>₱{Number(amountComputed).toFixed(2)}</strong>
                                 <span style={{ color: '#666' }}>
                                     ({quantityForAmount} × {Number(form?.unit_price || 0).toFixed(2)})
@@ -216,8 +229,9 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
                 ) : form.sale_category === 'egg' ? (
                     <>
                         <div className="form-group">
-                            <label>Egg Type</label>
+                            <FormLabel htmlFor="sale-egg-type" required>Egg Type</FormLabel>
                             <select
+                                id="sale-egg-type"
                                 className="form-control"
                                 value={form.egg_type || ''}
                                 onChange={(e) => {
@@ -235,19 +249,20 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
                                 required
                             >
                                 <option value="">Choose egg type</option>
+                                <option value="piwi">Piwi</option>
                                 <option value="small">Small</option>
                                 <option value="medium">Medium</option>
                                 <option value="large">Large</option>
                                 <option value="extra_large">Extra Large</option>
                                 <option value="jumbo">Jumbo</option>
                                 <option value="super_jumbo">Super Jumbo</option>
-                                <option value="piwi">Piwi</option>
                             </select>
                         </div>
 
                         <div className="form-group">
-                            <label>Pricing Unit</label>
+                            <FormLabel htmlFor="sale-pricing-unit" required>Pricing Unit</FormLabel>
                             <select
+                                id="sale-pricing-unit"
                                 className="form-control"
                                 value={form.pricing_unit || 'per_tray'}
                                 onChange={(e) => onChange('pricing_unit', e.target.value)}
@@ -260,8 +275,9 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
 
                         {(form.pricing_unit || 'per_tray') === 'per_piece' ? (
                             <div className="form-group">
-                                <label>How many eggs (pieces)?</label>
+                                <FormLabel htmlFor="sale-quantity-pieces" required>How many eggs (pieces)?</FormLabel>
                                 <input
+                                    id="sale-quantity-pieces"
                                     type="number"
                                     className="form-control"
                                     value={form.quantity_pieces || ''}
@@ -272,8 +288,9 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
                             </div>
                         ) : (
                             <div className="form-group">
-                                <label>How many eggs (trays)?</label>
+                                <FormLabel htmlFor="sale-quantity-trays" required>How many eggs (trays)?</FormLabel>
                                 <input
+                                    id="sale-quantity-trays"
                                     type="number"
                                     className="form-control"
                                     value={form.quantity_trays || ''}
@@ -285,8 +302,9 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
                         )}
 
                         <div className="form-group">
-                            <label>Unit Price</label>
+                            <FormLabel htmlFor="sale-egg-unit-price" required>Unit Price</FormLabel>
                             <input
+                                id="sale-egg-unit-price"
                                 type="number"
                                 step="0.01"
                                 className="form-control"
@@ -297,7 +315,7 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
                         </div>
 
                         <div className="form-group">
-                            <label>Total</label>
+                            <FormLabel htmlFor="sale-egg-total">Total Amount</FormLabel>
                             <div className="form-control" style={{ display: 'flex', alignItems: 'center' }}>
                                 <strong style={{ marginRight: 8 }}>₱{Number(amountComputed).toFixed(2)}</strong>
                                 <span style={{ color: '#666' }}>
@@ -309,8 +327,9 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
                 ) : null}
 
                 <div className="form-group">
-                    <label>Payment Method</label>
+                    <FormLabel htmlFor="sale-payment-method" required>Payment Method</FormLabel>
                     <select
+                        id="sale-payment-method"
                         className="form-control"
                         value={form.payment_method || ''}
                         onChange={(e) => onChange('payment_method', e.target.value)}
@@ -323,8 +342,9 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
                 </div>
 
                 <div className="form-group">
-                    <label>Status</label>
+                    <FormLabel htmlFor="sale-status" required>Status</FormLabel>
                     <select
+                        id="sale-status"
                         className="form-control"
                         value={form.status || ''}
                         onChange={(e) => onChange('status', e.target.value)}

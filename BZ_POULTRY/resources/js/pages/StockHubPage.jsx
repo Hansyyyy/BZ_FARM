@@ -13,6 +13,7 @@ import PanelCard from '../components/ui/PanelCard';
 import Modal from '../components/ui/Modal';
 import ExportModal from '../components/ui/ExportModal';
 import DynamicForm from '../components/forms/DynamicForm';
+import FormLabel from '../components/forms/FormLabel';
 import RowActionButtons from '../components/ui/RowActionButtons';
 import AnimatedSelect from '../components/ui/AnimatedSelect';
 import AnimatedDatePicker from '../components/ui/AnimatedDatePicker';
@@ -373,13 +374,9 @@ export default function StockHubPage() {
         );
     }, [data]);
 
-    const handleTransfer = async () => {
+    const handleTransfer = async (event) => {
+        event.preventDefault();
         setTransferError(null);
-
-        if (!transferForm.flock_id || !transferForm.destination_building) {
-            setTransferError('Please select both a flock and a destination building.');
-            return;
-        }
 
         try {
             await axios.post('/api/flocks/transfer', transferForm);
@@ -925,19 +922,25 @@ export default function StockHubPage() {
             >
                 {dailyReportMessage && <div className="alert-success">{dailyReportMessage}</div>}
                 <form id="daily-report-form" onSubmit={handleDailyReportSubmit}>
+                    <p className="form-required-note">
+                        Fields marked with <span className="form-required-mark">*</span> are required.
+                    </p>
                     <div className="modal-form-grid daily-report-modal-grid">
                         <div className="form-group">
-                            <label>Report Date</label>
+                            <FormLabel htmlFor="hub-report-date" required>Report Date</FormLabel>
                             <input
+                                id="hub-report-date"
                                 type="date"
                                 className="form-control"
                                 value={dailyReportForm.report_date}
                                 onChange={(e) => setDailyReportForm((prev) => ({ ...prev, report_date: e.target.value }))}
+                                required
                             />
                         </div>
                         <div className="form-group">
-                            <label>System Module</label>
+                            <FormLabel htmlFor="hub-module-name">System Module</FormLabel>
                             <input
+                                id="hub-module-name"
                                 type="text"
                                 className="form-control"
                                 value={dailyReportForm.module_name}
@@ -945,16 +948,18 @@ export default function StockHubPage() {
                             />
                         </div>
                         <div className="form-group span-2">
-                            <label>Manager Note</label>
+                            <FormLabel htmlFor="hub-manager-note">Manager Note</FormLabel>
                             <textarea
+                                id="hub-manager-note"
                                 className="form-control daily-report-textarea"
                                 value={dailyReportForm.manager_note}
                                 onChange={(e) => setDailyReportForm((prev) => ({ ...prev, manager_note: e.target.value }))}
                             />
                         </div>
                         <div className="form-group span-2">
-                            <label>Poultry Status Snapshot</label>
+                            <FormLabel htmlFor="hub-poultry-status">Poultry Status Snapshot</FormLabel>
                             <textarea
+                                id="hub-poultry-status"
                                 className="form-control daily-report-textarea"
                                 value={dailyReportForm.poultry_status}
                                 onChange={(e) => setDailyReportForm((prev) => ({ ...prev, poultry_status: e.target.value }))}
@@ -995,43 +1000,52 @@ export default function StockHubPage() {
                         >
                             Cancel
                         </button>
-                        <button type="button" className="btn btn-primary" onClick={handleTransfer}>
+                        <button type="submit" className="btn btn-primary" form="transfer-form">
                             Transfer
                         </button>
                     </>
                 )}
             >
                 {transferError && <div className="alert-error">{transferError}</div>}
-                <div className="modal-form-grid">
-                    <div className="form-group">
-                        <label>Select Grower Flock (18+ weeks)</label>
-                        <select
-                            className="form-control"
-                            value={transferForm.flock_id}
-                            onChange={(e) => setTransferForm({ ...transferForm, flock_id: e.target.value })}
-                        >
-                            <option value="">Select a flock</option>
-                            {transferableFlocks.map((flock) => (
-                                <option key={flock.id} value={flock.id}>
-                                    {flock.building_name} - {flock.batch_no} ({flock.quantity} birds)
-                                </option>
-                            ))}
-                        </select>
+                <form id="transfer-form" onSubmit={handleTransfer}>
+                    <p className="form-required-note">
+                        Fields marked with <span className="form-required-mark">*</span> are required.
+                    </p>
+                    <div className="modal-form-grid">
+                        <div className="form-group">
+                            <FormLabel htmlFor="transfer-flock" required>Select Grower Flock (18+ weeks)</FormLabel>
+                            <select
+                                id="transfer-flock"
+                                className="form-control"
+                                value={transferForm.flock_id}
+                                onChange={(e) => setTransferForm({ ...transferForm, flock_id: e.target.value })}
+                                required
+                            >
+                                <option value="">Select a flock</option>
+                                {transferableFlocks.map((flock) => (
+                                    <option key={flock.id} value={flock.id}>
+                                        {flock.building_name} - {flock.batch_no} ({flock.quantity} birds)
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="form-group">
+                            <FormLabel htmlFor="transfer-destination" required>Destination Layer Building (B-04 to B-11)</FormLabel>
+                            <select
+                                id="transfer-destination"
+                                className="form-control"
+                                value={transferForm.destination_building}
+                                onChange={(e) => setTransferForm({ ...transferForm, destination_building: e.target.value })}
+                                required
+                            >
+                                <option value="">Select a building</option>
+                                {availableLayerBuildings.map((b) => (
+                                    <option key={b.id} value={b.name}>{b.name}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
-                    <div className="form-group">
-                        <label>Destination Layer Building (B-04 to B-11)</label>
-                        <select
-                            className="form-control"
-                            value={transferForm.destination_building}
-                            onChange={(e) => setTransferForm({ ...transferForm, destination_building: e.target.value })}
-                        >
-                            <option value="">Select a building</option>
-                            {availableLayerBuildings.map((b) => (
-                                <option key={b.id} value={b.name}>{b.name}</option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
+                </form>
             </Modal>
 
         </PageState>

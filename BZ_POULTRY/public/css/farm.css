@@ -3372,6 +3372,22 @@ body {
     background: #ffe4e6;
     color: #b4232b;
 }
+.history-pill-success {
+    background: #e8f7ee;
+    color: #1f7d47;
+}
+.history-table-card.data-panel {
+    padding: 0;
+}
+
+.history-table-card .module-tabs {
+    margin: 0 24px 20px;
+}
+
+.history-table-card .table-responsive {
+    padding: 0 24px 24px;
+}
+
 .history-med-list {
     display: flex;
     flex-wrap: wrap;

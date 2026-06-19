@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import axios from 'axios';
 import useFetch from '../../hooks/useFetch';
 import Modal from './Modal';
+import FormLabel from '../forms/FormLabel';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -287,8 +288,11 @@ export default function FarmCalendar() {
                             <span>{selectedHoliday.name}</span>
                         </div>
                     )}
+                    <p className="form-required-note">
+                        Fields marked with <span className="form-required-mark">*</span> are required.
+                    </p>
                     <div className="form-group">
-                        <label htmlFor="calendar-note-content">Note</label>
+                        <FormLabel htmlFor="calendar-note-content" required>Note</FormLabel>
                         <textarea
                             id="calendar-note-content"
                             className="form-control"

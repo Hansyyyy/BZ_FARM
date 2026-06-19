@@ -1,3 +1,5 @@
+import React from 'react';
+
 const getInventoryIcon = (item) => {
     const category = String(item?.category || '').toLowerCase();
 
@@ -19,8 +21,6 @@ const getInventoryIcon = (item) => {
 
     return 'bi-box-seam';
 };
-
-import React from 'react';
 
 export default {
     title: 'Inventory',
@@ -51,13 +51,13 @@ export default {
         { key: 'location', label: 'Location' },
     ],
     formFields: [
-        { key: 'item_code', label: 'Item Code', type: 'text' },
-        { key: 'name', label: 'Name', type: 'text' },
-        { key: 'category', label: 'Category', type: 'text' },
-        { key: 'stock', label: 'Stock', type: 'number' },
-        { key: 'unit', label: 'Unit', type: 'text' },
-        { key: 'reorder_level', label: 'Reorder Level', type: 'number' },
-        { key: 'location', label: 'Location', type: 'text' },
-        { key: 'unit_price', label: 'Unit Price', type: 'number' },
+        { key: 'item_code', label: 'Item Code', type: 'text', required: true },
+        { key: 'name', label: 'Name', type: 'text', required: true },
+        { key: 'category', label: 'Category', type: 'text', required: true },
+        { key: 'stock', label: 'Stock', type: 'number', required: true, min: 0 },
+        { key: 'unit', label: 'Unit', type: 'text', required: true },
+        { key: 'reorder_level', label: 'Reorder Level', type: 'number', required: true, min: 0 },
+        { key: 'location', label: 'Location', type: 'text', placeholder: 'Optional' },
+        { key: 'unit_price', label: 'Unit Price', type: 'number', required: true, min: 0, step: '0.01' },
     ],
 };

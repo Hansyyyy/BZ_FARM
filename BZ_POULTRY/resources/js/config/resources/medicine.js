@@ -18,12 +18,12 @@ export default {
         { key: 'status', label: 'Status' },
     ],
     formFields: [
-        { key: 'name', label: 'Name', type: 'text' },
-        { key: 'category', label: 'Category', type: 'text' },
-        { key: 'type', label: 'Type', type: 'text' },
-        { key: 'stock', label: 'Stock', type: 'number' },
-        { key: 'reorder_level', label: 'Reorder Level', type: 'number' },
+        { key: 'name', label: 'Name', type: 'text', required: true },
+        { key: 'category', label: 'Category', type: 'text', required: true },
+        { key: 'type', label: 'Type', type: 'text', placeholder: 'Optional' },
+        { key: 'stock', label: 'Stock', type: 'number', required: true, min: 0 },
+        { key: 'reorder_level', label: 'Reorder Level', type: 'number', required: true, min: 0 },
         { key: 'expiry_date', label: 'Expiry Date', type: 'date' },
-        { key: 'unit_price', label: 'Unit Price', type: 'number' },
+        { key: 'unit_price', label: 'Unit Price', type: 'number', required: true, min: 0, step: '0.01' },
     ],
 };

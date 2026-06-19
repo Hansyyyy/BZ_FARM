@@ -57,16 +57,19 @@
 
             <form method="POST" action="{{ route('login') }}">
                 @csrf
+                <p class="form-required-note">
+                    Fields marked with <span class="form-required-mark">*</span> are required.
+                </p>
                 <div class="form-group">
                     <div class="floating-field">
                         <input type="text" id="username" name="username" class="form-control floating-input" value="{{ old('username') }}" placeholder=" " required autofocus>
-                        <label for="username" class="floating-label">Username</label>
+                        <label for="username" class="floating-label">Username <span class="form-required-mark">*</span></label>
                     </div>
                 </div>
                 <div class="form-group">
                     <div class="password-field floating-field">
                         <input type="password" id="password" name="password" class="form-control floating-input" placeholder=" " required>
-                        <label for="password" class="floating-label">Password</label>
+                        <label for="password" class="floating-label">Password <span class="form-required-mark">*</span></label>
                         <button type="button" class="toggle-password" aria-label="Show password">
                             <i class="bi bi-eye"></i>
                         </button>

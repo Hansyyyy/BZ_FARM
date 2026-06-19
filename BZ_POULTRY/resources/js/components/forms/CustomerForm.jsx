@@ -1,10 +1,16 @@
+import FormLabel from './FormLabel';
+
 export default function CustomerForm({ id, customer, onChange, onSubmit }) {
     return (
         <form id={id} onSubmit={onSubmit}>
+            <p className="form-required-note">
+                Fields marked with <span className="form-required-mark">*</span> are required.
+            </p>
             <div className="modal-form-grid">
                 <div className="form-group span-2">
-                    <label>Customer Name</label>
+                    <FormLabel htmlFor="customer-name" required>Customer Name</FormLabel>
                     <input
+                        id="customer-name"
                         className="form-control"
                         value={customer.name || ''}
                         onChange={(event) => onChange('name', event.target.value)}
@@ -13,8 +19,9 @@ export default function CustomerForm({ id, customer, onChange, onSubmit }) {
                     />
                 </div>
                 <div className="form-group">
-                    <label>Contact Person</label>
+                    <FormLabel htmlFor="customer-contact">Contact Person</FormLabel>
                     <input
+                        id="customer-contact"
                         className="form-control"
                         value={customer.contact || ''}
                         onChange={(event) => onChange('contact', event.target.value)}
@@ -22,8 +29,9 @@ export default function CustomerForm({ id, customer, onChange, onSubmit }) {
                     />
                 </div>
                 <div className="form-group">
-                    <label>Phone</label>
+                    <FormLabel htmlFor="customer-phone">Phone</FormLabel>
                     <input
+                        id="customer-phone"
                         className="form-control"
                         value={customer.phone || ''}
                         onChange={(event) => onChange('phone', event.target.value)}
@@ -31,8 +39,9 @@ export default function CustomerForm({ id, customer, onChange, onSubmit }) {
                     />
                 </div>
                 <div className="form-group span-2">
-                    <label>Email</label>
+                    <FormLabel htmlFor="customer-email">Email</FormLabel>
                     <input
+                        id="customer-email"
                         type="email"
                         className="form-control"
                         value={customer.email || ''}
