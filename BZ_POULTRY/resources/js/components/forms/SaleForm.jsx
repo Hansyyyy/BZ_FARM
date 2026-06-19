@@ -1,13 +1,11 @@
 import SearchableSelect from '../ui/SearchableSelect';
 
-const INVOICE_PREFIXES = ['SI#', 'DR#'];
-
 export function parseInvoiceNo(invoiceNo) {
     if (!invoiceNo) {
         return { invoice_prefix: 'SI#', invoice_number: '' };
     }
 
-    const matchedPrefix = INVOICE_PREFIXES.find((prefix) => invoiceNo.startsWith(prefix));
+    const matchedPrefix = ['SI#', 'DR#'].find((prefix) => invoiceNo.startsWith(prefix));
 
     if (matchedPrefix) {
         return {
@@ -17,6 +15,12 @@ export function parseInvoiceNo(invoiceNo) {
     }
 
     return { invoice_prefix: 'SI#', invoice_number: invoiceNo };
+}
+
+function setInvoiceTypeInInvoiceNo(currentInvoiceNo, invoiceType) {
+    const { invoice_number } = parseInvoiceNo(currentInvoiceNo);
+    const prefix = invoiceType === 'dr' ? 'DR#' : 'SI#';
+    return `${prefix}${String(invoice_number || '').trim()}`;
 }
 
 export function buildInvoiceNo(prefix, number) {
@@ -37,37 +41,80 @@ const CHICKEN_PRODUCTS = [
     { id: 'chicken_layer', name: 'Layer Chicken' },
 ];
 
-export default function SaleForm({ id, form, onChange, onSubmit, customers = [] }) {
+export default function SaleForm({ id, form, onChange, onSubmit, customers = [], products = [] }) {
+    const normalized = (v) => {
+        if (v === '' || v === null || v === undefined) return 0;
+        const n = Number(v);
+        return Number.isFinite(n) ? n : 0;
+    };
+
+    const selectedProduct = products?.find((p) => String(p.id) === String(form?.product_id)) || null;
+    const computedUnitPrice = selectedProduct ? normalized(selectedProduct.unit_price) : 0;
+
+    const quantityForAmount = (() => {
+        if (form?.sale_category === 'chicken') return normalized(form?.quantity_heads);
+        if (form?.sale_category === 'egg') {
+            const pricingUnit = form?.pricing_unit || 'per_tray';
+            if (pricingUnit === 'per_piece') return normalized(form?.quantity_pieces);
+            return normalized(form?.quantity_trays);
+        }
+        return normalized(form?.quantity);
+    })();
+
+    const amountComputed = quantityForAmount * normalized(form?.unit_price);
+
     return (
         <form id={id} onSubmit={onSubmit}>
             <div className="modal-form-grid">
                 <div className="form-group">
+                    <label>Invoice Type</label>
+                    <select
+                        className="form-control"
+                        value={(() => {
+                            const { invoice_prefix } = parseInvoiceNo(form.invoice_no || '');
+                            return invoice_prefix === 'DR#' ? 'dr' : 'si';
+                        })()}
+                        onChange={(e) => {
+                            const invoiceType = e.target.value; // 'si' | 'dr'
+                            const nextInvoiceNo = setInvoiceTypeInInvoiceNo(form.invoice_no || '', invoiceType);
+                            onChange('invoice_no', nextInvoiceNo);
+                        }}
+                        required
+                    >
+                        <option value="si">SI</option>
+                        <option value="dr">DR</option>
+                    </select>
+                </div>
+
+                <div className="form-group">
                     <label>Invoice No.</label>
                     <div className="invoice-no-field">
-                        <select
-                            className="form-control invoice-no-prefix"
-                            value={form.invoice_prefix || 'SI#'}
-                            onChange={(event) => onChange('invoice_prefix', event.target.value)}
-                            required
-                        >
-                            {INVOICE_PREFIXES.map((prefix) => (
-                                <option key={prefix} value={prefix}>{prefix}</option>
-                            ))}
-                        </select>
                         <input
                             className="form-control"
-                            value={form.invoice_number || ''}
-                            onChange={(event) => onChange('invoice_number', event.target.value)}
-                            placeholder={form.id ? 'Enter number' : 'Auto-generated (starts at 01)'}
-                            required={Boolean(form.id)}
-                            disabled={!form.id}
+                            value={form.invoice_no || ''}
+                            onChange={(event) => {
+                                const next = event.target.value;
+                                onChange('invoice_no', next);
+                            }}
+                            placeholder="Enter invoice number (e.g., SI#01 / DR#01)"
+                            required
                         />
                     </div>
                 </div>
+
+
+
                 <div className="form-group">
                     <label>Sale Date</label>
-                    <input type="date" className="form-control" value={form.sale_date || ''} onChange={(e) => onChange('sale_date', e.target.value)} required />
+                    <input
+                        type="date"
+                        className="form-control"
+                        value={form.sale_date || ''}
+                        onChange={(e) => onChange('sale_date', e.target.value)}
+                        required
+                    />
                 </div>
+
                 <div className="form-group span-2 searchable-select-field">
                     <SearchableSelect
                         label="Customer"
@@ -80,6 +127,7 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [] 
                         emptyMessage="No customers found. Add a customer first."
                     />
                 </div>
+
                 <div className="form-group">
                     <label>Choose Product Type First</label>
                     <select
@@ -104,7 +152,6 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [] 
                     </select>
                 </div>
 
-
                 {form.sale_category === 'chicken' ? (
                     <>
                         <div className="form-group">
@@ -112,10 +159,17 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [] 
                             <select
                                 className="form-control"
                                 value={form.chicken_type || ''}
-                                onChange={(e) => {
+                        onChange={(e) => {
                                     const chickenType = e.target.value;
+                                    const nextProductId = chickenType ? `chicken_${chickenType}` : '';
                                     onChange('chicken_type', chickenType);
-                                    onChange('product_id', chickenType ? `chicken_${chickenType}` : '');
+                                    onChange('product_id', nextProductId);
+
+                                    // Auto-fill unit_price from product configuration
+                                    const nextSelectedProduct = products?.find((p) => String(p.id) === String(nextProductId));
+                                    if (nextSelectedProduct && nextSelectedProduct.unit_price !== undefined) {
+                                        onChange('unit_price', nextSelectedProduct.unit_price);
+                                    }
                                 }}
                                 required
                             >
@@ -124,6 +178,7 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [] 
                                 <option value="layer">Layer</option>
                             </select>
                         </div>
+
                         <div className="form-group">
                             <label>How many chickens?</label>
                             <input
@@ -135,6 +190,7 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [] 
                                 required
                             />
                         </div>
+
                         <div className="form-group">
                             <label>Unit Price (per head)</label>
                             <input
@@ -146,6 +202,16 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [] 
                                 required
                             />
                         </div>
+
+                        <div className="form-group">
+                            <label>Total</label>
+                            <div className="form-control" style={{ display: 'flex', alignItems: 'center' }}>
+                                <strong style={{ marginRight: 8 }}>₱{Number(amountComputed).toFixed(2)}</strong>
+                                <span style={{ color: '#666' }}>
+                                    ({quantityForAmount} × {Number(form?.unit_price || 0).toFixed(2)})
+                                </span>
+                            </div>
+                        </div>
                     </>
                 ) : form.sale_category === 'egg' ? (
                     <>
@@ -156,8 +222,15 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [] 
                                 value={form.egg_type || ''}
                                 onChange={(e) => {
                                     const eggType = e.target.value;
+                                    const nextProductId = eggType === 'piwi' ? 'egg_piwi' : (eggType ? `egg_${eggType}` : '');
                                     onChange('egg_type', eggType);
-                                    onChange('product_id', eggType ? `egg_${eggType}` : '');
+                                    onChange('product_id', nextProductId);
+
+                                    // Auto-fill unit_price from product configuration
+                                    const nextSelectedProduct = products?.find((p) => String(p.id) === String(nextProductId));
+                                    if (nextSelectedProduct && nextSelectedProduct.unit_price !== undefined) {
+                                        onChange('unit_price', nextSelectedProduct.unit_price);
+                                    }
                                 }}
                                 required
                             >
@@ -168,8 +241,10 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [] 
                                 <option value="extra_large">Extra Large</option>
                                 <option value="jumbo">Jumbo</option>
                                 <option value="super_jumbo">Super Jumbo</option>
+                                <option value="piwi">Piwi</option>
                             </select>
                         </div>
+
                         <div className="form-group">
                             <label>Pricing Unit</label>
                             <select
@@ -182,6 +257,7 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [] 
                                 <option value="per_piece">Per Piece</option>
                             </select>
                         </div>
+
                         {(form.pricing_unit || 'per_tray') === 'per_piece' ? (
                             <div className="form-group">
                                 <label>How many eggs (pieces)?</label>
@@ -207,6 +283,7 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [] 
                                 />
                             </div>
                         )}
+
                         <div className="form-group">
                             <label>Unit Price</label>
                             <input
@@ -218,19 +295,41 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [] 
                                 required
                             />
                         </div>
+
+                        <div className="form-group">
+                            <label>Total</label>
+                            <div className="form-control" style={{ display: 'flex', alignItems: 'center' }}>
+                                <strong style={{ marginRight: 8 }}>₱{Number(amountComputed).toFixed(2)}</strong>
+                                <span style={{ color: '#666' }}>
+                                    ({quantityForAmount} × {Number(form?.unit_price || 0).toFixed(2)})
+                                </span>
+                            </div>
+                        </div>
                     </>
                 ) : null}
+
                 <div className="form-group">
                     <label>Payment Method</label>
-                    <select className="form-control" value={form.payment_method || ''} onChange={(e) => onChange('payment_method', e.target.value)} required>
+                    <select
+                        className="form-control"
+                        value={form.payment_method || ''}
+                        onChange={(e) => onChange('payment_method', e.target.value)}
+                        required
+                    >
                         <option value="">Choose</option>
                         <option value="cash">Cash</option>
                         <option value="credit">Credit</option>
                     </select>
                 </div>
+
                 <div className="form-group">
                     <label>Status</label>
-                    <select className="form-control" value={form.status || ''} onChange={(e) => onChange('status', e.target.value)} required>
+                    <select
+                        className="form-control"
+                        value={form.status || ''}
+                        onChange={(e) => onChange('status', e.target.value)}
+                        required
+                    >
                         <option value="">Choose status</option>
                         <option value="paid">Paid</option>
                         <option value="unpaid">Unpaid</option>
@@ -240,3 +339,4 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [] 
         </form>
     );
 }
+

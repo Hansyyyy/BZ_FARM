@@ -57,13 +57,13 @@ export default function SalesPage() {
     const openCreateSale = () => {
         setEditingId(null);
         setForm({
-            invoice_prefix: 'SI#',
-            invoice_number: '',
+            invoice_no: '',
             sale_category: '',
             pricing_unit: 'per_tray',
         });
         setShowForm(true);
     };
+
 
     const openEdit = (sale) => {
         const invoice = parseInvoiceNo(sale.invoice_no || '');
@@ -71,8 +71,8 @@ export default function SalesPage() {
         setEditingId(sale.id);
         setForm({
             id: sale.id,
-            invoice_prefix: invoice.invoice_prefix,
-            invoice_number: invoice.invoice_number,
+            invoice_no: sale.invoice_no || '',
+
             customer_id: sale.customer_id || sale.customer?.id || '',
             product_id: sale.product_id || sale.product?.id || '',
             sale_category: sale.sale_category || 'egg',
@@ -94,6 +94,7 @@ export default function SalesPage() {
     const submit = async (event) => {
         event.preventDefault();
         try {
+
             if (!form.customer_id) {
                 setError('Please select a customer.');
                 return;
@@ -102,20 +103,16 @@ export default function SalesPage() {
             const payload = { ...form };
 
             if (editingId) {
-                payload.invoice_no = buildInvoiceNo(form.invoice_prefix, form.invoice_number);
-                delete payload.invoice_prefix;
-                delete payload.invoice_number;
                 delete payload.id;
                 await axios.put(`/api/sales/${editingId}`, payload);
             } else {
-                payload.invoice_prefix = form.invoice_prefix || 'SI#';
-                delete payload.invoice_number;
                 delete payload.id;
 
                 const formData = new FormData();
                 Object.entries(payload).forEach(([key, value]) => formData.append(key, value));
                 await axios.post('/api/sales', formData);
             }
+
 
             closeForm();
             await reload();

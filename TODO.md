@@ -1,9 +1,12 @@
-# TODO - History export modal design refinement
+# TODO
 
-- [x] Update `BZ_POULTRY/public/css/farm.css`
-  - [x] Refine modal container/header/subtitle to match provided design.
-  - [x] Refine export option cards active/inactive look.
-  - [x] Refine footer action spacing and button styles.
-- [x] Update `BZ_POULTRY/resources/js/pages/HistoryPage.jsx`
-  - [x] Adjust confirm button icon/text to match design behavior.
-- [x] Run quick sanity check for style/class consistency.
+## Implement SI/DR invoice type selection in Sales
+- [x] Update `BZ_POULTRY/resources/js/components/forms/SaleForm.jsx` to add Invoice Type dropdown (SI/DR)
+- [x] Keep invoice_no input synced with selected type
+
+- [x] Update `BZ_POULTRY/app/Http/Controllers/Api/SalesController.php` store validation to enforce `invoice_no` prefix `^(SI#|DR#).+`
+
+- [ ] Quick manual test in browser: create/edit sales and verify invoice prefix behavior
+- [x] (Command) npm test executed
+
+

@@ -65,8 +65,9 @@ class SalesController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'invoice_prefix' => ['required', 'string', 'in:SI#,DR#'],
+            'invoice_no' => ['required', 'string', 'unique:sales,invoice_no', 'regex:/^(SI#|DR#).+/'],
             'customer_id' => 'required|exists:customers,id',
+
             'product_id' => 'required|exists:products,id',
             'sale_category' => 'required|in:egg,chicken',
             'egg_type' => 'nullable|string|max:255|required_if:sale_category,egg',
@@ -82,23 +83,11 @@ class SalesController extends Controller
             'sale_date' => 'required|date',
         ]);
 
-        $prefix = $data['invoice_prefix'];
-        $latestInvoice = Sale::where('invoice_no', 'like', $prefix . '%')
-            ->orderByDesc('id')
-            ->value('invoice_no');
-
-        $nextNumber = 1;
-        if ($latestInvoice && str_starts_with($latestInvoice, $prefix)) {
-            $numericPart = substr($latestInvoice, strlen($prefix));
-            if (ctype_digit($numericPart)) {
-                $nextNumber = (int) $numericPart + 1;
-            }
-        }
-
-        $data['invoice_no'] = $prefix . str_pad((string) $nextNumber, 2, '0', STR_PAD_LEFT);
-        unset($data['invoice_prefix']);
+        // Invoice number must be provided manually.
+        $data['invoice_no'] = $request->input('invoice_no');
 
         if (($data['sale_category'] ?? null) === 'chicken') {
+
             $data['quantity'] = (int) ($data['quantity_heads'] ?? 0);
             $data['pricing_unit'] = 'per_head';
             $data['egg_type'] = null;

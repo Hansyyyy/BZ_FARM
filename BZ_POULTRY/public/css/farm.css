@@ -3214,7 +3214,7 @@ body {
 }
 .history-export-title {
     margin: 0;
-    font-size: 44px;
+    font-size: 22px;
     font-weight: 800;
     letter-spacing: 0.01em;
     color: #0b1f45;
@@ -3273,7 +3273,7 @@ body {
     line-height: 1;
 }
 .history-export-option-title {
-    font-size: 38px;
+    font-size: 18px;
     line-height: 1;
     font-weight: 800;
     color: #0b4a3f;
@@ -3295,7 +3295,7 @@ body {
     min-height: 52px;
     border-radius: 16px;
     padding: 0 24px;
-    font-size: 32px;
+    font-size: 18px;
     font-weight: 700;
 }
 .history-export-footer .btn-primary {
@@ -3313,7 +3313,7 @@ body {
     gap: 10px;
 }
 .history-export-confirm-btn i {
-    font-size: 20px;
+    font-size: 13px;
     line-height: 1;
 }
 .history-table {

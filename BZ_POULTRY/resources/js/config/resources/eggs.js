@@ -5,6 +5,7 @@ const goodEggBreakdown = [
     { key: 'large_eggs', label: 'Large' },
     { key: 'medium_eggs', label: 'Medium' },
     { key: 'small_eggs', label: 'Small' },
+    { key: 'piwi_eggs', label: 'Piwi' },
 ];
 
 const defectiveEggBreakdown = [
@@ -46,6 +47,7 @@ export default {
         { key: 'large_eggs', label: 'Large', type: 'number' },
         { key: 'medium_eggs', label: 'Medium', type: 'number' },
         { key: 'small_eggs', label: 'Small', type: 'number' },
+        { key: 'piwi_eggs', label: 'Piwi', type: 'number' },
         { key: 'cracked_eggs', label: 'Cracked', type: 'number' },
         { key: 'soft_shell_eggs', label: 'Soft Shell', type: 'number' },
         { key: 'damaged_eggs', label: 'Leak', type: 'number' },
