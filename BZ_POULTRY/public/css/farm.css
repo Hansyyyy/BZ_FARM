@@ -3403,9 +3403,40 @@ body {
     padding: 0;
 }
 
+/* Align History header text/spacing */
+.history-table-card .history-table-header {
+    margin-bottom: 18px;
+}
+
+.history-table-card .history-title {
+    margin: 0;
+}
+
+.history-table-card .history-subtitle {
+    margin-top: 6px;
+    margin-bottom: 0;
+}
+
+
 .history-table-card .module-tabs {
     margin: 0 24px 20px;
 }
+
+/* Ensure header content is padded inside card border */
+.history-table-card .history-table-header {
+    padding: 18px 24px 0;
+    margin: 0;
+}
+
+.history-table-card .history-table-actions {
+    padding-right: 0;
+}
+
+/* Prevent Export button from visually sticking to the corner */
+.history-table-card .history-table-actions .btn {
+    margin-left: 0;
+}
+
 
 .history-table-card .table-responsive {
     padding: 0 24px 24px;
