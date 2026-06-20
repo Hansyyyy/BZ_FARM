@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AdminInventoryController;
 use App\Http\Controllers\Api\CalendarNoteController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\DailyReportController;
+use App\Http\Controllers\Api\DailyReportEntryController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\EggProductionController;
 use App\Http\Controllers\Api\FeedController;
@@ -37,6 +38,7 @@ Route::prefix('api')->group(function () {
 
     Route::get('/feed', [FeedController::class, 'index'])->name('api.feed.index');
     Route::post('/feed', [FeedController::class, 'store'])->name('api.feed.store');
+    Route::post('/feed/restock', [FeedController::class, 'restock'])->name('api.feed.restock');
     Route::put('/feed/{feed}', [FeedController::class, 'update'])->name('api.feed.update');
     Route::delete('/feed/{feed}', [FeedController::class, 'destroy'])->name('api.feed.destroy');
 
@@ -69,6 +71,7 @@ Route::prefix('api')->group(function () {
     Route::get('/daily-reports', [DailyReportController::class, 'index'])->name('api.daily-reports.index');
     Route::get('/daily-reports/snapshot', [DailyReportController::class, 'snapshot'])->name('api.daily-reports.snapshot');
     Route::post('/daily-reports', [DailyReportController::class, 'store'])->name('api.daily-reports.store');
+    Route::post('/daily-reports/entry', [DailyReportEntryController::class, 'store'])->name('api.daily-reports.entry');
     Route::put('/daily-reports/{dailyReport}/review', [DailyReportController::class, 'review'])->name('api.daily-reports.review');
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('api.notifications.index');

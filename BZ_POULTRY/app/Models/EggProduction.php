@@ -11,7 +11,7 @@ class EggProduction extends Model
         'date', 'building_id', 'total_eggs', 'soft_shell_eggs',
         'damaged_eggs', 'cracked_eggs',
         'small_eggs', 'medium_eggs', 'large_eggs',
-        'extra_large_eggs', 'jumbo_eggs', 'super_jumbo_eggs',
+        'extra_large_eggs', 'jumbo_eggs', 'super_jumbo_eggs', 'piwi_eggs',
         'user_id',
     ];
 

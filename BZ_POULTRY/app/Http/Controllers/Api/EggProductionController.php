@@ -33,27 +33,60 @@ class EggProductionController extends Controller
         $weekTotal = EggProduction::where('date', '>=', $weekStart)->sum('total_eggs');
         $monthTotal = EggProduction::where('date', '>=', $monthStart)->sum('total_eggs');
 
-        $records = EggProduction::with('building')->latest('date')->paginate(10);
+        // Get all layer buildings with their latest egg production data
+        $layerBuildings = Building::whereExists(function ($q) {
+            $q->from('flocks')
+                ->whereColumn('flocks.building_name', 'buildings.name')
+                ->where('flocks.type', 'Layers');
+        })->orderBy('name')->get();
 
-        $items = collect($records->items())->map(function ($record) {
-            $buildingStatus = 'inactive';
-            if ($record->building) {
-                $hasActiveFlock = Flock::where('building_id', $record->building->id)
-                    ->where('status', 'active')
-                    ->exists();
-                $buildingStatus = $hasActiveFlock ? 'active' : 'inactive';
+        $latestEggByBuilding = EggProduction::with('building')
+            ->whereIn('building_id', $layerBuildings->pluck('id'))
+            ->latest('date')
+            ->get()
+            ->groupBy('building_id')
+            ->map(fn ($group) => $group->first());
+
+        $items = $layerBuildings->map(function ($building) use ($latestEggByBuilding) {
+            $hasActiveFlock = Flock::where('building_name', $building->name)
+                ->where('status', 'active')
+                ->exists();
+
+            $record = $latestEggByBuilding->get($building->id);
+
+            if ($record) {
+                $record->building_status = $hasActiveFlock ? 'active' : 'inactive';
+                return $record;
             }
-            $record->building_status = $buildingStatus;
-            return $record;
+
+            // No egg record yet — return a placeholder row
+            return (object) [
+                'id' => null,
+                'date' => null,
+                'building_id' => $building->id,
+                'building' => $building,
+                'total_eggs' => 0,
+                'soft_shell_eggs' => 0,
+                'damaged_eggs' => 0,
+                'cracked_eggs' => 0,
+                'small_eggs' => 0,
+                'medium_eggs' => 0,
+                'large_eggs' => 0,
+                'extra_large_eggs' => 0,
+                'jumbo_eggs' => 0,
+                'super_jumbo_eggs' => 0,
+                'piwi_eggs' => 0,
+                'building_status' => $hasActiveFlock ? 'active' : 'inactive',
+            ];
         });
 
         return response()->json([
             'items' => $items,
             'pagination' => [
-                'current_page' => $records->currentPage(),
-                'last_page' => $records->lastPage(),
-                'per_page' => $records->perPage(),
-                'total' => $records->total(),
+                'current_page' => 1,
+                'last_page' => 1,
+                'per_page' => $items->count(),
+                'total' => $items->count(),
             ],
             'summary' => compact(
                 'eggsToday',
@@ -134,6 +167,15 @@ class EggProductionController extends Controller
         $data['super_jumbo_eggs'] = $data['super_jumbo_eggs'] ?? 0;
 
         $data['user_id'] = auth()->id();
+
+        // Remove placeholder egg record for this building if exists
+        EggProduction::where('building_id', $data['building_id'])
+            ->where('total_eggs', 0)
+            ->where('soft_shell_eggs', 0)
+            ->where('damaged_eggs', 0)
+            ->where('cracked_eggs', 0)
+            ->delete();
+
         $record = EggProduction::create($data);
         ActivityLogger::log('created', 'Egg Production', "Added production record for building {$data['building_id']}");
 

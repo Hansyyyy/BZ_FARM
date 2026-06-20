@@ -8,7 +8,7 @@ class Flock extends Model
 {
     protected $fillable = [
         'batch_no', 'building_id', 'building_name', 'type', 'initial_quantity', 'quantity',
-        'age_weeks', 'date_in', 'mortality', 'status',
+        'age_weeks', 'date_in', 'mortality', 'cull', 'status',
     ];
 
     protected function casts(): array

@@ -23,11 +23,31 @@ import { stockTabs, getStockResource } from '../config/stockTabs';
 
 const PAGE_SIZE = 11;
 
+const goodEggTypes = [
+    { key: 'super_jumbo', label: 'Super Jumbo' },
+    { key: 'jumbo', label: 'Jumbo' },
+    { key: 'extra_large', label: 'Extra Large' },
+    { key: 'large', label: 'Large' },
+    { key: 'medium', label: 'Medium' },
+    { key: 'small', label: 'Small' },
+    { key: 'piwi', label: 'Piwi' },
+];
+
+const defectiveEggTypes = [
+    { key: 'cracked', label: 'Cracked' },
+    { key: 'soft_shell', label: 'Soft Shell' },
+    { key: 'leak', label: 'Leak' },
+];
+
+const feedTypes = ['Booster', 'Starter', 'Grower', 'Prelay', 'Layer 1', 'Layer 2'];
+
 const getDefaultDailyReportForm = () => ({
-    report_date: new Date().toISOString().slice(0, 10),
-    module_name: 'BZ Poultry Farm Management System',
-    manager_note: 'Daily operations are monitored through this stock hub. This temporary report helps managers summarize poultry movement, feed usage, and medicine readiness.',
-    poultry_status: 'Flock status stable. Continue tracking transfer-ready growers and low-stock alerts.',
+    building_id: '',
+    cull: '',
+    mortality: '',
+    feed: '',
+    feed_type: '',
+    eggs: Object.fromEntries([...goodEggTypes, ...defectiveEggTypes].map((e) => [e.key, ''])),
 });
 
 function getAgeWeeks(item) {
@@ -103,6 +123,8 @@ export default function StockHubPage() {
     const resource = getStockResource(activeTab);
 
     const { data, loading, error, reload } = useFetch(resource.endpoint);
+    const { data: flockData, reload: reloadFlocks } = useFetch('/api/flocks');
+    const { data: feedData, reload: reloadFeeds } = useFetch('/api/feed');
     const [search, setSearch] = useState('');
     const [filters, setFilters] = useState({ type: '', status: '', category: '', building: '', date: '' });
     const [page, setPage] = useState(1);
@@ -116,9 +138,15 @@ export default function StockHubPage() {
     const [transferForm, setTransferForm] = useState({ flock_id: '', destination_building: '' });
     const [dailyReportForm, setDailyReportForm] = useState(getDefaultDailyReportForm);
     const [dailyReportMessage, setDailyReportMessage] = useState(null);
+    const [dailyReportError, setDailyReportError] = useState(null);
+    const [dailyReportSubmitting, setDailyReportSubmitting] = useState(false);
     const [formError, setFormError] = useState(null);
     const [transferError, setTransferError] = useState(null);
     const [expandedRows, setExpandedRows] = useState(new Set());
+    const [isRestockOpen, setRestockOpen] = useState(false);
+    const [restockForm, setRestockForm] = useState({ feed_id: '', quantity: '' });
+    const [restockError, setRestockError] = useState(null);
+    const [restockMessage, setRestockMessage] = useState(null);
 
     const activeFields = editingId && resource.editFormFields ? resource.editFormFields : resource.formFields;
     const isEditing = Boolean(editingId);
@@ -281,10 +309,40 @@ export default function StockHubPage() {
     };
 
     const openCreate = () => {
+        if (activeTab === 'feeds') {
+            setRestockForm({ feed_id: '', quantity: '', expiry_date: '' });
+            setRestockError(null);
+            setRestockMessage(null);
+            setRestockOpen(true);
+            return;
+        }
         setEditingId(null);
         setForm(activeTab === 'chicken' ? { age_days: 0 } : {});
         setFormError(null);
         setFormOpen(true);
+    };
+
+    const handleRestockSubmit = async (event) => {
+        event.preventDefault();
+        setRestockError(null);
+        setRestockMessage(null);
+
+        try {
+            const res = await axios.post('/api/feed/restock', {
+                feed_id: restockForm.feed_id,
+                quantity: Number(restockForm.quantity),
+                expiry_date: restockForm.expiry_date || null,
+            });
+            setRestockMessage(res.data.message || 'Feed restocked successfully.');
+            await reload();
+            setTimeout(() => {
+                setRestockOpen(false);
+                setRestockForm({ feed_id: '', quantity: '', expiry_date: '' });
+                setRestockMessage(null);
+            }, 1200);
+        } catch (err) {
+            setRestockError(err.response?.data?.message || 'Unable to restock feed.');
+        }
     };
 
     const openEdit = (item) => {
@@ -392,15 +450,78 @@ export default function StockHubPage() {
     const closeDailyReportModal = () => {
         setDailyReportOpen(false);
         setDailyReportMessage(null);
+        setDailyReportError(null);
         setDailyReportForm(getDefaultDailyReportForm());
     };
 
-    const handleDailyReportSubmit = (event) => {
+    const buildingFlockMap = useMemo(() => {
+        const map = {};
+        (flockData?.items || []).forEach((item) => {
+            if (item.status === 'active' && item.building_name) {
+                map[item.building_name] = item;
+            }
+        });
+        return map;
+    }, [flockData]);
+
+    const selectedBuildingFlock = dailyReportForm.building_id
+        ? buildingFlockMap[
+            (flockData?.buildings || []).find((b) => String(b.id) === String(dailyReportForm.building_id))?.name || ''
+        ] || null
+        : null;
+
+    const activeBuildings = useMemo(() => {
+        const activeNames = new Set(
+            (flockData?.items || []).filter((item) => item.status === 'active').map((item) => item.building_name).filter(Boolean)
+        );
+        return (flockData?.buildings || []).filter((b) => activeNames.has(b.name));
+    }, [flockData]);
+
+    const availableFeedTypes = useMemo(() => {
+        return (feedData?.items || []).filter((item) => item.status !== 'No Stock');
+    }, [feedData]);
+
+    const selectedFeedMaxStock = useMemo(() => {
+        if (!dailyReportForm.feed_type) return null;
+        const match = (feedData?.items || []).find((item) => (item.category || item.name) === dailyReportForm.feed_type);
+        return match ? Number(match.stock) : null;
+    }, [feedData, dailyReportForm.feed_type]);
+
+    const handleDailyReportSubmit = async (event) => {
         event.preventDefault();
-        setDailyReportMessage('Temporary daily report captured successfully. This is a demo form for manager workflow preview.');
-        setTimeout(() => {
-            closeDailyReportModal();
-        }, 1200);
+        setDailyReportError(null);
+        setDailyReportMessage(null);
+
+        const feedAmount = dailyReportForm.feed ? Number(dailyReportForm.feed) : 0;
+        if (feedAmount > 0 && selectedFeedMaxStock != null && feedAmount > selectedFeedMaxStock) {
+            setDailyReportError(`Feed amount (${feedAmount}kg) exceeds available stock (${selectedFeedMaxStock}kg).`);
+            return;
+        }
+
+        setDailyReportSubmitting(true);
+
+        try {
+            const payload = {
+                building_id: dailyReportForm.building_id,
+                cull: dailyReportForm.cull ? Number(dailyReportForm.cull) : 0,
+                mortality: dailyReportForm.mortality ? Number(dailyReportForm.mortality) : 0,
+                feed: dailyReportForm.feed ? Number(dailyReportForm.feed) : 0,
+                feed_type: dailyReportForm.feed_type,
+                ...dailyReportForm.eggs,
+            };
+            const res = await axios.post('/api/daily-reports/entry', payload);
+            setDailyReportMessage(res.data.message || 'Daily report entry saved.');
+            await Promise.all([reload(), reloadFlocks(), reloadFeeds()]);
+            setTimeout(() => closeDailyReportModal(), 1500);
+        } catch (err) {
+            setDailyReportError(err.response?.data?.message || 'Unable to save daily report.');
+        } finally {
+            setDailyReportSubmitting(false);
+        }
+    };
+
+    const updateDailyReportEgg = (key, value) => {
+        setDailyReportForm((prev) => ({ ...prev, eggs: { ...prev.eggs, [key]: value } }));
     };
 
     const infographicContext = useMemo(() => {
@@ -549,6 +670,21 @@ export default function StockHubPage() {
             {resource.summaryFields && (
                 <SummaryCards fields={resource.summaryFields} summary={data?.summary} />
             )}
+            <div className="dailyReport_container">
+                <button
+                    type="button"
+                    className="dailyReport_btn"
+                    onClick={() => {
+                        setDailyReportForm(getDefaultDailyReportForm());
+                        setDailyReportMessage(null);
+                        setDailyReportOpen(true);
+                    }}
+                >
+                    <i className="bi bi-journal-check"></i> Create Daily Report
+                </button>
+            </div>
+
+
 
 
  
@@ -605,17 +741,7 @@ export default function StockHubPage() {
                         <div className="data-panel-actions">
                             {activeTab === 'chicken' && (
                                 <>
-                                    <button
-                                        type="button"
-                                        className="btn btn-outline"
-                                        onClick={() => {
-                                            setDailyReportForm(getDefaultDailyReportForm());
-                                            setDailyReportMessage(null);
-                                            setDailyReportOpen(true);
-                                        }}
-                                    >
-                                        <i className="bi bi-journal-check"></i> Create Daily Report
-                                    </button>
+
                                     <button
                                         type="button"
                                         className="btn btn-outline"
@@ -648,7 +774,7 @@ export default function StockHubPage() {
                             {pagedItems.length ? pagedItems.map((item) => {
                                 const isMature = activeTab === 'chicken' && item.type === 'Growers' && getAgeWeeks(item) >= 18;
                                 const dueforCull= activeTab === 'chicken' && item.type === 'Layers' && getAgeWeeks(item) >= 100;
-                                const rowKey = item.id || item.batch_no || item.item_code || item.name;
+                                const rowKey = item.id || item.batch_no || item.item_code || item.name || item.building?.name || `row-${item.building_id}`;
                                 const isExpanded = expandedRows.has(rowKey);
                                 const colSpan = resource.columns.length + (resource.expandable ? 2 : 1);
                                 return (
@@ -914,61 +1040,152 @@ export default function StockHubPage() {
                         >
                             Cancel
                         </button>
-                        <button type="submit" className="btn btn-primary" form="daily-report-form">
-                            Save Report
+                        <button type="submit" className="btn btn-primary" form="daily-report-form" disabled={dailyReportSubmitting}>
+                            {dailyReportSubmitting ? 'Saving...' : 'Save Report'}
                         </button>
                     </>
                 )}
             >
+                {dailyReportError && <div className="alert-error">{dailyReportError}</div>}
                 {dailyReportMessage && <div className="alert-success">{dailyReportMessage}</div>}
                 <form id="daily-report-form" onSubmit={handleDailyReportSubmit}>
-                    <div className="modal-form-grid daily-report-modal-grid">
-                        <div className="form-group">
-                            <FormLabel htmlFor="hub-report-date" required>Report Date</FormLabel>
-                            <input
-                                id="hub-report-date"
-                                type="date"
-                                className="form-control"
-                                value={dailyReportForm.report_date}
-                                onChange={(e) => setDailyReportForm((prev) => ({ ...prev, report_date: e.target.value }))}
-                                required
-                            />
+
+                    <p className="form-required-note">
+                        Fields marked with <span className="form-required-mark">*</span> are required.
+                    </p>
+                    <div className="dr-form">
+                        {/* Building Selection */}
+                        <div className="dr-section">
+                            <div className="dr-section-title"><i className="bi bi-building"></i> Building</div>
+                            <div className="modal-form-grid">
+                                <div className="form-group">
+                                    <FormLabel htmlFor="dr-building" required>Select Building</FormLabel>
+                                    <select
+                                        id="dr-building"
+                                        className="form-control"
+                                        value={dailyReportForm.building_id}
+                                        onChange={(e) => setDailyReportForm((prev) => ({ ...prev, building_id: e.target.value }))}
+                                        required
+                                    >
+                                        <option value="">-- Choose Building --</option>
+                                        {activeBuildings.map((b) => (
+                                            <option key={b.id} value={String(b.id)}>
+                                                {b.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <FormLabel>Available Chickens</FormLabel>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        value={selectedBuildingFlock ? `${selectedBuildingFlock.quantity ?? 0} birds (${selectedBuildingFlock.batch_no || ''})` : '—'}
+                                        readOnly
+                                    />
+                                </div>
+                            </div>
                         </div>
-                        <div className="form-group">
-                            <FormLabel htmlFor="hub-module-name">System Module</FormLabel>
-                            <input
-                                id="hub-module-name"
-                                type="text"
-                                className="form-control"
-                                value={dailyReportForm.module_name}
-                                onChange={(e) => setDailyReportForm((prev) => ({ ...prev, module_name: e.target.value }))}
-                            />
+
+                        {/* Cull, Mortality, Feed */}
+                        <div className="dr-section">
+                            <div className="dr-section-title"><i className="bi bi-clipboard2-pulse"></i> Operations</div>
+                            <div className="modal-form-grid cols-4">
+                                <div className="form-group">
+                                    <FormLabel htmlFor="dr-cull">Cull</FormLabel>
+                                    <input
+                                        id="dr-cull"
+                                        type="number"
+                                        className="form-control"
+                                        min="0"
+                                        value={dailyReportForm.cull}
+                                        onChange={(e) => setDailyReportForm((prev) => ({ ...prev, cull: e.target.value }))}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <FormLabel htmlFor="dr-mortality">Mortality</FormLabel>
+                                    <input
+                                        id="dr-mortality"
+                                        type="number"
+                                        className="form-control"
+                                        min="0"
+                                        value={dailyReportForm.mortality}
+                                        onChange={(e) => setDailyReportForm((prev) => ({ ...prev, mortality: e.target.value }))}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <FormLabel htmlFor="dr-feed-type">Feed Type</FormLabel>
+                                    <select
+                                        id="dr-feed-type"
+                                        className="form-control"
+                                        value={dailyReportForm.feed_type}
+                                        onChange={(e) => setDailyReportForm((prev) => ({ ...prev, feed_type: e.target.value, feed: '' }))}
+                                    >
+                                        <option value="">-- Select Type --</option>
+                                        {availableFeedTypes.map((ft) => (
+                                            <option key={ft.id} value={ft.category || ft.name}>
+                                                {ft.category || ft.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <FormLabel htmlFor="dr-feed">Feed (kg){selectedFeedMaxStock != null ? ` — Available: ${selectedFeedMaxStock}kg` : ''}</FormLabel>
+                                    <input
+                                        id="dr-feed"
+                                        type="number"
+                                        className={`form-control${dailyReportForm.feed && selectedFeedMaxStock != null && Number(dailyReportForm.feed) > selectedFeedMaxStock ? ' is-invalid' : ''}`}
+                                        min="0"
+                                        max={selectedFeedMaxStock ?? undefined}
+                                        value={dailyReportForm.feed}
+                                        onChange={(e) => setDailyReportForm((prev) => ({ ...prev, feed: e.target.value }))}
+                                    />
+                                    {dailyReportForm.feed && selectedFeedMaxStock != null && Number(dailyReportForm.feed) > selectedFeedMaxStock && (
+                                        <div className="invalid-feedback" style={{ display: 'block' }}>
+                                            Feed amount exceeds available stock ({selectedFeedMaxStock}kg).
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
-                        <div className="form-group span-2">
-                            <FormLabel htmlFor="hub-manager-note">Manager Note</FormLabel>
-                            <textarea
-                                id="hub-manager-note"
-                                className="form-control daily-report-textarea"
-                                value={dailyReportForm.manager_note}
-                                onChange={(e) => setDailyReportForm((prev) => ({ ...prev, manager_note: e.target.value }))}
-                            />
+
+                        {/* Good Eggs */}
+                        <div className="dr-section">
+                            <div className="dr-section-title"><i className="bi bi-emoji-smile"></i> Good Eggs</div>
+                            <div className="dr-egg-grid">
+                                {goodEggTypes.map((egg) => (
+                                    <div className="form-group" key={egg.key}>
+                                        <FormLabel htmlFor={`dr-egg-${egg.key}`}>{egg.label}</FormLabel>
+                                        <input
+                                            id={`dr-egg-${egg.key}`}
+                                            type="number"
+                                            className="form-control"
+                                            min="0"
+                                            value={dailyReportForm.eggs[egg.key]}
+                                            onChange={(e) => updateDailyReportEgg(egg.key, e.target.value)}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                        <div className="form-group span-2">
-                            <FormLabel htmlFor="hub-poultry-status">Poultry Status Snapshot</FormLabel>
-                            <textarea
-                                id="hub-poultry-status"
-                                className="form-control daily-report-textarea"
-                                value={dailyReportForm.poultry_status}
-                                onChange={(e) => setDailyReportForm((prev) => ({ ...prev, poultry_status: e.target.value }))}
-                            />
-                        </div>
-                        <div className="form-group span-2">
-                            <div className="daily-report-info">
-                                <strong>About this system</strong>
-                                <p>
-                                    BZ Poultry Farm Management System helps managers oversee chicken stock, feed and medicine inventory,
-                                    transfer scheduling, and daily operations reporting in one dashboard.
-                                </p>
+
+                        {/* Defective Eggs */}
+                        <div className="dr-section">
+                            <div className="dr-section-title"><i className="bi bi-exclamation-triangle"></i> Defective Eggs</div>
+                            <div className="dr-egg-grid">
+                                {defectiveEggTypes.map((egg) => (
+                                    <div className="form-group" key={egg.key}>
+                                        <FormLabel htmlFor={`dr-egg-${egg.key}`}>{egg.label}</FormLabel>
+                                        <input
+                                            id={`dr-egg-${egg.key}`}
+                                            type="number"
+                                            className="form-control"
+                                            min="0"
+                                            value={dailyReportForm.eggs[egg.key]}
+                                            onChange={(e) => updateDailyReportEgg(egg.key, e.target.value)}
+                                        />
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>
@@ -1037,6 +1254,87 @@ export default function StockHubPage() {
                                     <option key={b.id} value={b.name}>{b.name}</option>
                                 ))}
                             </select>
+                        </div>
+                    </div>
+                </form>
+            </Modal>
+
+            <Modal
+                open={isRestockOpen}
+                title="Restock Feed"
+                size="landscape"
+                onClose={() => {
+                    setRestockOpen(false);
+                    setRestockForm({ feed_id: '', quantity: '', expiry_date: '' });
+                    setRestockError(null);
+                    setRestockMessage(null);
+                }}
+                actions={(
+                    <>
+                        <button
+                            type="button"
+                            className="btn btn-outline"
+                            onClick={() => {
+                                setRestockOpen(false);
+                                setRestockForm({ feed_id: '', quantity: '', expiry_date: '' });
+                                setRestockError(null);
+                                setRestockMessage(null);
+                            }}
+                        >
+                            Cancel
+                        </button>
+                        <button type="submit" className="btn btn-primary" form="restock-form">
+                            Restock
+                        </button>
+                    </>
+                )}
+            >
+                {restockError && <div className="alert-error">{restockError}</div>}
+                {restockMessage && <div className="alert-success">{restockMessage}</div>}
+                <form id="restock-form" onSubmit={handleRestockSubmit}>
+                    <p className="form-required-note">
+                        Fields marked with <span className="form-required-mark">*</span> are required.
+                    </p>
+                    <div className="modal-form-grid cols-3">
+                        <div className="form-group">
+                            <FormLabel htmlFor="restock-feed" required>Select Feed Item</FormLabel>
+                            <select
+                                id="restock-feed"
+                                className="form-control"
+                                value={restockForm.feed_id}
+                                onChange={(e) => setRestockForm({ ...restockForm, feed_id: e.target.value })}
+                                required
+                            >
+                                <option value="">-- Choose Feed --</option>
+                                {(data?.items || []).map((item) => (
+                                    <option key={item.id} value={item.id}>
+                                        {item.name} ({item.category || 'N/A'}) — Current: {item.stock}kg
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="form-group">
+                            <FormLabel htmlFor="restock-qty" required>Quantity to Add (kg)</FormLabel>
+                            <input
+                                id="restock-qty"
+                                type="number"
+                                className="form-control"
+                                min="0.01"
+                                step="0.01"
+                                value={restockForm.quantity}
+                                onChange={(e) => setRestockForm({ ...restockForm, quantity: e.target.value })}
+                                required
+                            />
+                        </div>
+                        <div className="form-group">
+                            <FormLabel htmlFor="restock-expiry">Expiry Date</FormLabel>
+                            <input
+                                id="restock-expiry"
+                                type="date"
+                                className="form-control"
+                                value={restockForm.expiry_date}
+                                onChange={(e) => setRestockForm({ ...restockForm, expiry_date: e.target.value })}
+                            />
                         </div>
                     </div>
                 </form>

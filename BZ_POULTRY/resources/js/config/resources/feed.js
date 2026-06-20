@@ -1,3 +1,5 @@
+const fmtDate = (v) => v ? String(v).slice(0, 10) : '';
+
 const feedCategories = ['Booster', 'Starter', 'Grower', 'Prelay', 'Layer 1', 'Layer 2'];
 
 export default {
@@ -16,8 +18,8 @@ export default {
         { key: 'stock', label: 'Stock (kg)' },
         { key: 'unit', label: 'Unit' },
         { key: 'reorder_level', label: 'Reorder Level (kg)' },
-        { key: 'expiry_date', label: 'Expiry Date' },
-        { key: 'last_stock_in', label: 'Last Stock in' },
+        { key: 'expiry_date', label: 'Expiry Date', render: (item) => fmtDate(item.expiry_date) },
+        { key: 'last_stock_in', label: 'Last Stock in', render: (item) => fmtDate(item.last_stock_in) },
         { key: 'status', label: 'Status', badge: true },
     ],
     formFields: [

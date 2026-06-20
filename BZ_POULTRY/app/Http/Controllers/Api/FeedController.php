@@ -130,4 +130,44 @@ class FeedController extends Controller
 
         return response()->json(['message' => 'Feed item deleted.']);
     }
+
+    public function restock(Request $request)
+    {
+        $data = $request->validate([
+            'feed_id' => 'required|exists:feed_items,id',
+            'quantity' => 'required|numeric|min:0.01',
+            'expiry_date' => 'nullable|date',
+        ]);
+
+        $feedItem = FeedItem::findOrFail($data['feed_id']);
+        $quantity = (float) $data['quantity'];
+
+        $updateData = [
+            'stock' => (float) $feedItem->stock + $quantity,
+            'last_stock_in' => now(),
+        ];
+
+        if (!empty($data['expiry_date'])) {
+            $updateData['expiry_date'] = $data['expiry_date'];
+        }
+
+        $feedItem->update($updateData);
+
+        StockTransaction::create([
+            'item_type' => 'feed',
+            'item_id' => $feedItem->id,
+            'type' => 'in',
+            'quantity' => $quantity,
+            'reference' => 'restock',
+            'user_id' => auth()->id(),
+            'notes' => "Restocked {$feedItem->name} ({$feedItem->category}) +{$quantity}kg",
+        ]);
+
+        ActivityLogger::log('updated', 'Feed Inventory', "Restocked {$feedItem->name} +{$quantity}kg");
+
+        return response()->json([
+            'message' => "Restocked {$feedItem->name} with {$quantity}kg.",
+            'item' => $feedItem->fresh(),
+        ]);
+    }
 }

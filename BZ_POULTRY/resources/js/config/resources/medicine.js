@@ -14,7 +14,7 @@ export default {
         { key: 'type', label: 'Type' },
         { key: 'stock', label: 'Stock' },
         { key: 'reorder_level', label: 'Reorder Level' },
-        { key: 'expiry_date', label: 'Expiry' },
+        { key: 'expiry_date', label: 'Expiry', render: (item) => item.expiry_date ? String(item.expiry_date).slice(0, 10) : '' },
         { key: 'status', label: 'Status' },
     ],
     formFields: [

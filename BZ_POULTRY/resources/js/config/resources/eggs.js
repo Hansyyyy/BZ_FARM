@@ -26,7 +26,7 @@ export default {
         { key: 'monthTotal', label: 'This Month' },
     ],
     columns: [
-        { key: 'date', label: 'Date' },
+        { key: 'date', label: 'Date', render: (item) => item.date ? String(item.date).slice(0, 10) : '' },
         { key: 'building_id', label: 'Building', render: (item) => item.building?.name ?? '' },
         { key: 'total_eggs', label: 'Total Eggs (pcs)' },
         { key: 'good_eggs', label: 'Good Eggs (pcs)', render: (item) => {

@@ -19,7 +19,7 @@ export const stockTabs = [
         icon: 'bi-bucket',
         resourceKey: 'feed',
         listTitle: 'Feed List',
-        addLabel: 'Add New Feed',
+        addLabel: 'Restock Feed',
         searchPlaceholder: 'search by category...',
         filters: ['category', 'status', 'date'],
     },

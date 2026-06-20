@@ -10,3 +10,5 @@
 - [x] (Command) npm test executed
 
 
+- [ ] change daily report to Generate Report
+

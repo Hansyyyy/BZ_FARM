@@ -28,7 +28,7 @@ export default {
             },
         },
         { key: 'date_in', label: 'Date In', render: (item) => item.date_in ? String(item.date_in).slice(0, 10) : '' },
-        { key: 'cull', label: 'Cull', render: () => 0 },
+        { key: 'cull', label: 'Cull', render: (item) => item.cull ?? 0 },
         { key: 'mortality', label: 'Mortality', render: (item) => item.mortality ?? 0 },
         {
             key: 'mortality_rate',
