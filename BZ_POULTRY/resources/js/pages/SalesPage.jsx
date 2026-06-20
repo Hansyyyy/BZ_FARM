@@ -6,7 +6,7 @@ import PageState from '../components/ui/PageState';
 import SummaryCards from '../components/ui/SummaryCards';
 import Modal from '../components/ui/Modal';
 import ExportModal from '../components/ui/ExportModal';
-import SaleForm, { buildInvoiceNo, parseInvoiceNo } from '../components/forms/SaleForm';
+import SaleForm, { buildEggLinesFromSale, createEmptyEggLine, createEmptyChickenLine } from '../components/forms/SaleForm';
 import CustomerForm from '../components/forms/CustomerForm';
 import RowActionButtons from '../components/ui/RowActionButtons';
 import { exportTableData } from '../utils/exportData';
@@ -23,7 +23,7 @@ const salesColumns = [
     { key: 'sale_date', label: 'Date' },
     { key: 'invoice_no', label: 'Invoice No.' },
     { key: 'customer', label: 'Customer', render: (sale) => sale.customer?.name ?? sale.customer_name },
-    { key: 'product', label: 'Product', render: (sale) => sale.product?.name ?? sale.product_name },
+    { key: 'product', label: 'Product', render: (sale) => sale.product_summary || sale.product?.name || sale.product_name },
     { key: 'quantity', label: 'Qty' },
     { key: 'amount', label: 'Amount', render: (sale) => `₱${Number(sale.amount).toFixed(2)}` },
     { key: 'payment_method', label: 'Payment' },
@@ -60,24 +60,39 @@ export default function SalesPage() {
             invoice_no: '',
             sale_category: '',
             pricing_unit: 'per_tray',
+            egg_lines: [createEmptyEggLine()],
+            chicken_lines: [createEmptyChickenLine()],
         });
         setShowForm(true);
     };
 
 
     const openEdit = (sale) => {
-        const invoice = parseInvoiceNo(sale.invoice_no || '');
-
         setEditingId(sale.id);
         setForm({
             id: sale.id,
             invoice_no: sale.invoice_no || '',
-
             customer_id: sale.customer_id || sale.customer?.id || '',
             product_id: sale.product_id || sale.product?.id || '',
             sale_category: sale.sale_category || 'egg',
             egg_type: sale.egg_type || '',
+            egg_lines: buildEggLinesFromSale(sale),
             chicken_type: sale.chicken_type || '',
+            chicken_lines: Array.isArray(sale.chicken_lines) && sale.chicken_lines.length
+                ? sale.chicken_lines.map((line, index) => ({
+                    id: line.id || `chicken-line-${index}`,
+                    chicken_type: line.chicken_type || '',
+                    product_id: line.product_id || '',
+                    quantity: line.quantity ?? '',
+                    unit_price: line.unit_price ?? '',
+                }))
+                : [{
+                    id: 'chicken-line-0',
+                    chicken_type: sale.chicken_type || '',
+                    product_id: sale.product_id || sale.product?.id || '',
+                    quantity: sale.quantity_heads || '',
+                    unit_price: sale.unit_price || '',
+                }],
             quantity_heads: sale.quantity_heads || '',
             quantity_trays: sale.quantity_trays || '',
             quantity_pieces: sale.quantity_pieces || '',
@@ -96,6 +111,25 @@ export default function SalesPage() {
         try {
             const payload = { ...form };
 
+            if (payload.sale_category === 'egg') {
+                payload.egg_lines = (payload.egg_lines || []).map(({ id, ...line }) => line);
+                delete payload.chicken_lines;
+            } else if (payload.sale_category === 'chicken') {
+                payload.chicken_lines = (payload.chicken_lines || []).map(({ id, ...line }) => line);
+
+                if (payload.chicken_lines.length) {
+                    payload.chicken_type = payload.chicken_lines[0]?.chicken_type || '';
+                    payload.quantity_heads = payload.chicken_lines[0]?.quantity || '';
+                    payload.unit_price = payload.chicken_lines[0]?.unit_price || '';
+                    payload.product_id = payload.chicken_lines[0]?.product_id || '';
+                }
+
+                delete payload.egg_lines;
+            } else {
+                delete payload.egg_lines;
+                delete payload.chicken_lines;
+            }
+
             if (editingId) {
                 delete payload.id;
                 await axios.put(`/api/sales/${editingId}`, payload);
@@ -103,10 +137,18 @@ export default function SalesPage() {
                 delete payload.id;
 
                 const formData = new FormData();
-                Object.entries(payload).forEach(([key, value]) => formData.append(key, value));
+                Object.entries(payload).forEach(([key, value]) => {
+                    if (key === 'egg_lines' || key === 'chicken_lines') {
+                        formData.append(key, JSON.stringify(value));
+                        return;
+                    }
+
+                    if (value !== undefined && value !== null) {
+                        formData.append(key, value);
+                    }
+                });
                 await axios.post('/api/sales', formData);
             }
-
 
             closeForm();
             await reload();
@@ -280,17 +322,47 @@ export default function SalesPage() {
                 actions={<button type="button" className="btn btn-outline" onClick={() => setViewItem(null)}>Close</button>}
             >
                 {viewItem && (
-                    <div className="detail-grid">
-                        {salesColumns.map((col) => {
-                            const value = col.render ? col.render(viewItem) : viewItem[col.key] ?? '';
-                            return (
-                                <div className="detail-item" key={col.key}>
-                                    <span>{col.label}</span>
-                                    <strong>{value}</strong>
+                    <>
+                        <div className="detail-grid">
+                            {salesColumns.map((col) => {
+                                const value = col.render ? col.render(viewItem) : viewItem[col.key] ?? '';
+                                return (
+                                    <div className="detail-item" key={col.key}>
+                                        <span>{col.label}</span>
+                                        <strong>{value}</strong>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {Array.isArray(viewItem.egg_lines) && viewItem.egg_lines.length > 0 && (
+                            <div className="sale-egg-lines-view">
+                                <h4>Egg Type Breakdown</h4>
+                                <div className="table-responsive">
+                                    <table className="data-table mockup-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Egg Type</th>
+                                                <th>Qty</th>
+                                                <th>Unit Price</th>
+                                                <th>Line Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {viewItem.egg_lines.map((line, index) => (
+                                                <tr key={`${line.egg_type}-${index}`}>
+                                                    <td>{line.egg_type_label || line.egg_type}</td>
+                                                    <td>{line.quantity}</td>
+                                                    <td>₱{Number(line.unit_price || 0).toFixed(2)}</td>
+                                                    <td>₱{Number(line.line_total || 0).toFixed(2)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
-                            );
-                        })}
-                    </div>
+                            </div>
+                        )}
+                    </>
                 )}
             </Modal>
 

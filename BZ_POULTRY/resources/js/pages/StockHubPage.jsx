@@ -922,9 +922,6 @@ export default function StockHubPage() {
             >
                 {dailyReportMessage && <div className="alert-success">{dailyReportMessage}</div>}
                 <form id="daily-report-form" onSubmit={handleDailyReportSubmit}>
-                    <p className="form-required-note">
-                        Fields marked with <span className="form-required-mark">*</span> are required.
-                    </p>
                     <div className="modal-form-grid daily-report-modal-grid">
                         <div className="form-group">
                             <FormLabel htmlFor="hub-report-date" required>Report Date</FormLabel>
@@ -1008,9 +1005,6 @@ export default function StockHubPage() {
             >
                 {transferError && <div className="alert-error">{transferError}</div>}
                 <form id="transfer-form" onSubmit={handleTransfer}>
-                    <p className="form-required-note">
-                        Fields marked with <span className="form-required-mark">*</span> are required.
-                    </p>
                     <div className="modal-form-grid">
                         <div className="form-group">
                             <FormLabel htmlFor="transfer-flock" required>Select Grower Flock (18+ weeks)</FormLabel>

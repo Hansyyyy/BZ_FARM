@@ -2070,6 +2070,92 @@ html.dark-theme .modal .form-control::placeholder {
     font-weight: 600;
 }
 
+.sale-egg-lines-wrap {
+    grid-column: span 2;
+}
+
+.sale-egg-lines-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.sale-egg-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.sale-egg-line {
+    border: 1px solid #b8d4c4;
+    border-radius: 12px;
+    padding: 14px;
+    background: #ffffff;
+}
+
+.sale-egg-line-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.sale-egg-line .form-group {
+    margin-bottom: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.sale-egg-line-remove {
+    margin-top: 10px;
+}
+
+.sale-total-display {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 44px;
+}
+
+.sale-total-display--grand {
+    font-size: 1.05rem;
+}
+
+.sale-total-meta {
+    color: var(--text-muted, #667);
+    font-size: 0.92rem;
+}
+
+html.dark-theme .sale-egg-line {
+    background: rgba(10, 24, 18, 0.72);
+    border-color: var(--theme-border);
+}
+
+html.dark-theme .sale-total-meta {
+    color: var(--theme-muted) !important;
+}
+
+html.dark-theme .sale-total-display {
+    color: var(--theme-text);
+}
+
+.sale-egg-lines-view {
+    margin-top: 20px;
+}
+
+.sale-egg-lines-view h4 {
+    margin: 0 0 12px;
+    font-size: 1rem;
+    color: var(--text-dark);
+}
+
+html.dark-theme .sale-egg-lines-view h4 {
+    color: var(--theme-text);
+}
+
 .action-btn {
     width: 36px;
     height: 36px;
@@ -2100,5 +2186,13 @@ html.dark-theme .modal .form-control::placeholder {
 
     .invoice-no-field {
         grid-template-columns: 1fr;
+    }
+
+    .sale-egg-line-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .sale-egg-lines-wrap {
+        grid-column: span 1;
     }
 }

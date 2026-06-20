@@ -1,6 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem('theme') === 'dark') {
+                    document.documentElement.classList.add('dark-theme');
+                }
+            } catch (error) {
+                // Ignore storage access errors.
+            }
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - BZ Farm</title>
@@ -60,13 +71,13 @@
                 <div class="form-group">
                     <div class="floating-field">
                         <input type="text" id="username" name="username" class="form-control floating-input" value="<?php echo e(old('username')); ?>" placeholder=" " required autofocus>
-                        <label for="username" class="floating-label">Username</label>
+                        <label for="username" class="floating-label">Username <span class="form-required-mark">*</span></label>
                     </div>
                 </div>
                 <div class="form-group">
                     <div class="password-field floating-field">
                         <input type="password" id="password" name="password" class="form-control floating-input" placeholder=" " required>
-                        <label for="password" class="floating-label">Password</label>
+                        <label for="password" class="floating-label">Password <span class="form-required-mark">*</span></label>
                         <button type="button" class="toggle-password" aria-label="Show password">
                             <i class="bi bi-eye"></i>
                         </button>

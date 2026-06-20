@@ -1,19 +1,35 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import LogoutModal from './LogoutModal';
+
+function readStoredTheme() {
+    try {
+        return localStorage.getItem('theme') === 'dark' ? 'dark' : 'light';
+    } catch {
+        return 'light';
+    }
+}
+
+function applyTheme(theme) {
+    document.documentElement.classList.toggle('dark-theme', theme === 'dark');
+}
 
 export default function Layout({ children }) {
     const [collapsed, setCollapsed] = useState(localStorage.getItem('sidebarCollapsed') === '1');
     const [mobileOpen, setMobileOpen] = useState(false);
     const [showLogout, setShowLogout] = useState(false);
-    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+    const [theme, setTheme] = useState(readStoredTheme);
+
+    useEffect(() => {
+        applyTheme(theme);
+    }, [theme]);
 
     const toggleTheme = () => {
         const next = theme === 'dark' ? 'light' : 'dark';
         setTheme(next);
         localStorage.setItem('theme', next);
-        document.documentElement.classList.toggle('dark-theme', next === 'dark');
+        applyTheme(next);
     };
 
 

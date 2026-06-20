@@ -288,9 +288,6 @@ export default function FarmCalendar() {
                             <span>{selectedHoliday.name}</span>
                         </div>
                     )}
-                    <p className="form-required-note">
-                        Fields marked with <span className="form-required-mark">*</span> are required.
-                    </p>
                     <div className="form-group">
                         <FormLabel htmlFor="calendar-note-content" required>Note</FormLabel>
                         <textarea

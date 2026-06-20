@@ -1,6 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem('theme') === 'dark') {
+                    document.documentElement.classList.add('dark-theme');
+                }
+            } catch (error) {
+                // Ignore storage access errors.
+            }
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - BZ Farm</title>
@@ -57,9 +68,6 @@
 
             <form method="POST" action="{{ route('login') }}">
                 @csrf
-                <p class="form-required-note">
-                    Fields marked with <span class="form-required-mark">*</span> are required.
-                </p>
                 <div class="form-group">
                     <div class="floating-field">
                         <input type="text" id="username" name="username" class="form-control floating-input" value="{{ old('username') }}" placeholder=" " required autofocus>

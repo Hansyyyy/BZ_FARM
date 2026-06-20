@@ -3,9 +3,6 @@ import FormLabel from './FormLabel';
 export default function UserForm({ id, user, onChange, onSubmit }) {
     return (
         <form id={id} onSubmit={onSubmit}>
-            <p className="form-required-note">
-                Fields marked with <span className="form-required-mark">*</span> are required.
-            </p>
             <div className="modal-form-grid">
                 <div className="form-group">
                     <FormLabel htmlFor="user-name" required>Name</FormLabel>

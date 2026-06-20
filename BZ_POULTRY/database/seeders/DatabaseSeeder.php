@@ -49,6 +49,7 @@ class DatabaseSeeder extends Seeder
             FlocksSeeder::class,
             FeedItemsSeeder::class,
             EggProductionSeeder::class,
+            ProductsSeeder::class,
         ]);
     }
 }

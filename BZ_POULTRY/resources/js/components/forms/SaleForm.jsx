@@ -1,6 +1,45 @@
 import SearchableSelect from '../ui/SearchableSelect';
 import FormLabel from './FormLabel';
 
+export const EGG_TYPE_OPTIONS = [
+    { value: 'piwi', label: 'Piwi' },
+    { value: 'small', label: 'Small' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'large', label: 'Large' },
+    { value: 'extra_large', label: 'Extra Large' },
+    { value: 'jumbo', label: 'Jumbo' },
+    { value: 'super_jumbo', label: 'Super Jumbo' },
+];
+
+export function createEmptyEggLine() {
+    return {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        egg_type: '',
+        product_id: '',
+        quantity: '',
+        unit_price: '',
+    };
+}
+
+export function createEmptyChickenLine() {
+    return {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        chicken_type: '',
+        product_id: '',
+        quantity: '',
+        unit_price: '',
+    };
+}
+
+export function findProductByEggType(products, eggType) {
+    if (!eggType) return null;
+
+    const option = EGG_TYPE_OPTIONS.find((item) => item.value === eggType);
+    const needle = (option?.label || eggType.replace(/_/g, ' ')).toLowerCase();
+
+    return (products || []).find((product) => String(product.name || '').toLowerCase().includes(needle)) || null;
+}
+
 export function parseInvoiceNo(invoiceNo) {
     if (!invoiceNo) {
         return { invoice_prefix: 'SI#', invoice_number: '' };
@@ -28,47 +67,139 @@ export function buildInvoiceNo(prefix, number) {
     return `${prefix || 'SI#'}${String(number || '').trim()}`;
 }
 
-const EGG_PRODUCTS = [
-    { id: 'egg_small', name: 'Small Eggs' },
-    { id: 'egg_medium', name: 'Medium Eggs' },
-    { id: 'egg_large', name: 'Large Eggs' },
-    { id: 'egg_extra_large', name: 'Extra Large Eggs' },
-    { id: 'egg_jumbo', name: 'Jumbo Eggs' },
-    { id: 'egg_super_jumbo', name: 'Super Jumbo Eggs' },
-];
+function normalizedNumber(value) {
+    if (value === '' || value === null || value === undefined) return 0;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+}
 
-const CHICKEN_PRODUCTS = [
-    { id: 'chicken_grower', name: 'Grower Chicken' },
-    { id: 'chicken_layer', name: 'Layer Chicken' },
-];
+function formatCurrency(value) {
+    return `₱${Number(value || 0).toFixed(2)}`;
+}
+
+export function buildEggLinesFromSale(sale) {
+    if (Array.isArray(sale?.egg_lines) && sale.egg_lines.length) {
+        return sale.egg_lines.map((line, index) => ({
+            id: line.id || `line-${index}`,
+            egg_type: line.egg_type || '',
+            product_id: line.product_id || '',
+            quantity: line.quantity ?? '',
+            unit_price: line.unit_price ?? '',
+        }));
+    }
+
+    const quantity = sale?.pricing_unit === 'per_piece'
+        ? sale?.quantity_pieces
+        : sale?.quantity_trays;
+
+    if (!sale?.egg_type) {
+        return [createEmptyEggLine()];
+    }
+
+    return [{
+        id: 'line-0',
+        egg_type: sale.egg_type,
+        product_id: sale.product_id || '',
+        quantity: quantity ?? sale.quantity ?? '',
+        unit_price: sale.unit_price ?? '',
+    }];
+}
 
 export default function SaleForm({ id, form, onChange, onSubmit, customers = [], products = [] }) {
-    const normalized = (v) => {
-        if (v === '' || v === null || v === undefined) return 0;
-        const n = Number(v);
-        return Number.isFinite(n) ? n : 0;
+    const pricingUnit = form?.pricing_unit || 'per_tray';
+    const eggLines = form?.egg_lines?.length ? form.egg_lines : [createEmptyEggLine()];
+    const chickenLines = form?.chicken_lines?.length ? form.chicken_lines : [createEmptyChickenLine()];
+
+    const eggLinesTotal = eggLines.reduce(
+        (sum, line) => sum + normalizedNumber(line.quantity) * normalizedNumber(line.unit_price),
+        0
+    );
+
+    const updateEggLine = (index, key, value) => {
+        const nextLines = eggLines.map((line, lineIndex) => {
+            if (lineIndex !== index) return line;
+
+            const updated = { ...line, [key]: value };
+
+            if (key === 'egg_type') {
+                const matchedProduct = findProductByEggType(products, value);
+                updated.product_id = matchedProduct?.id || '';
+                updated.unit_price = matchedProduct?.unit_price ?? '';
+            }
+
+            return updated;
+        });
+
+        onChange('egg_lines', nextLines);
+
+        if (index === 0) {
+            onChange('product_id', nextLines[0]?.product_id || '');
+            onChange('egg_type', nextLines[0]?.egg_type || '');
+        }
     };
 
-    const selectedProduct = products?.find((p) => String(p.id) === String(form?.product_id)) || null;
-    const computedUnitPrice = selectedProduct ? normalized(selectedProduct.unit_price) : 0;
+    const updateChickenLine = (index, key, value) => {
+        const nextLines = chickenLines.map((line, lineIndex) => {
+            if (lineIndex !== index) return line;
 
-    const quantityForAmount = (() => {
-        if (form?.sale_category === 'chicken') return normalized(form?.quantity_heads);
-        if (form?.sale_category === 'egg') {
-            const pricingUnit = form?.pricing_unit || 'per_tray';
-            if (pricingUnit === 'per_piece') return normalized(form?.quantity_pieces);
-            return normalized(form?.quantity_trays);
+            const updated = { ...line, [key]: value };
+
+            if (key === 'chicken_type') {
+                const matchedProduct = (products || []).find((product) => (
+                    String(product.name || '').toLowerCase().includes(String(value || '').toLowerCase())
+                ));
+                updated.product_id = matchedProduct?.id || '';
+                updated.unit_price = matchedProduct?.unit_price ?? '';
+            }
+
+            return updated;
+        });
+
+        onChange('chicken_lines', nextLines);
+
+        if (index === 0) {
+            onChange('product_id', nextLines[0]?.product_id || '');
+            onChange('chicken_type', nextLines[0]?.chicken_type || '');
+            onChange('quantity_heads', nextLines[0]?.quantity || '');
+            onChange('unit_price', nextLines[0]?.unit_price || '');
         }
-        return normalized(form?.quantity);
-    })();
+    };
 
-    const amountComputed = quantityForAmount * normalized(form?.unit_price);
+    const addEggLine = () => {
+        onChange('egg_lines', [...eggLines, createEmptyEggLine()]);
+    };
+
+    const addChickenLine = () => {
+        onChange('chicken_lines', [...chickenLines, createEmptyChickenLine()]);
+    };
+
+    const removeEggLine = (index) => {
+        if (eggLines.length <= 1) return;
+        const nextLines = eggLines.filter((_, lineIndex) => lineIndex !== index);
+        onChange('egg_lines', nextLines);
+        onChange('product_id', nextLines[0]?.product_id || '');
+        onChange('egg_type', nextLines[0]?.egg_type || '');
+    };
+
+    const removeChickenLine = (index) => {
+        if (chickenLines.length <= 1) return;
+        const nextLines = chickenLines.filter((_, lineIndex) => lineIndex !== index);
+        onChange('chicken_lines', nextLines);
+        onChange('product_id', nextLines[0]?.product_id || '');
+        onChange('chicken_type', nextLines[0]?.chicken_type || '');
+        onChange('quantity_heads', nextLines[0]?.quantity || '');
+        onChange('unit_price', nextLines[0]?.unit_price || '');
+    };
+
+    const usedEggTypes = new Set(eggLines.map((line) => line.egg_type).filter(Boolean));
+    const usedChickenTypes = new Set(chickenLines.map((line) => line.chicken_type).filter(Boolean));
+    const chickenLinesTotal = chickenLines.reduce(
+        (sum, line) => sum + normalizedNumber(line.quantity) * normalizedNumber(line.unit_price),
+        0
+    );
 
     return (
         <form id={id} onSubmit={onSubmit}>
-            <p className="form-required-note">
-                Fields marked with <span className="form-required-mark">*</span> are required.
-            </p>
             <div className="modal-form-grid">
                 <div className="form-group">
                     <FormLabel htmlFor="sale-invoice-type" required>Invoice Type</FormLabel>
@@ -79,8 +210,8 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
                             const { invoice_prefix } = parseInvoiceNo(form.invoice_no || '');
                             return invoice_prefix === 'DR#' ? 'dr' : 'si';
                         })()}
-                        onChange={(e) => {
-                            const invoiceType = e.target.value; // 'si' | 'dr'
+                        onChange={(event) => {
+                            const invoiceType = event.target.value;
                             const nextInvoiceNo = setInvoiceTypeInInvoiceNo(form.invoice_no || '', invoiceType);
                             onChange('invoice_no', nextInvoiceNo);
                         }}
@@ -98,17 +229,12 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
                             id="sale-invoice-no"
                             className="form-control"
                             value={form.invoice_no || ''}
-                            onChange={(event) => {
-                                const next = event.target.value;
-                                onChange('invoice_no', next);
-                            }}
+                            onChange={(event) => onChange('invoice_no', event.target.value)}
                             placeholder="Enter invoice number (e.g., SI#01 / DR#01)"
                             required
                         />
                     </div>
                 </div>
-
-
 
                 <div className="form-group">
                     <FormLabel htmlFor="sale-date" required>Sale Date</FormLabel>
@@ -117,7 +243,7 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
                         type="date"
                         className="form-control"
                         value={form.sale_date || ''}
-                        onChange={(e) => onChange('sale_date', e.target.value)}
+                        onChange={(event) => onChange('sale_date', event.target.value)}
                         required
                     />
                 </div>
@@ -143,15 +269,18 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
                         id="sale-category"
                         className="form-control"
                         value={form.sale_category || ''}
-                        onChange={(e) => {
-                            const saleCategory = e.target.value;
+                        onChange={(event) => {
+                            const saleCategory = event.target.value;
                             onChange('sale_category', saleCategory);
                             onChange('product_id', '');
 
                             if (saleCategory === 'egg') {
-                                onChange('product_id', EGG_PRODUCTS[0].id);
+                                onChange('egg_lines', [createEmptyEggLine()]);
+                                onChange('chicken_lines', []);
+                                onChange('pricing_unit', form.pricing_unit || 'per_tray');
                             } else if (saleCategory === 'chicken') {
-                                onChange('product_id', CHICKEN_PRODUCTS[0].id);
+                                onChange('egg_lines', []);
+                                onChange('chicken_lines', [createEmptyChickenLine()]);
                             }
                         }}
                         required
@@ -164,64 +293,98 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
 
                 {form.sale_category === 'chicken' ? (
                     <>
-                        <div className="form-group">
-                            <FormLabel htmlFor="sale-chicken-type" required>Chicken Type</FormLabel>
-                            <select
-                                id="sale-chicken-type"
-                                className="form-control"
-                                value={form.chicken_type || ''}
-                        onChange={(e) => {
-                                    const chickenType = e.target.value;
-                                    const nextProductId = chickenType ? `chicken_${chickenType}` : '';
-                                    onChange('chicken_type', chickenType);
-                                    onChange('product_id', nextProductId);
+                        <div className="form-group span-2 sale-egg-lines-wrap">
+                            <div className="sale-egg-lines-header">
+                                <FormLabel required>Chicken Types</FormLabel>
+                                <button type="button" className="btn btn-outline btn-sm" onClick={addChickenLine}>
+                                    <i className="bi bi-plus-lg"></i> Add Chicken Type
+                                </button>
+                            </div>
 
-                                    // Auto-fill unit_price from product configuration
-                                    const nextSelectedProduct = products?.find((p) => String(p.id) === String(nextProductId));
-                                    if (nextSelectedProduct && nextSelectedProduct.unit_price !== undefined) {
-                                        onChange('unit_price', nextSelectedProduct.unit_price);
-                                    }
-                                }}
-                                required
-                            >
-                                <option value="">Choose chicken type</option>
-                                <option value="grower">Grower</option>
-                                <option value="layer">Layer</option>
-                            </select>
+                            <div className="sale-egg-lines">
+                                {chickenLines.map((line, index) => {
+                                    const lineTotal = normalizedNumber(line.quantity) * normalizedNumber(line.unit_price);
+
+                                    return (
+                                        <div className="sale-egg-line" key={line.id || `chicken-line-${index}`}>
+                                            <div className="sale-egg-line-grid">
+                                                <div className="form-group">
+                                                    <FormLabel required={index === 0}>Chicken Type</FormLabel>
+                                                    <select
+                                                        className="form-control"
+                                                        value={line.chicken_type || ''}
+                                                        onChange={(event) => updateChickenLine(index, 'chicken_type', event.target.value)}
+                                                        required
+                                                    >
+                                                        <option value="">Choose chicken type</option>
+                                                        <option
+                                                            value="grower"
+                                                            disabled={usedChickenTypes.has('grower') && line.chicken_type !== 'grower'}
+                                                        >
+                                                            Grower
+                                                        </option>
+                                                        <option
+                                                            value="layer"
+                                                            disabled={usedChickenTypes.has('layer') && line.chicken_type !== 'layer'}
+                                                        >
+                                                            Layer
+                                                        </option>
+                                                    </select>
+                                                </div>
+
+                                                <div className="form-group">
+                                                    <FormLabel required={index === 0}>Quantity (heads)</FormLabel>
+                                                    <input
+                                                        type="number"
+                                                        className="form-control"
+                                                        value={line.quantity || ''}
+                                                        onChange={(event) => updateChickenLine(index, 'quantity', event.target.value)}
+                                                        min="1"
+                                                        required
+                                                    />
+                                                </div>
+
+                                                <div className="form-group">
+                                                    <FormLabel required={index === 0}>Unit Price (per head)</FormLabel>
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        className="form-control"
+                                                        value={line.unit_price || ''}
+                                                        onChange={(event) => updateChickenLine(index, 'unit_price', event.target.value)}
+                                                        required
+                                                    />
+                                                </div>
+
+                                                <div className="form-group">
+                                                    <FormLabel>Line Total</FormLabel>
+                                                    <div className="form-control sale-total-display">
+                                                        <strong>{formatCurrency(lineTotal)}</strong>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {chickenLines.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-outline btn-sm sale-egg-line-remove"
+                                                    onClick={() => removeChickenLine(index)}
+                                                >
+                                                    <i className="bi bi-trash"></i> Remove
+                                                </button>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
 
-                        <div className="form-group">
-                            <FormLabel htmlFor="sale-quantity-heads" required>How many chickens?</FormLabel>
-                            <input
-                                id="sale-quantity-heads"
-                                type="number"
-                                className="form-control"
-                                value={form.quantity_heads || ''}
-                                onChange={(e) => onChange('quantity_heads', e.target.value)}
-                                min="1"
-                                required
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <FormLabel htmlFor="sale-chicken-unit-price" required>Unit Price (per head)</FormLabel>
-                            <input
-                                id="sale-chicken-unit-price"
-                                type="number"
-                                step="0.01"
-                                className="form-control"
-                                value={form.unit_price || ''}
-                                onChange={(e) => onChange('unit_price', e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <FormLabel htmlFor="sale-chicken-total">Total</FormLabel>
-                            <div id="sale-chicken-total" className="form-control" style={{ display: 'flex', alignItems: 'center' }}>
-                                <strong style={{ marginRight: 8 }}>₱{Number(amountComputed).toFixed(2)}</strong>
-                                <span style={{ color: '#666' }}>
-                                    ({quantityForAmount} × {Number(form?.unit_price || 0).toFixed(2)})
+                        <div className="form-group span-2">
+                            <FormLabel htmlFor="sale-chicken-total">Total Amount</FormLabel>
+                            <div id="sale-chicken-total" className="form-control sale-total-display sale-total-display--grand">
+                                <strong>{formatCurrency(chickenLinesTotal)}</strong>
+                                <span className="sale-total-meta">
+                                    Sum of {chickenLines.length} chicken type{chickenLines.length === 1 ? '' : 's'}
                                 </span>
                             </div>
                         </div>
@@ -229,43 +392,12 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
                 ) : form.sale_category === 'egg' ? (
                     <>
                         <div className="form-group">
-                            <FormLabel htmlFor="sale-egg-type" required>Egg Type</FormLabel>
-                            <select
-                                id="sale-egg-type"
-                                className="form-control"
-                                value={form.egg_type || ''}
-                                onChange={(e) => {
-                                    const eggType = e.target.value;
-                                    const nextProductId = eggType === 'piwi' ? 'egg_piwi' : (eggType ? `egg_${eggType}` : '');
-                                    onChange('egg_type', eggType);
-                                    onChange('product_id', nextProductId);
-
-                                    // Auto-fill unit_price from product configuration
-                                    const nextSelectedProduct = products?.find((p) => String(p.id) === String(nextProductId));
-                                    if (nextSelectedProduct && nextSelectedProduct.unit_price !== undefined) {
-                                        onChange('unit_price', nextSelectedProduct.unit_price);
-                                    }
-                                }}
-                                required
-                            >
-                                <option value="">Choose egg type</option>
-                                <option value="piwi">Piwi</option>
-                                <option value="small">Small</option>
-                                <option value="medium">Medium</option>
-                                <option value="large">Large</option>
-                                <option value="extra_large">Extra Large</option>
-                                <option value="jumbo">Jumbo</option>
-                                <option value="super_jumbo">Super Jumbo</option>
-                            </select>
-                        </div>
-
-                        <div className="form-group">
                             <FormLabel htmlFor="sale-pricing-unit" required>Pricing Unit</FormLabel>
                             <select
                                 id="sale-pricing-unit"
                                 className="form-control"
-                                value={form.pricing_unit || 'per_tray'}
-                                onChange={(e) => onChange('pricing_unit', e.target.value)}
+                                value={pricingUnit}
+                                onChange={(event) => onChange('pricing_unit', event.target.value)}
                                 required
                             >
                                 <option value="per_tray">Per Tray</option>
@@ -273,53 +405,98 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
                             </select>
                         </div>
 
-                        {(form.pricing_unit || 'per_tray') === 'per_piece' ? (
-                            <div className="form-group">
-                                <FormLabel htmlFor="sale-quantity-pieces" required>How many eggs (pieces)?</FormLabel>
-                                <input
-                                    id="sale-quantity-pieces"
-                                    type="number"
-                                    className="form-control"
-                                    value={form.quantity_pieces || ''}
-                                    onChange={(e) => onChange('quantity_pieces', e.target.value)}
-                                    min="1"
-                                    required
-                                />
+                        <div className="form-group span-2 sale-egg-lines-wrap">
+                            <div className="sale-egg-lines-header">
+                                <FormLabel required>Egg Types</FormLabel>
+                                <button type="button" className="btn btn-outline btn-sm" onClick={addEggLine}>
+                                    <i className="bi bi-plus-lg"></i> Add Egg Type
+                                </button>
                             </div>
-                        ) : (
-                            <div className="form-group">
-                                <FormLabel htmlFor="sale-quantity-trays" required>How many eggs (trays)?</FormLabel>
-                                <input
-                                    id="sale-quantity-trays"
-                                    type="number"
-                                    className="form-control"
-                                    value={form.quantity_trays || ''}
-                                    onChange={(e) => onChange('quantity_trays', e.target.value)}
-                                    min="1"
-                                    required
-                                />
-                            </div>
-                        )}
 
-                        <div className="form-group">
-                            <FormLabel htmlFor="sale-egg-unit-price" required>Unit Price</FormLabel>
-                            <input
-                                id="sale-egg-unit-price"
-                                type="number"
-                                step="0.01"
-                                className="form-control"
-                                value={form.unit_price || ''}
-                                onChange={(e) => onChange('unit_price', e.target.value)}
-                                required
-                            />
+                            <div className="sale-egg-lines">
+                                {eggLines.map((line, index) => {
+                                    const lineTotal = normalizedNumber(line.quantity) * normalizedNumber(line.unit_price);
+                                    const quantityLabel = pricingUnit === 'per_piece'
+                                        ? 'Quantity (pieces)'
+                                        : 'Quantity (trays)';
+
+                                    return (
+                                        <div className="sale-egg-line" key={line.id || `egg-line-${index}`}>
+                                            <div className="sale-egg-line-grid">
+                                                <div className="form-group">
+                                                    <FormLabel required={index === 0}>Egg Type</FormLabel>
+                                                    <select
+                                                        className="form-control"
+                                                        value={line.egg_type || ''}
+                                                        onChange={(event) => updateEggLine(index, 'egg_type', event.target.value)}
+                                                        required
+                                                    >
+                                                        <option value="">Choose egg type</option>
+                                                        {EGG_TYPE_OPTIONS.map((option) => (
+                                                            <option
+                                                                key={option.value}
+                                                                value={option.value}
+                                                                disabled={usedEggTypes.has(option.value) && line.egg_type !== option.value}
+                                                            >
+                                                                {option.label}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+
+                                                <div className="form-group">
+                                                    <FormLabel required={index === 0}>{quantityLabel}</FormLabel>
+                                                    <input
+                                                        type="number"
+                                                        className="form-control"
+                                                        value={line.quantity || ''}
+                                                        onChange={(event) => updateEggLine(index, 'quantity', event.target.value)}
+                                                        min="1"
+                                                        required
+                                                    />
+                                                </div>
+
+                                                <div className="form-group">
+                                                    <FormLabel required={index === 0}>Unit Price</FormLabel>
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        className="form-control"
+                                                        value={line.unit_price || ''}
+                                                        onChange={(event) => updateEggLine(index, 'unit_price', event.target.value)}
+                                                        required
+                                                    />
+                                                </div>
+
+                                                <div className="form-group">
+                                                    <FormLabel>Line Total</FormLabel>
+                                                    <div className="form-control sale-total-display">
+                                                        <strong>{formatCurrency(lineTotal)}</strong>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {eggLines.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-outline btn-sm sale-egg-line-remove"
+                                                    onClick={() => removeEggLine(index)}
+                                                >
+                                                    <i className="bi bi-trash"></i> Remove
+                                                </button>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
 
-                        <div className="form-group">
+                        <div className="form-group span-2">
                             <FormLabel htmlFor="sale-egg-total">Total Amount</FormLabel>
-                            <div className="form-control" style={{ display: 'flex', alignItems: 'center' }}>
-                                <strong style={{ marginRight: 8 }}>₱{Number(amountComputed).toFixed(2)}</strong>
-                                <span style={{ color: '#666' }}>
-                                    ({quantityForAmount} × {Number(form?.unit_price || 0).toFixed(2)})
+                            <div id="sale-egg-total" className="form-control sale-total-display sale-total-display--grand">
+                                <strong>{formatCurrency(eggLinesTotal)}</strong>
+                                <span className="sale-total-meta">
+                                    Sum of {eggLines.length} egg type{eggLines.length === 1 ? '' : 's'}
                                 </span>
                             </div>
                         </div>
@@ -332,7 +509,7 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
                         id="sale-payment-method"
                         className="form-control"
                         value={form.payment_method || ''}
-                        onChange={(e) => onChange('payment_method', e.target.value)}
+                        onChange={(event) => onChange('payment_method', event.target.value)}
                         required
                     >
                         <option value="">Choose</option>
@@ -347,7 +524,7 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
                         id="sale-status"
                         className="form-control"
                         value={form.status || ''}
-                        onChange={(e) => onChange('status', e.target.value)}
+                        onChange={(event) => onChange('status', event.target.value)}
                         required
                     >
                         <option value="">Choose status</option>
@@ -359,4 +536,3 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
         </form>
     );
 }
-
