@@ -396,12 +396,13 @@ export default function StockHubPage() {
         }
     };
 
-    const handleExport = async (format) => {
+    const handleExport = async (format, preparedBy) => {
         exportTableData({
             title: tabConfig.listTitle,
             columns: resource.columns,
             rows: items,
             format,
+            preparedBy,
         });
     };
 

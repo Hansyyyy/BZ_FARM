@@ -36,6 +36,14 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        // Keep remember-me login persistent even after explicit logout request.
+        if (Auth::viaRemember()) {
+            $request->session()->regenerate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login');
+        }
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

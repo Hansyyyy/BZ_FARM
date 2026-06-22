@@ -11,6 +11,7 @@
     --text-dark: #10231c;
     --text-muted: #546b60;
     --border: #d6e4dd;
+    --table-line: #b7cbbf;
     --success: #2d9d5f;
     --warning: #f29f05;
     --danger: #d93f45;
@@ -1487,12 +1488,12 @@ body {
     color: var(--text-dark);
     font-weight: 700;
     letter-spacing: 0.6px;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--table-line);
     text-align: left;
 }
 .mockup-table tbody tr {
     transition: background-color 0.2s ease;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--table-line);
 }
 .mockup-table tbody tr:nth-child(odd) {
     background-color: white;
@@ -1805,14 +1806,16 @@ body {
     color: var(--text-dark);
     text-transform: uppercase;
     letter-spacing: 0.6px;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--table-line);
+    border-right: 1px solid var(--table-line);
     font-weight: 700;
     background-color: #f7f8f7;
 }
 .data-table td {
     padding: 14px 16px;
     font-size: 13px;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--table-line);
+    border-right: 1px solid var(--table-line);
 }
 .data-table tbody tr {
     transition: background-color 0.2s ease;
@@ -3421,12 +3424,14 @@ body {
     letter-spacing: 0.05em;
     font-weight: 700;
     padding: 14px 14px;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--table-line);
+    border-right: 1px solid var(--table-line);
     text-align: left;
 }
 .history-table tbody td {
     padding: 14px 14px;
-    border-bottom: 1px solid #e8f1eb;
+    border-bottom: 1px solid var(--table-line);
+    border-right: 1px solid var(--table-line);
     vertical-align: top;
     font-size: 13px;
 }

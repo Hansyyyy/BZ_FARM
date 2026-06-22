@@ -5,13 +5,13 @@ export default function CustomerForm({ id, customer, onChange, onSubmit }) {
         <form id={id} onSubmit={onSubmit}>
             <div className="modal-form-grid">
                 <div className="form-group span-2">
-                    <FormLabel htmlFor="customer-name" required>Customer Name</FormLabel>
+                    <FormLabel htmlFor="customer-name" required>Customer/Company Name</FormLabel>
                     <input
                         id="customer-name"
                         className="form-control"
                         value={customer.name || ''}
                         onChange={(event) => onChange('name', event.target.value)}
-                        placeholder="Enter customer name"
+                        placeholder="Enter name"
                         required
                     />
                 </div>

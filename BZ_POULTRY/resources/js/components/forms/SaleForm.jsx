@@ -223,14 +223,30 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
                 </div>
 
                 <div className="form-group">
-                    <FormLabel htmlFor="sale-invoice-no" required>Invoice No.</FormLabel>
+                    <FormLabel htmlFor="sale-invoice-no-suffix" required>Invoice No.</FormLabel>
                     <div className="invoice-no-field">
                         <input
-                            id="sale-invoice-no"
+                            className="form-control invoice-no-prefix"
+                            value={(() => {
+                                const { invoice_prefix } = parseInvoiceNo(form.invoice_no || '');
+                                return invoice_prefix || 'SI#';
+                            })()}
+                            readOnly
+                            aria-label="Invoice prefix"
+                            tabIndex={-1}
+                        />
+                        <input
+                            id="sale-invoice-no-suffix"
                             className="form-control"
-                            value={form.invoice_no || ''}
-                            onChange={(event) => onChange('invoice_no', event.target.value)}
-                            placeholder="Enter invoice number (e.g., SI#01 / DR#01)"
+                            value={(() => {
+                                const { invoice_number } = parseInvoiceNo(form.invoice_no || '');
+                                return invoice_number || '';
+                            })()}
+                            onChange={(event) => {
+                                const { invoice_prefix } = parseInvoiceNo(form.invoice_no || '');
+                                onChange('invoice_no', buildInvoiceNo(invoice_prefix || 'SI#', event.target.value));
+                            }}
+                            placeholder="Enter invoice number (e.g., 01)"
                             required
                         />
                     </div>
