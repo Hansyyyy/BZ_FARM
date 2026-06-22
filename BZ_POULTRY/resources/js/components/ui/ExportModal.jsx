@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
 import Modal from './Modal';
 
+const preparedByOptions = [
+    'Jonel Carpio',
+    'Ms. ChinChin',
+    'Ms. Jailyn',
+];
+
 const formats = [
     {
         value: 'pdf',
@@ -27,12 +33,14 @@ const formats = [
 
 export default function ExportModal({ open, title, description, onClose, onExport }) {
     const [format, setFormat] = useState('pdf');
+    const [preparedBy, setPreparedBy] = useState(preparedByOptions[0]);
     const [exporting, setExporting] = useState(false);
     const [error, setError] = useState(null);
 
     useEffect(() => {
         if (open) {
             setFormat('pdf');
+            setPreparedBy(preparedByOptions[0]);
             setExporting(false);
             setError(null);
         }
@@ -45,7 +53,7 @@ export default function ExportModal({ open, title, description, onClose, onExpor
         setError(null);
 
         try {
-            await onExport?.(format);
+            await onExport?.(format, preparedBy);
             onClose();
         } catch (err) {
             setError(err.message || 'Export failed.');
@@ -72,6 +80,24 @@ export default function ExportModal({ open, title, description, onClose, onExpor
         >
             <p className="export-modal-desc">{description}</p>
             {error && <div className="alert-error">{error}</div>}
+
+            <div className="form-group" style={{ marginBottom: '14px' }}>
+                <label htmlFor="prepared-by-select" style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>
+                    Prepared by
+                </label>
+                <select
+                    id="prepared-by-select"
+                    className="form-control"
+                    value={preparedBy}
+                    onChange={(event) => setPreparedBy(event.target.value)}
+                    disabled={exporting}
+                >
+                    {preparedByOptions.map((name) => (
+                        <option key={name} value={name}>{name}</option>
+                    ))}
+                </select>
+            </div>
+
             <div className="export-format-grid export-format-grid-3">
                 {formats.map((option) => (
                     <button

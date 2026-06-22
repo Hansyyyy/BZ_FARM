@@ -371,7 +371,13 @@ export default function SalesPage() {
                 title="Export Sales"
                 description="Choose how you want to export your sales records."
                 onClose={() => setShowExport(false)}
-                onExport={(format) => exportTableData({ title: 'Sales List', columns: salesColumns, rows: filteredSales, format })}
+                onExport={(format, preparedBy) => exportTableData({
+                    title: 'Sales List',
+                    columns: salesColumns,
+                    rows: filteredSales,
+                    format,
+                    preparedBy,
+                })}
             />
         </PageState>
     );

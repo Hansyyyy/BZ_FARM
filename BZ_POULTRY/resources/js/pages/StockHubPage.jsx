@@ -386,9 +386,7 @@ export default function StockHubPage() {
             if (isEditing) {
                 await axios.put(`${resource.endpoint}/${editingId}`, payload);
             } else {
-                const formData = new FormData();
-                Object.entries(payload).forEach(([key, value]) => formData.append(key, value));
-                await axios.post(resource.endpoint, formData);
+                await axios.post(resource.endpoint, payload);
             }
 
             closeForm();

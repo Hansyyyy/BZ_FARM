@@ -1,8 +1,19 @@
 # BZ_POULTRY TODO
 
-- [ ] Update Sale form total/amount logic so it auto-calculates based on selected egg/chicken type and quantity (trays/pieces/heads) times the configured unit_price for that product.
-- [ ] Wire auto unit_price: when egg_type/chicken_type changes, set form.unit_price from selected product.unit_price.
-- [ ] Ensure Total field is displayed (and/or amount computed) on frontend and submitted payload contains correct quantity + unit_price.
-- [x] Apply true egg-line behavior to chicken: multiple chicken types with Add/Remove rows, per-line totals, and grand total.
-- [x] Remove “Fields marked with * are required.” note from Sale and Customer forms.
+- [x] Investigate Eggs section save failure (UI -> API -> DB) for “input data it does not record”.
+- [x] Verify API routes for `/api/eggs` and `/api/daily-reports/entry`.
+- [x] Verify `EggProduction` model mass-assignable fields and mappings.
+- [x] Implement minimal fix for root cause.
+- [ ] Run syntax check for edited backend files.
+- [ ] Update user with root cause and fix summary.
+
+## Export footer enhancement (PDF / Print / CSV)
+
+- [x] Review export utility and identify all format builders.
+- [x] Add reusable metadata/footer builder (`Prepared by`, `Received by`, `Signature over printed name`, `Date`).
+- [x] Apply footer to print HTML export.
+- [x] Apply footer to PDF export.
+- [x] Apply footer rows to CSV export.
+- [x] Run quick validation for export output formatting. (Build command attempted; blocked by PowerShell execution policy for npm.ps1.)
+- [x] Report completed changes.
 

@@ -14,10 +14,54 @@ function getCellValue(column, row) {
     return row[column.key] ?? '';
 }
 
-function downloadCsv(filename, columns, rows) {
+function resolvePreparedBy(preparedBy) {
+    if (preparedBy && String(preparedBy).trim()) {
+        return String(preparedBy).trim();
+    }
+    return 'Jonel Carpio';
+}
+
+function getFooterMeta(preparedBy) {
+    const now = new Date();
+    return {
+        preparedBy: resolvePreparedBy(preparedBy),
+        dateDisplay: now.toLocaleDateString(),
+    };
+}
+
+function buildFooterHtml(preparedBy) {
+    const meta = getFooterMeta(preparedBy);
+
+    return `
+        <div style="margin-top: 30px; font-size: 12px; color: #1a1a2e; display: flex; justify-content: space-between; align-items: flex-end; gap: 24px;">
+            <div style="flex: 1; text-align: left;">
+                <p style="margin: 0;"><strong>Prepared by:</strong> ${meta.preparedBy}</p>
+            </div>
+            <div style="text-align: right; min-width: 260px;">
+                <p style="margin: 0 0 12px 0;"><strong>Received by:</strong> ____________________</p>
+                <p style="margin: 0 0 12px 0;">Signature over printed name</p>
+                <p style="margin: 0;"><strong>Date:</strong> ${meta.dateDisplay}</p>
+            </div>
+        </div>
+    `;
+}
+
+function buildFooterCsv(preparedBy) {
+    const meta = getFooterMeta(preparedBy);
+    return [
+        '',
+        `${escapeCsv('Prepared by')},${escapeCsv(meta.preparedBy)}`,
+        `${escapeCsv('Received by')},${escapeCsv('____________________')}`,
+        `${escapeCsv('Signature')},${escapeCsv('over printed name')}`,
+        `${escapeCsv('Date')},${escapeCsv(meta.dateDisplay)}`,
+    ].join('\n');
+}
+
+function downloadCsv(filename, columns, rows, preparedBy) {
     const headers = columns.map((column) => escapeCsv(column.label)).join(',');
     const body = rows.map((row) => columns.map((column) => escapeCsv(getCellValue(column, row))).join(',')).join('\n');
-    const blob = new Blob([`${headers}\n${body}`], { type: 'text/csv;charset=utf-8;' });
+    const footer = buildFooterCsv(preparedBy);
+    const blob = new Blob([`${headers}\n${body}\n${footer}`], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -28,7 +72,7 @@ function downloadCsv(filename, columns, rows) {
     URL.revokeObjectURL(url);
 }
 
-function buildPrintHtml(title, columns, rows) {
+function buildPrintHtml(title, columns, rows, preparedBy) {
     const headerCells = columns.map((column) => `<th>${column.label}</th>`).join('');
     const bodyRows = rows.map((row) => {
         const cells = columns.map((column) => `<td>${getCellValue(column, row)}</td>`).join('');
@@ -56,11 +100,12 @@ function buildPrintHtml(title, columns, rows) {
         <thead><tr>${headerCells}</tr></thead>
         <tbody>${bodyRows}</tbody>
     </table>
+    ${buildFooterHtml(preparedBy)}
 </body>
 </html>`;
 }
 
-function openPrintView(title, columns, rows, { printImmediately = false } = {}) {
+function openPrintView(title, columns, rows, preparedBy, { printImmediately = false } = {}) {
     const printWindow = window.open('', '_blank');
 
     if (!printWindow) {
@@ -68,7 +113,7 @@ function openPrintView(title, columns, rows, { printImmediately = false } = {}) 
     }
 
     printWindow.document.open();
-    printWindow.document.write(buildPrintHtml(title, columns, rows));
+    printWindow.document.write(buildPrintHtml(title, columns, rows, preparedBy));
     printWindow.document.close();
     printWindow.focus();
 
@@ -81,7 +126,7 @@ function openPrintView(title, columns, rows, { printImmediately = false } = {}) 
     return printWindow;
 }
 
-function downloadPdf(filename, columns, rows) {
+function downloadPdf(filename, columns, rows, preparedBy) {
     if (typeof html2pdf === 'undefined') {
         // Fallback to print dialog if html2pdf is not available
         throw new Error('PDF library not loaded. Please try again.');
@@ -102,6 +147,7 @@ function downloadPdf(filename, columns, rows) {
                 <thead><tr>${headerCells}</tr></thead>
                 <tbody>${bodyRows}</tbody>
             </table>
+            ${buildFooterHtml(preparedBy)}
         </div>
     `;
 
@@ -116,23 +162,23 @@ function downloadPdf(filename, columns, rows) {
     html2pdf().set(opt).from(element).save();
 }
 
-export function exportTableData({ title, columns, rows, format }) {
+export function exportTableData({ title, columns, rows, format, preparedBy }) {
     if (!rows.length) {
         throw new Error('No data available to export.');
     }
 
     if (format === 'csv') {
-        downloadCsv(title, columns, rows);
+        downloadCsv(title, columns, rows, preparedBy);
         return;
     }
 
     if (format === 'pdf') {
-        downloadPdf(title, columns, rows);
+        downloadPdf(title, columns, rows, preparedBy);
         return;
     }
 
     if (format === 'print') {
-        const printWindow = openPrintView(title, columns, rows);
+        const printWindow = openPrintView(title, columns, rows, preparedBy);
         printWindow.onload = () => printWindow.print();
         return;
     }

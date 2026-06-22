@@ -18,9 +18,6 @@ return new class extends Migration
             $table->dropColumn('good_eggs');
         });
 
-        for ($i = 1; $i <= 11; $i++) {
-            Building::firstOrCreate(['name' => "Building {$i}"]);
-        }
     }
 
     public function down(): void
