@@ -612,47 +612,62 @@ export default function StockHubPage() {
         const map = {
             chicken: {
                 recentTitle: 'Recent Chicken Transactions',
+                recentSubtitle: 'Latest building and batch movements',
                 expiringTitle: 'Transfer-Ready (Within 30 Days)',
                 expiringSubtitle: 'Growers approaching transfer readiness',
                 lowTitle: 'Health & Low Stock Alerts',
+                lowSubtitle: 'Bird count and risk thresholds',
                 chartTitle: 'Chicken Movement (This Week)',
                 kpiLabel: 'Total Bird Movement',
+                trendLabel: 'Movement trend is stable this week',
                 icon: 'bi-egg-fried',
             },
             feeds: {
                 recentTitle: 'Recent Feed Transactions',
+                recentSubtitle: 'Latest feed stock updates by category',
                 expiringTitle: 'Usage Forecast (Within 30 Days)',
                 expiringSubtitle: 'Categories with projected demand',
                 lowTitle: 'Low Feed Stock Alerts',
+                lowSubtitle: 'Stock levels close to reorder point',
                 chartTitle: 'Feed Usage (This Week)',
                 kpiLabel: 'Total Feed Used',
+                trendLabel: 'Feed consumption pacing is healthy',
                 icon: 'bi-bucket',
             },
             medicine: {
                 recentTitle: 'Recent Medicine Transactions',
+                recentSubtitle: 'Latest medicine and vaccine activity',
                 expiringTitle: 'Expiring Soon (Within 30 Days)',
                 expiringSubtitle: 'Items that need immediate consumption',
                 lowTitle: 'Low Medicine Stock Alerts',
+                lowSubtitle: 'Critical inventory levels to restock',
                 chartTitle: 'Medicine & Vaccine Usage',
                 kpiLabel: 'Total Item Used',
+                trendLabel: 'Usage trend remains within expected range',
                 icon: 'bi-capsule',
             },
             eggs: {
                 recentTitle: 'Recent Egg Production Entries',
+                recentSubtitle: 'Latest collection and quality records',
                 expiringTitle: 'Upcoming Collection Focus',
                 expiringSubtitle: 'Buildings with lower recent output',
                 lowTitle: 'Production Quality Alerts',
+                lowSubtitle: 'Quality and output areas needing attention',
                 chartTitle: 'Egg Collection (This Week)',
                 kpiLabel: 'Total Eggs Tracked',
+                trendLabel: 'Collection trend is improving gradually',
                 icon: 'bi-basket',
             },
             medications: {
                 recentTitle: 'Recent Medication Transactions',
+                recentSubtitle: 'Latest medication stock movement',
                 expiringTitle: 'Expiring Soon (Within 30 Days)',
                 expiringSubtitle: 'Medication items nearing expiry',
                 lowTitle: 'Low Medication Stock Alerts',
+                lowSubtitle: 'Items nearing minimum stock threshold',
                 chartTitle: 'Medication Consumption (This Week)',
                 kpiLabel: 'Total Item Used',
+                trendLabel: 'Consumption trend is steady and monitored',
                 icon: 'bi-box-seam',
             },
         };
@@ -898,7 +913,7 @@ export default function StockHubPage() {
 
             <div className="stock-infographics">
                 <div className="stock-infographics-grid">
-                    <PanelCard title={infographicCopy.recentTitle} subtitle="View all" icon={infographicCopy.icon}>
+                    <PanelCard title={infographicCopy.recentTitle} subtitle={infographicCopy.recentSubtitle} icon={infographicCopy.icon}>
                         <ul className="stock-info-list">
                             {infographicContext.recentRows.length ? infographicContext.recentRows.map((row, index) => (
                                 <li key={`recent-${row.id || row.name || row.batch_no || index}`}>
@@ -912,7 +927,7 @@ export default function StockHubPage() {
                         </ul>
                     </PanelCard>
 
-                    <PanelCard title={infographicCopy.expiringTitle} subtitle="View all" icon="bi-hourglass-split">
+                    <PanelCard title={infographicCopy.expiringTitle} subtitle={infographicCopy.expiringSubtitle} icon="bi-hourglass-split">
                         <ul className="stock-info-list">
                             {(infographicContext.expiringRows.length ? infographicContext.expiringRows : infographicContext.recentRows).map((row, index) => (
                                 <li key={`exp-${row.id || row.name || row.batch_no || index}`}>
@@ -930,7 +945,7 @@ export default function StockHubPage() {
                         </ul>
                     </PanelCard>
 
-                    <PanelCard title={infographicCopy.lowTitle} subtitle="View all" icon="bi-exclamation-triangle">
+                    <PanelCard title={infographicCopy.lowTitle} subtitle={infographicCopy.lowSubtitle} icon="bi-exclamation-triangle">
                         <ul className="stock-info-list">
                             {infographicContext.lowStockRows.length ? infographicContext.lowStockRows.map((row, index) => (
                                 <li key={`low-${row.id || row.name || row.batch_no || index}`}>
@@ -947,7 +962,7 @@ export default function StockHubPage() {
                     </PanelCard>
                 </div>
 
-                <PanelCard title={infographicCopy.chartTitle} subtitle="This month" icon="bi-bar-chart-line">
+                <PanelCard title={infographicCopy.chartTitle} subtitle="Last 7 records" icon="bi-bar-chart-line">
                     <div className="stock-usage-wrap">
                         <div className="stock-usage-chart">
                             {infographicContext.chartRows.map((entry) => {
@@ -970,7 +985,7 @@ export default function StockHubPage() {
                             <div>
                                 <span>{infographicCopy.kpiLabel}</span>
                                 <strong>{infographicContext.kpiValue}</strong>
-                                <small>↑ 12.5% vs last month</small>
+                                <small>{infographicCopy.trendLabel}</small>
                             </div>
                         </aside>
                     </div>

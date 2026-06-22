@@ -68,6 +68,16 @@ export default function HistoryPage() {
 
     const exportTitle = activeTab === 'sales' ? 'Sales History' : 'Inventory Stock History';
 
+    const normalizeDate = (value) => String(value || '').slice(0, 10);
+
+    const getRowsToExport = (dateFilter) => {
+        if (!dateFilter) return filteredItems;
+
+        const dateKey = activeTab === 'sales' ? 'sale_date' : 'date';
+
+        return filteredItems.filter((row) => normalizeDate(row[dateKey]) === normalizeDate(dateFilter));
+    };
+
     const handleTabChange = (tabId) => {
         setActiveTab(tabId);
         setSearch('');
@@ -175,11 +185,12 @@ export default function HistoryPage() {
                 title={`Export ${exportTitle}`}
                 description={`Choose how you want to export your ${activeTab === 'sales' ? 'sales' : 'inventory stock'} history.`}
                 onClose={() => setShowExport(false)}
-                onExport={(format) => exportTableData({
+                onExport={(format, preparedBy, filterDate) => exportTableData({
                     title: exportTitle,
                     columns,
-                    rows: filteredItems,
+                    rows: getRowsToExport(filterDate),
                     format,
+                    preparedBy,
                 })}
             />
         </PageState>
