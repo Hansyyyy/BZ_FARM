@@ -1,0 +1,376 @@
+/* Admin dashboard specific styles */
+
+/* Admin Inventory Dashboard */
+.admin-inventory {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+.admin-inventory-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    background: var(--primary);
+    color: white;
+    border-radius: 14px;
+    padding: 22px 24px;
+    box-shadow: 0 8px 24px rgba(27, 77, 46, 0.18);
+}
+.admin-inventory-hero-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.admin-inventory-logo {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.14);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.admin-inventory-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.admin-inventory-hero h2 {
+    margin: 0;
+    font-size: 1.55rem;
+    font-weight: 700;
+}
+.admin-inventory-hero p {
+    margin: 4px 0 0;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.95rem;
+}
+.admin-role-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+.admin-summary-cards {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+}
+.admin-summary-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+.admin-summary-card-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+}
+.admin-summary-card-value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+.admin-summary-card-value.tone-success { color: var(--success); }
+.admin-summary-card-value.tone-danger { color: var(--danger); }
+.admin-tab-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.admin-main-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.admin-main-tab {
+    border: 1px solid var(--border);
+    background: white;
+    color: var(--text-muted);
+    border-radius: 10px 10px 0 0;
+    padding: 12px 18px;
+    font-size: 14px;
+    cursor: pointer;
+}
+.admin-main-tab.active {
+    color: var(--primary);
+    font-weight: 700;
+    border-bottom-color: white;
+    box-shadow: inset 0 3px 0 var(--primary);
+}
+.admin-date-picker {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--text-dark);
+}
+.admin-date-picker input {
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    color: var(--text-dark);
+}
+.admin-panel-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+.admin-panel,
+.admin-inventory .data-panel {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+.admin-panel-full {
+    grid-column: 1 / -1;
+}
+.admin-panel-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 20px 20px 12px;
+}
+.admin-panel-kicker {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+.admin-panel-stats {
+    display: flex;
+    gap: 18px;
+    margin-top: 8px;
+    font-size: 1.35rem;
+}
+.admin-panel-big-value {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-top: 6px;
+}
+.admin-panel-select {
+    align-self: center;
+    background: var(--primary);
+    color: white;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+}
+.admin-panel-sub {
+    margin: 6px 0 0;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+.admin-activity-list {
+    list-style: none;
+    padding: 0 20px 20px;
+    display: grid;
+    gap: 12px;
+}
+.admin-activity-list li {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    background: #fafbfa;
+}
+.admin-activity-list li > div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+}
+.admin-activity-list li span {
+    font-size: 12px;
+    color: var(--primary);
+    font-weight: 600;
+    text-transform: capitalize;
+}
+.admin-activity-list li p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-dark);
+}
+.admin-activity-list li time {
+    display: block;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+.admin-sub-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.admin-sub-tab {
+    border: 1px solid var(--border);
+    background: white;
+    color: var(--text-dark);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+}
+.admin-sub-tab.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    font-weight: 600;
+}
+.admin-egg-toolbar {
+    justify-content: space-between;
+}
+.share-bar {
+    position: relative;
+    height: 24px;
+    background: #edf2ef;
+    border-radius: 999px;
+    overflow: hidden;
+    min-width: 120px;
+}
+.share-bar span {
+    position: absolute;
+    inset: 0 auto 0 0;
+    background: var(--primary);
+    border-radius: 999px;
+}
+.share-bar em {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
+    font-style: normal;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+.admin-grading-table .grade-aa { color: #2e7d32; }
+.admin-grading-table .grade-a { color: #1565c0; }
+.admin-grading-table .grade-b { color: #f9a825; }
+.admin-grading-table .grade-cracked { color: #ef6c00; }
+.admin-grading-table .grade-dirty { color: #c62828; }
+.admin-inventory-split {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 0;
+}
+.admin-inventory-side {
+    padding: 20px;
+    border-right: 1px solid var(--border);
+}
+.grade-breakdown {
+    display: grid;
+    gap: 14px;
+    margin-top: 18px;
+}
+.grade-row-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13px;
+    margin-bottom: 6px;
+}
+.grade-bar {
+    height: 8px;
+    background: #edf2ef;
+    border-radius: 999px;
+    overflow: hidden;
+}
+.grade-bar span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+}
+.grade-green .grade-row-head span,
+.grade-green .grade-bar span { color: #2e7d32; background: #2e7d32; }
+.grade-blue .grade-row-head span,
+.grade-blue .grade-bar span { color: #1565c0; background: #1565c0; }
+.grade-yellow .grade-row-head span,
+.grade-yellow .grade-bar span { color: #f9a825; background: #f9a825; }
+.grade-orange .grade-row-head span,
+.grade-orange .grade-bar span { color: #ef6c00; background: #ef6c00; }
+.grade-red .grade-row-head span,
+.grade-red .grade-bar span { color: #c62828; background: #c62828; }
+.text-success { color: var(--success); font-weight: 600; }
+.text-danger { color: var(--danger); font-weight: 600; }
+
+.medication-alert-body {
+    display: grid;
+    gap: 14px;
+}
+.medication-alert-body p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-dark);
+}
+.medication-alert-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: #fff3e0;
+    color: #e65100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+.medication-alert-list {
+    list-style: none;
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+}
+.medication-alert-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #fafbfa;
+    font-size: 13px;
+}
+.medication-alert-list li span {
+    color: var(--text-muted);
+    text-transform: capitalize;
+}
+
+@media (max-width: 1200px) {
+    .admin-summary-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .admin-inventory-split { grid-template-columns: 1fr; }
+    .admin-inventory-side { border-right: none; border-bottom: 1px solid var(--border); }
+}
+@media (max-width: 768px) {
+    .admin-panel-grid { grid-template-columns: 1fr; }
+    .admin-summary-cards { grid-template-columns: 1fr; }
+    .admin-main-tabs { width: 100%; overflow-x: auto; flex-wrap: nowrap; }
+}
+
