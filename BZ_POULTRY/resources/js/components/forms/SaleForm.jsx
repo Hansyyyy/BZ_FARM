@@ -40,31 +40,8 @@ export function findProductByEggType(products, eggType) {
     return (products || []).find((product) => String(product.name || '').toLowerCase().includes(needle)) || null;
 }
 
-export function parseInvoiceNo(invoiceNo) {
-    if (!invoiceNo) {
-        return { invoice_prefix: 'SI#', invoice_number: '' };
-    }
-
-    const matchedPrefix = ['SI#', 'DR#'].find((prefix) => invoiceNo.startsWith(prefix));
-
-    if (matchedPrefix) {
-        return {
-            invoice_prefix: matchedPrefix,
-            invoice_number: invoiceNo.slice(matchedPrefix.length),
-        };
-    }
-
-    return { invoice_prefix: 'SI#', invoice_number: invoiceNo };
-}
-
-function setInvoiceTypeInInvoiceNo(currentInvoiceNo, invoiceType) {
-    const { invoice_number } = parseInvoiceNo(currentInvoiceNo);
-    const prefix = invoiceType === 'dr' ? 'DR#' : 'SI#';
-    return `${prefix}${String(invoice_number || '').trim()}`;
-}
-
-export function buildInvoiceNo(prefix, number) {
-    return `${prefix || 'SI#'}${String(number || '').trim()}`;
+function getInvoicePrefix(invoiceType) {
+    return invoiceType === 'dr' ? 'DR#' : 'SI#';
 }
 
 function normalizedNumber(value) {
@@ -206,15 +183,8 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
                     <select
                         id="sale-invoice-type"
                         className="form-control"
-                        value={(() => {
-                            const { invoice_prefix } = parseInvoiceNo(form.invoice_no || '');
-                            return invoice_prefix === 'DR#' ? 'dr' : 'si';
-                        })()}
-                        onChange={(event) => {
-                            const invoiceType = event.target.value;
-                            const nextInvoiceNo = setInvoiceTypeInInvoiceNo(form.invoice_no || '', invoiceType);
-                            onChange('invoice_no', nextInvoiceNo);
-                        }}
+                        value={form.invoice_type || 'si'}
+                        onChange={(event) => onChange('invoice_type', event.target.value)}
                         required
                     >
                         <option value="si">SI</option>
@@ -227,10 +197,7 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
                     <div className="invoice-no-field">
                         <input
                             className="form-control invoice-no-prefix"
-                            value={(() => {
-                                const { invoice_prefix } = parseInvoiceNo(form.invoice_no || '');
-                                return invoice_prefix || 'SI#';
-                            })()}
+                            value={getInvoicePrefix(form.invoice_type || 'si')}
                             readOnly
                             aria-label="Invoice prefix"
                             tabIndex={-1}
@@ -238,14 +205,8 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
                         <input
                             id="sale-invoice-no-suffix"
                             className="form-control"
-                            value={(() => {
-                                const { invoice_number } = parseInvoiceNo(form.invoice_no || '');
-                                return invoice_number || '';
-                            })()}
-                            onChange={(event) => {
-                                const { invoice_prefix } = parseInvoiceNo(form.invoice_no || '');
-                                onChange('invoice_no', buildInvoiceNo(invoice_prefix || 'SI#', event.target.value));
-                            }}
+                            value={form.invoice_no || ''}
+                            onChange={(event) => onChange('invoice_no', event.target.value)}
                             placeholder="Enter invoice number (e.g., 01)"
                             required
                         />
@@ -260,6 +221,18 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
                         className="form-control"
                         value={form.sale_date || ''}
                         onChange={(event) => onChange('sale_date', event.target.value)}
+                        required
+                    />
+                </div>
+
+                <div className="form-group">
+                    <FormLabel htmlFor="sale-reference-no" required>Reference#</FormLabel>
+                    <input
+                        id="sale-reference-no"
+                        className="form-control"
+                        value={form.reference_no || ''}
+                        onChange={(event) => onChange('reference_no', event.target.value)}
+                        placeholder="Enter reference number"
                         required
                     />
                 </div>

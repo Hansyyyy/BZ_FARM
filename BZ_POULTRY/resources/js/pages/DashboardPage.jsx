@@ -6,15 +6,14 @@ import PanelCard from '../components/ui/PanelCard';
 import RecentActivities from '../components/ui/RecentActivities';
 import VerticalBarChart from '../components/ui/VerticalBarChart';
 import FarmCalendar from '../components/ui/FarmCalendar';
-import DashboardMiniStats from '../components/ui/DashboardMiniStats';
 import { buildInventorySegments, chartColors } from '../config/chartTheme';
 
 const dashboardFields = [
     { key: 'totalPoultry', label: 'Total Poultry', sub: 'Birds in Stock', icon: 'bi-egg-fried' },
     { key: 'eggsToday', label: 'Eggs Today', sub: 'Collected Today', icon: 'bi-basket' },
-    { key: 'feedStock', label: 'Feed in Stock', sub: 'Kilograms Available', icon: 'bi-box-seam' },
-    { key: 'medicineStock', label: 'Medicine in Stock', sub: 'Units Available', icon: 'bi-capsule' },
     { key: 'salesToday', label: 'Sales Today', sub: 'Revenue Today', icon: 'bi-cash-stack', tone: 'success', prefix: '₱' },
+    { key: 'mortality', label: 'Mortality', sub: 'Birds Lost', icon: 'bi-heartbreak', tone: 'danger' },
+    { key: 'cull', label: 'Cull', sub: 'Birds Culled', icon: 'bi-scissors', tone: 'warning' },
 ];
 
 const quickMetrics = [
@@ -40,52 +39,11 @@ function buildSummaryItems(summary) {
     }));
 }
 
-function buildMiniStats(summary, eggSummary, flockDistribution, eggQuality) {
-    const defects = (eggQuality?.soft_shell || 0) + (eggQuality?.damaged || 0) + (eggQuality?.cracked || 0);
-    const weekEggs = eggSummary?.week || 0;
-    const qualityRate = weekEggs > 0
-        ? Math.max(0, Math.round(((weekEggs - defects) / weekEggs) * 100))
-        : 100;
-
-    return [
-        {
-            key: 'weekEggs',
-            label: 'Weekly Eggs',
-            value: Number(weekEggs || 0).toLocaleString(),
-            hint: 'Last 7 days collection',
-            tone: 'blue',
-        },
-        {
-            key: 'defects',
-            label: 'Defective Eggs',
-            value: Number(defects || 0).toLocaleString(),
-            hint: 'Soft shell, damaged, cracked',
-            tone: defects > 0 ? 'orange' : 'green',
-        },
-        {
-            key: 'qualityRate',
-            label: 'Quality Rate',
-            value: `${qualityRate}%`,
-            hint: 'Good eggs vs weekly total',
-            tone: qualityRate >= 90 ? 'green' : qualityRate >= 75 ? 'yellow' : 'red',
-        },
-        {
-            key: 'activeBirds',
-            label: 'Active Birds',
-            value: Number(summary?.totalPoultry || 0).toLocaleString(),
-            hint: `Layers ${Number(flockDistribution?.layers || 0).toLocaleString()} • Growers ${Number(flockDistribution?.growers || 0).toLocaleString()}`,
-            tone: 'purple',
-        },
-    ];
-}
-
 export default function DashboardPage() {
     const { data: dashboard, loading, error } = useFetch('/api/dashboard');
     const summary = dashboard?.summary || {};
-    const eggSummary = summary.eggSummary || {};
     const flockDistribution = dashboard?.flockDistribution || {};
     const inventoryRows = buildInventorySegments(dashboard?.inventoryBreakdown);
-    const miniStats = buildMiniStats(summary, eggSummary, flockDistribution, dashboard?.eggQuality);
 
     
     
@@ -103,8 +61,6 @@ export default function DashboardPage() {
             >
                 <FarmCalendar />
             </PanelCard>
-
-            <DashboardMiniStats items={miniStats} />
 
             <div className="dashboard-coach">
                 <div className="dashboard-col dashboard-col-left">

@@ -12,16 +12,17 @@ import RowActionButtons from '../components/ui/RowActionButtons';
 import { exportTableData } from '../utils/exportData';
 
 const salesSummaryFields = [
-    { key: 'eggsToday', label: 'Eggs Collected Today', sub: 'Today', icon: 'bi-basket' },
-    { key: 'calTotal', label: 'Cal Total', sub: 'Total Eggs', icon: 'bi-check-circle' },
-    { key: 'crackedToday', label: 'Cracked Eggs', sub: 'Today', icon: 'bi-exclamation-circle', tone: 'warning' },
-    { key: 'weekTotal', label: 'This Week', sub: 'Weekly Total', icon: 'bi-calendar-week' },
-    { key: 'monthTotal', label: 'This Month', sub: 'Monthly Total', icon: 'bi-calendar-month' },
+    { key: 'eggsToday', label: 'Sales Today', sub: 'Today', icon: 'bi-basket' },
+    { key: 'calTotal', label: 'Total Sales', sub: 'All Time', icon: 'bi-check-circle' },
+    { key: 'crackedToday', label: 'Returned Sales', sub: 'Today', icon: 'bi-exclamation-circle', tone: 'warning' },
+    { key: 'weekTotal', label: 'This Week', sub: 'Weekly Sales', icon: 'bi-calendar-week' },
+    { key: 'monthTotal', label: 'This Month', sub: 'Monthly Sales', icon: 'bi-calendar-month' },
 ];
 
 const salesColumns = [
     { key: 'sale_date', label: 'Date' },
     { key: 'invoice_no', label: 'Invoice No.' },
+    { key: 'reference_no', label: 'Reference #', render: (sale) => String(sale.reference_no || '').trim() || '—' },
     { key: 'customer', label: 'Customer', render: (sale) => sale.customer?.name ?? sale.customer_name },
     { key: 'product', label: 'Product', render: (sale) => sale.product_summary || sale.product?.name || sale.product_name },
     { key: 'quantity', label: 'Qty' },
@@ -35,7 +36,7 @@ export default function SalesPage() {
     const [search, setSearch] = useState('');
     const [customerSearch, setCustomerSearch] = useState('');
     const [form, setForm] = useState({});
-    const [newCustomer, setNewCustomer] = useState({ name: '', contact: '', email: '', phone: '' });
+    const [newCustomer, setNewCustomer] = useState({ name: '', company_name: '', contact: '', email: '', phone: '' });
     const [editingId, setEditingId] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [showAddCustomer, setShowAddCustomer] = useState(false);
@@ -57,7 +58,9 @@ export default function SalesPage() {
     const openCreateSale = () => {
         setEditingId(null);
         setForm({
+            invoice_type: 'si',
             invoice_no: '',
+            reference_no: '',
             sale_category: '',
             pricing_unit: 'per_tray',
             egg_lines: [createEmptyEggLine()],
@@ -71,10 +74,12 @@ export default function SalesPage() {
         setEditingId(sale.id);
         setForm({
             id: sale.id,
-            invoice_no: sale.invoice_no || '',
+            invoice_type: String(sale.invoice_no || '').startsWith('DR#') ? 'dr' : 'si',
+            invoice_no: String(sale.invoice_no || '').replace(/^SI#|^DR#/, ''),
             customer_id: sale.customer_id || sale.customer?.id || '',
             product_id: sale.product_id || sale.product?.id || '',
             sale_category: sale.sale_category || 'egg',
+            reference_no: sale.reference_no || '',
             egg_type: sale.egg_type || '',
             egg_lines: buildEggLinesFromSale(sale),
             chicken_type: sale.chicken_type || '',
@@ -110,6 +115,9 @@ export default function SalesPage() {
         event.preventDefault();
         try {
             const payload = { ...form };
+
+            payload.invoice_no = `${payload.invoice_type === 'dr' ? 'DR#' : 'SI#'}${String(payload.invoice_no || '').trim()}`;
+            delete payload.invoice_type;
 
             if (payload.sale_category === 'egg') {
                 payload.egg_lines = (payload.egg_lines || []).map(({ id, ...line }) => line);
@@ -162,7 +170,7 @@ export default function SalesPage() {
         try {
             const response = await axios.post('/api/customers', newCustomer);
             setShowAddCustomer(false);
-            setNewCustomer({ name: '', contact: '', email: '', phone: '' });
+            setNewCustomer({ name: '', company_name: '', contact: '', email: '', phone: '' });
             setCustomerMessage(`${response.data.item.name} added to customer list.`);
             await reload();
             setForm((previous) => ({ ...previous, customer_id: response.data.item.id }));
@@ -229,6 +237,7 @@ export default function SalesPage() {
                         <thead>
                             <tr>
                                 <th>Name</th>
+                                <th>Company</th>
                                 <th>Contact</th>
                                 <th>Phone</th>
                                 <th>Email</th>
@@ -238,12 +247,13 @@ export default function SalesPage() {
                             {filteredCustomers.length ? filteredCustomers.map((customer) => (
                                 <tr key={customer.id}>
                                     <td><strong>{customer.name}</strong></td>
+                                    <td>{customer.company_name || '—'}</td>
                                     <td>{customer.contact || '—'}</td>
                                     <td>{customer.phone || '—'}</td>
                                     <td>{customer.email || '—'}</td>
                                 </tr>
                             )) : (
-                                <tr><td colSpan="4" className="empty-state">No customers yet. Click Add Customer to create one.</td></tr>
+                                <tr><td colSpan="5" className="empty-state">No customers yet. Click Add Customer to create one.</td></tr>
                             )}
                         </tbody>
                     </table>
@@ -268,7 +278,7 @@ export default function SalesPage() {
                     <table className="data-table mockup-table">
                         <thead>
                             <tr>
-                                <th>Date</th><th>Invoice No.</th><th>Customer</th><th>Product</th>
+                                <th>Date</th><th>Invoice No.</th><th>Reference #</th><th>Customer</th><th>Product</th>
                                 <th>Qty</th><th>Amount</th><th>Payment</th><th>Status</th><th>Action</th>
                             </tr>
                         </thead>
@@ -277,6 +287,7 @@ export default function SalesPage() {
                                 <tr key={sale.id}>
                                     <td>{sale.sale_date}</td>
                                     <td><strong>{sale.invoice_no}</strong></td>
+                                    <td>{sale.reference_no?.trim() || '—'}</td>
                                     <td>{sale.customer?.name ?? sale.customer_name}</td>
                                     <td>{sale.product?.name ?? sale.product_name}</td>
                                     <td>{sale.quantity}</td>
@@ -290,7 +301,7 @@ export default function SalesPage() {
                                         />
                                     </td>
                                 </tr>
-                            )) : <tr><td colSpan="9">No sales found.</td></tr>}
+                            )) : <tr><td colSpan="10">No sales found.</td></tr>}
                         </tbody>
                     </table>
                 </div>
@@ -377,6 +388,12 @@ export default function SalesPage() {
                     rows: filteredSales,
                     format,
                     preparedBy,
+                    printOptions: {
+                        printTitle: 'Statement of Account',
+                        centerTitle: true,
+                        hideGeneratedOn: true,
+                        hideFooterDate: true,
+                    },
                 })}
             />
         </PageState>

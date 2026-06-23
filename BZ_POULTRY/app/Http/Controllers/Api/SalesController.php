@@ -82,6 +82,7 @@ class SalesController extends Controller
 
         $data = $request->validate([
             'invoice_no' => ['required', 'string', 'unique:sales,invoice_no', 'regex:/^(SI#|DR#).+/'],
+            'reference_no' => ['required', 'string', 'max:255'],
             'customer_id' => 'required|exists:customers,id',
             'product_id' => 'nullable|exists:products,id',
             'sale_category' => 'required|in:egg,chicken',
@@ -123,6 +124,7 @@ class SalesController extends Controller
 
         $data = $request->validate([
             'invoice_no' => ['required', 'string', 'unique:sales,invoice_no,'.$sale->id, 'regex:/^(SI#|DR#).+/'],
+            'reference_no' => ['required', 'string', 'max:255'],
             'customer_id' => 'required|exists:customers,id',
             'product_id' => 'nullable|exists:products,id',
             'sale_category' => 'required|in:egg,chicken',
