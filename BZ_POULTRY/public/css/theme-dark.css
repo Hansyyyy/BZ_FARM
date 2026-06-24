@@ -1,0 +1,138 @@
+/* Dark mode theme (extracted from resources/js/config/dark-mode/theming usage).
+   Applies when <html class="dark-theme"> is present.
+*/
+
+:root {
+    /* light defaults */
+    --theme-bg: #ecf6ef;
+    --theme-text: #10231c;
+    --theme-muted: #546b60;
+    --theme-card: rgba(255, 255, 255, 0.82);
+    --theme-border: rgba(148, 163, 184, 0.22);
+    --theme-header-bg: rgba(255, 255, 255, 0.82);
+}
+
+:root.dark-theme {
+    --theme-bg: #07110d;
+    --theme-text: #d6f5ea;
+    --theme-muted: #94b7a9;
+    --theme-card: rgba(10, 24, 18, 0.72);
+    --theme-border: rgba(148, 163, 184, 0.18);
+    --theme-header-bg: rgba(7, 17, 13, 0.66);
+}
+
+html.dark-theme body {
+    background: radial-gradient(1200px circle at 20% 0%, rgba(20, 184, 166, 0.16) 0%, rgba(7, 17, 13, 1) 55%, rgba(7, 17, 13, 1) 100%);
+    color: var(--theme-text);
+}
+
+html.dark-theme,
+html.dark-theme body {
+    transition: background-color 260ms ease, color 260ms ease, border-color 260ms ease;
+}
+
+html.dark-theme .sidebar {
+    background: rgba(7, 26, 18, 0.82) !important;
+    border-right-color: var(--theme-border) !important;
+}
+
+html.dark-theme .top-header {
+    background: var(--theme-header-bg) !important;
+    border-bottom-color: var(--theme-border) !important;
+}
+
+html.dark-theme .panel-card,
+html.dark-theme .summary-card,
+html.dark-theme .data-panel,
+html.dark-theme .page-toolbar {
+    background: var(--theme-card) !important;
+    border-color: rgba(148, 163, 184, 0.22) !important;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.22) !important;
+}
+
+html.dark-theme .panel-card-body,
+html.dark-theme .data-panel-toolbar,
+html.dark-theme .card-body {
+    background: transparent !important;
+}
+
+html.dark-theme .btn-outline {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border-color: rgba(148, 163, 184, 0.25) !important;
+    color: var(--theme-text) !important;
+}
+
+html.dark-theme .btn,
+html.dark-theme .btn-primary {
+    color: var(--theme-text) !important;
+}
+
+html.dark-theme .data-table,
+html.dark-theme .mockup-table {
+    background: transparent !important;
+}
+
+html.dark-theme .mockup-table thead th {
+    background: rgba(255, 255, 255, 0.04) !important;
+    color: var(--theme-muted) !important;
+}
+
+html.dark-theme .mockup-table tbody td {
+    color: var(--theme-text) !important;
+}
+
+html.dark-theme .empty-state,
+html.dark-theme .history-table-header p,
+html.dark-theme .history-table-header .history-title {
+    color: var(--theme-muted) !important;
+}
+
+html.dark-theme .farm-calendar,
+html.dark-theme .farm-calendar-toolbar,
+html.dark-theme .farm-calendar-grid,
+html.dark-theme .farm-calendar-weekday,
+html.dark-theme .farm-calendar-day,
+html.dark-theme .farm-calendar-day-outside,
+html.dark-theme .farm-calendar-footer {
+    background: transparent !important;
+    color: var(--theme-text) !important;
+    border-color: var(--theme-border) !important;
+}
+
+html.dark-theme .summary-card-value,
+html.dark-theme .panel-card-body .summary-card-value,
+html.dark-theme .summary-card .summary-card-value,
+html.dark-theme .stat-card .value,
+html.dark-theme .stat-card strong {
+    color: #ffffff !important;
+    text-shadow: 0 1px 0 rgba(0,0,0,0.25);
+}
+
+html.dark-theme .mockup-table thead th,
+html.dark-theme .history-table-card,
+html.dark-theme .modal {
+    border-color: var(--theme-border) !important;
+}
+
+html.dark-theme .history-table-card,
+html.dark-theme .card-large,
+html.dark-theme .modal,
+html.dark-theme .modal-header,
+html.dark-theme .modal-body,
+html.dark-theme .modal-footer {
+    background: var(--theme-card) !important;
+}
+
+html.dark-theme .modal .form-control,
+html.dark-theme .modal select.form-control,
+html.dark-theme .form-control,
+html.dark-theme select.form-control {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: var(--theme-text) !important;
+    border-color: rgba(148, 163, 184, 0.35) !important;
+}
+
+html.dark-theme .modal .form-control::placeholder {
+    color: rgba(148, 163, 184, 0.9) !important;
+}
+
