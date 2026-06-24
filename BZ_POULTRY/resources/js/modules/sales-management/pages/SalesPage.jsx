@@ -1,15 +1,15 @@
 import { useCallback, useMemo, useState } from 'react';
 import axios from 'axios';
-import useFetch from '../../../../hooks/useFetch';
-import { usePageSearch } from '../../../../context/HeaderSearchContext';
-import PageState from '../../../../components/ui/PageState';
-import SummaryCards from '../../../../components/ui/SummaryCards';
-import Modal from '../../../../components/ui/Modal';
-import ExportModal from '../../../../components/ui/ExportModal';
-import SaleForm, { buildEggLinesFromSale, createEmptyEggLine, createEmptyChickenLine } from '../../../../components/forms/SaleForm';
-import CustomerForm from '../../../../components/forms/CustomerForm';
-import RowActionButtons from '../../../../components/ui/RowActionButtons';
-import { exportTableData } from '../../../../utils/exportData';
+import useFetch from '../../../hooks/useFetch';
+import { usePageSearch } from '../../../context/HeaderSearchContext';
+import PageState from '../../../components/ui/PageState.jsx';
+import SummaryCards from '../../../components/ui/SummaryCards.jsx';
+import Modal from '../../../components/ui/Modal.jsx';
+import ExportModal from '../../../components/ui/ExportModal.jsx';
+import SaleForm, { buildEggLinesFromSale, createEmptyEggLine, createEmptyChickenLine } from '../../../components/forms/SaleForm.jsx';
+import CustomerForm from '../../../components/forms/CustomerForm.jsx';
+import RowActionButtons from '../../../components/ui/RowActionButtons.jsx';
+import { exportTableData } from '../../../utils/exportData.js';
 
 const salesSummaryFields = [
     { key: 'eggsToday', label: 'Eggs Collected Today', sub: 'Today', icon: 'bi-basket' },

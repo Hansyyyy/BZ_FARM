@@ -1,16 +1,18 @@
-import flocks from './flocks';
-import feed from './feed';
-import medicine from './medicine';
-import inventory from './inventory';
-import eggs from './eggs';
+// import flocks from './flocks.js';
+import feed from './feed.js';
+import medicine from './medicine.js';
+import inventory from './inventory.js';
+import eggs from './eggs.js';
 
 export const resources = {
-    flocks,
+    // flocks is not present in this folder (missing ./flocks.js)
+    // flocks,
+
     feed,
     medicine,
     inventory,
     eggs,
 };
 
-export { flocks, feed, medicine, inventory, eggs };
+export { feed, medicine, inventory, eggs };
 

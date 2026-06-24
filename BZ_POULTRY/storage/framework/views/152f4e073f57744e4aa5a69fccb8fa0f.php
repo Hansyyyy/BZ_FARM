@@ -85,10 +85,9 @@
                 </div>
                 <div class="form-group remember-row">
                     <label class="checkbox-field">
-                        <input type="checkbox" id="remember" name="remember">
+                        <input type="checkbox" id="remember" name="remember" <?php echo e(old('remember') ? 'checked' : ''); ?>>
                         <span>Remember me</span>
                     </label>
-                    <a href="#" class="forgot-link">Forgot password?</a>
                 </div>
                 <button type="submit" class="btn btn-primary btn-block">Sign In</button>
             </form>
