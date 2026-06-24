@@ -6,8 +6,21 @@
     <title>@yield('title', 'Dashboard') - BZ Farm</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{{ asset('css/farm.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/login.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/theme-dark.css') }}">
+
     <link rel="stylesheet" href="{{ asset('css/admin-dashboard.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/inventory-stock-admin.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/inventory-stock-manager.css') }}">
+
+
     <link rel="stylesheet" href="{{ asset('css/manager-dashboard.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/daily-reports.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/sales-management.css') }}">
+
+
+
+
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     @viteReactRefresh

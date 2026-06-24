@@ -1,19 +1,21 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import DashboardPage from '../pages/DashboardPage';
-import AdminInventoryPage from '../pages/admin/inventory/AdminInventoryPage';
+import AdminInventoryPage from '../modules/inventory-stock/pages/admin/inventory/AdminInventoryPage';
 import ManagerDashboardPage from '../pages/manager/ManagerDashboardPage';
 
+import StockHubPage from '../modules/inventory-stock/pages/StockHubPage';
 
-import StockHubPage from '../pages/StockHubPage';
+import SalesPage from '../modules/sales-management/pages/SalesPage';
 
-import SalesPage from '../pages/SalesPage';
-import ReportsPage from '../pages/ReportsPage';
+
+import DailyReportsPage from '../pages/daily-reports/DailyReportsPage';
 import SettingsPage from '../pages/SettingsPage';
 import HistoryPage from '../pages/HistoryPage';
 import NotFoundPage from '../pages/NotFoundPage';
 
 const user = window.Laravel?.user;
 const isAdmin = user?.role === 'admin';
+
 
 export default function AppRoutes() {
     return (
@@ -22,7 +24,7 @@ export default function AppRoutes() {
             <Route path="/inventory-stock" element={<StockHubPage />} />
             <Route path="/chicken-stock" element={<StockHubPage />} />
             <Route path="/Inventory-stock" element={<Navigate to="/inventory-stock" replace />} />
-            <Route path="/daily-reports" element={<ReportsPage />} />
+            <Route path="/daily-reports" element={<DailyReportsPage />} />
             <Route path="/sales" element={<SalesPage />} />
             <Route path="/history" element={<HistoryPage />} />
             <Route path="/settings" element={<SettingsPage />} />
