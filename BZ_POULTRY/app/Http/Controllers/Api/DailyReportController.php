@@ -55,9 +55,16 @@ class DailyReportController extends Controller
             ->whereDate('report_date', $date)
             ->first();
 
+        try {
+            $snapshot = $snapshotService->build($date);
+        } catch (\Throwable $e) {
+            report()->error('Daily report snapshot failed: '.$e->getMessage(), ['exception' => $e]);
+            $snapshot = null;
+        }
+
         return response()->json([
             'date' => $date->toDateString(),
-            'snapshot' => $snapshotService->build($date),
+            'snapshot' => $snapshot,
             'report' => $existing ? $this->formatReport($existing, includeSnapshot: true) : null,
         ]);
     }

@@ -4,11 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Building;
 
 class StockTransaction extends Model
 {
     protected $fillable = [
-        'item_type', 'item_id', 'type', 'quantity',
+        'item_type', 'item_id', 'type', 'quantity', 'building_id',
         'reference', 'user_id', 'notes',
     ];
 
@@ -22,6 +23,11 @@ class StockTransaction extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function building(): BelongsTo
+    {
+        return $this->belongsTo(Building::class);
     }
 
     public function getItemNameAttribute(): string

@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\CalendarNoteController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\DailyReportController;
 use App\Http\Controllers\Api\DailyReportEntryController;
+use App\Http\Controllers\Api\DailyReportExportController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\EggProductionController;
 use App\Http\Controllers\Api\FeedController;
@@ -73,6 +74,7 @@ Route::prefix('api')->group(function () {
     Route::get('/daily-reports/snapshot', [DailyReportController::class, 'snapshot'])->name('api.daily-reports.snapshot');
     Route::post('/daily-reports', [DailyReportController::class, 'store'])->name('api.daily-reports.store');
     Route::post('/daily-reports/entry', [DailyReportEntryController::class, 'store'])->name('api.daily-reports.entry');
+    Route::get('/daily-reports/export', [DailyReportExportController::class, 'export'])->name('api.daily-reports.export');
     Route::put('/daily-reports/{dailyReport}/review', [DailyReportController::class, 'review'])->name('api.daily-reports.review');
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('api.notifications.index');
