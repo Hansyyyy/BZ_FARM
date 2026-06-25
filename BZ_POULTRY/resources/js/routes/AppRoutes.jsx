@@ -1,7 +1,11 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import DashboardPage from '../pages/DashboardPage';
-import AdminInventoryPage from '../pages/admin/AdminInventoryPage';
+import AdminInventoryPage from '../pages/admin/inventory/AdminInventoryPage';
+import ManagerDashboardPage from '../pages/manager/ManagerDashboardPage';
+
+
 import StockHubPage from '../pages/StockHubPage';
+
 import SalesPage from '../pages/SalesPage';
 import ReportsPage from '../pages/ReportsPage';
 import SettingsPage from '../pages/SettingsPage';

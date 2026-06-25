@@ -1,0 +1,34 @@
+/* Manager dashboard CSS
+   NOTE: Manager dashboard styles were extracted from public/css/farm.css.
+*/
+
+/* Manager dashboard components live in resources/js/pages/manager/*
+   Current manager UI is placeholder-only, so only the base layout classes are included.
+*/
+
+/* Placeholder/Shared */
+.centered-page {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+/* Manager dashboard container */
+.manager-dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.manager-dashboard-placeholder {
+    padding: 24px;
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.7);
+}
+
+
+
+

@@ -5,13 +5,24 @@ export default function CustomerForm({ id, customer, onChange, onSubmit }) {
         <form id={id} onSubmit={onSubmit}>
             <div className="modal-form-grid">
                 <div className="form-group span-2">
-                    <FormLabel htmlFor="customer-name" required>Customer/Company Name</FormLabel>
+                    <FormLabel htmlFor="customer-name" required>Customer Name</FormLabel>
                     <input
                         id="customer-name"
                         className="form-control"
                         value={customer.name || ''}
                         onChange={(event) => onChange('name', event.target.value)}
                         placeholder="Enter name"
+                        required
+                    />
+                </div>
+                 <div className="form-group">
+                    <FormLabel htmlFor="customer-company-name">Company Name</FormLabel>
+                    <input
+                        id="customer-company-name"
+                        className="form-control"
+                        value={customer.company_name || ''}
+                        onChange={(event) => onChange('company_name', event.target.value)}
+                        placeholder="Enter Company Name"
                         required
                     />
                 </div>
@@ -26,13 +37,14 @@ export default function CustomerForm({ id, customer, onChange, onSubmit }) {
                     />
                 </div>
                 <div className="form-group">
-                    <FormLabel htmlFor="customer-phone">Phone</FormLabel>
+                    <FormLabel htmlFor="customer-phone">Phone Number</FormLabel>
                     <input
                         id="customer-phone"
                         className="form-control"
                         value={customer.phone || ''}
                         onChange={(event) => onChange('phone', event.target.value)}
-                        placeholder="Optional"
+                        placeholder="Enter cellphone number"
+                        required
                     />
                 </div>
                 <div className="form-group span-2">

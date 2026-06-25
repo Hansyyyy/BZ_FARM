@@ -1,14 +1,33 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import useFetch from '../../hooks/useFetch';
-import { usePageSearch } from '../../context/HeaderSearchContext';
-import PageState from '../../components/ui/PageState';
-import SummaryCards from '../../components/ui/SummaryCards';
-import ModuleTabs from '../../components/ui/ModuleTabs';
-import AnimatedDatePicker from '../../components/ui/AnimatedDatePicker';
-import SegmentDonut from '../../components/ui/SegmentDonut';
-import { buildGradeSegments } from '../../config/chartTheme';
+import useFetch from '../../../hooks/useFetch';
+
+import { usePageSearch } from '../../../context/HeaderSearchContext';
+
+import PageState from '../../../components/ui/PageState';
+
+
+
+
+
+
+import SummaryCards from '../../../components/ui/SummaryCards';
+
+
+import ModuleTabs from '../../../components/ui/ModuleTabs';
+
+
+import AnimatedDatePicker from '../../../components/ui/AnimatedDatePicker';
+
+
+import SegmentDonut from '../../../components/ui/SegmentDonut';
+
+
+import { buildGradeSegments } from '../../../config/chartTheme';
+
+
 
 const MAIN_TABS = [
+
     { id: 'overview', label: 'Overview' },
     { id: 'chickens', label: 'Chickens' },
     { id: 'egg-productions', label: 'Egg Productions' },
@@ -224,8 +243,10 @@ export default function AdminInventoryPage() {
 
                         <div className="admin-panel admin-panel-full">
                             <div className="admin-panel-head">
-                                <div className="admin-panel-kicker">Manager Activity</div>
-                                <p className="admin-panel-sub">Updates submitted by farm managers</p>
+                                <div>
+                                    <div className="admin-panel-kicker">Manager Activity</div>
+                                    <p className="admin-panel-sub">Updates submitted by farm managers</p>
+                                </div>
                             </div>
                             <ul className="admin-activity-list">
                                 {managerActivities.length ? managerActivities.map((activity) => (
@@ -531,3 +552,4 @@ export default function AdminInventoryPage() {
         </PageState>
     );
 }
+
