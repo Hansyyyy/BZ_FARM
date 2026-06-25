@@ -34,6 +34,7 @@ Route::prefix('api')->group(function () {
     Route::post('/flocks', [FlockController::class, 'store'])->name('api.flocks.store');
     Route::post('/flocks/transfer', [FlockController::class, 'transfer'])->name('api.flocks.transfer');
     Route::put('/flocks/{flock}', [FlockController::class, 'update'])->name('api.flocks.update');
+    Route::post('/flocks/{flock}/close', [FlockController::class, 'close'])->name('api.flocks.close');
     Route::delete('/flocks/{flock}', [FlockController::class, 'destroy'])->name('api.flocks.destroy');
 
     Route::get('/feed', [FeedController::class, 'index'])->name('api.feed.index');

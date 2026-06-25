@@ -26,7 +26,7 @@ return new class extends Migration
             $table->unsignedInteger('age_weeks')->default(0);
             $table->date('date_in')->nullable();                    // Made nullable for your initial seeder
             $table->unsignedInteger('mortality')->default(0);
-            $table->enum('status', ['active', 'inactive'])->default('inactive'); // Changed default to 'inactive' to match your initialization setup
+            $table->string('status', 20)->default('inactive');
             $table->timestamps();
         });
 
