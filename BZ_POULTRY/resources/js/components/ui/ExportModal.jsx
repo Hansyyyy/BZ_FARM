@@ -31,22 +31,27 @@ const formats = [
     },
 ];
 
-export default function ExportModal({ open, title, description, onClose, onExport }) {
-    const [format, setFormat] = useState('pdf');
+export default function ExportModal({
+    open,
+    title,
+    description,
+    onClose,
+    onExport,
+    defaultFormat = 'pdf',
+}) {
+    const [format, setFormat] = useState(defaultFormat);
     const [preparedBy, setPreparedBy] = useState(preparedByOptions[0]);
-    const [filterDate, setFilterDate] = useState('');
     const [exporting, setExporting] = useState(false);
     const [error, setError] = useState(null);
 
     useEffect(() => {
         if (open) {
-            setFormat('pdf');
+            setFormat(defaultFormat);
             setPreparedBy(preparedByOptions[0]);
-            setFilterDate('');
             setExporting(false);
             setError(null);
         }
-    }, [open]);
+    }, [open, defaultFormat]);
 
     const selectedFormat = formats.find((option) => option.value === format) || formats[0];
 
@@ -55,7 +60,7 @@ export default function ExportModal({ open, title, description, onClose, onExpor
         setError(null);
 
         try {
-            await onExport?.(format, preparedBy, filterDate);
+            await onExport?.(format, preparedBy);
             onClose();
         } catch (err) {
             setError(err.message || 'Export failed.');
@@ -100,19 +105,6 @@ export default function ExportModal({ open, title, description, onClose, onExpor
                 </select>
             </div>
 
-            <div className="form-group" style={{ marginBottom: '14px' }}>
-                <label htmlFor="filter-date" style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>
-                    Filter date (optional)
-                </label>
-                <input
-                    id="filter-date"
-                    type="date"
-                    className="form-control"
-                    value={filterDate}
-                    onChange={(event) => setFilterDate(event.target.value)}
-                    disabled={exporting}
-                />
-            </div>
 
             <div className="export-format-grid export-format-grid-3">
                 {formats.map((option) => (

@@ -1557,6 +1557,17 @@ body {
     white-space: nowrap;
 }
 
+.row-actions .btn-row-action--warn,
+.btn-row-action--warn {
+    border-color: #c62828;
+    color: #c62828;
+}
+
+.row-actions .btn-row-action--warn:hover,
+.btn-row-action--warn:hover {
+    background: #ffebee;
+}
+
 .mockup-table td:last-child,
 .mockup-table th:last-child {
     min-width: 130px;
@@ -1859,6 +1870,7 @@ body {
 .status-in_stock, .status-in-stock, .status-active, .status-paid { background: #d9f2df; color: #1e623f; }
 .status-low_stock, .status-low-stock, .status-unpaid { background: #fff6d9; color: #a66e0d; }
 .status-out_of_stock, .status-no-stock, .status-inactive { background: #fbe2e3; color: #9f3035; }
+.status-closed { background: #eef1f4; color: #5a6472; }
 .status-pending { background: #e8f2ff; color: #165aab; }
 .status-completed { background: #e2f7ef; color: #1b6b3c; }
 

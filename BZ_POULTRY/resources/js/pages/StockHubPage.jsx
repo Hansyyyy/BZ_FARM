@@ -142,6 +142,11 @@ export default function StockHubPage() {
     const [dailyReportSubmitting, setDailyReportSubmitting] = useState(false);
     const [formError, setFormError] = useState(null);
     const [transferError, setTransferError] = useState(null);
+    const [isCloseBatchOpen, setCloseBatchOpen] = useState(false);
+    const [closeBatchItem, setCloseBatchItem] = useState(null);
+    const [closeBatchForm, setCloseBatchForm] = useState({ closed_reason: 'cycle_end' });
+    const [closeBatchError, setCloseBatchError] = useState(null);
+    const [closeBatchSubmitting, setCloseBatchSubmitting] = useState(false);
     const [expandedRows, setExpandedRows] = useState(new Set());
     const [isRestockOpen, setRestockOpen] = useState(false);
     const [restockForm, setRestockForm] = useState({ feed_id: '', quantity: '' });
@@ -205,7 +210,13 @@ export default function StockHubPage() {
 
     useEffect(() => {
         setSearch('');
-        setFilters({ type: '', status: '', category: '', building: '', date: '' });
+        setFilters({
+            type: '',
+            status: activeTab === 'chicken' ? 'active' : '',
+            category: '',
+            building: '',
+            date: '',
+        });
         setPage(1);
         setForm({});
         setEditingId(null);
@@ -250,6 +261,7 @@ export default function StockHubPage() {
     const statusOptions = [
         { value: '', label: 'All Status' },
         { value: 'active', label: 'Active' },
+        { value: 'closed', label: 'Closed' },
         { value: 'inactive', label: 'Inactive' },
     ];
 
@@ -443,6 +455,39 @@ export default function StockHubPage() {
             await reload();
         } catch (err) {
             setTransferError(formatApiError(err, 'Unable to transfer flock.'));
+        }
+    };
+
+    const openCloseBatch = (item) => {
+        setCloseBatchItem(item);
+        setCloseBatchForm({ closed_reason: 'cycle_end' });
+        setCloseBatchError(null);
+        setCloseBatchOpen(true);
+    };
+
+    const closeCloseBatchModal = () => {
+        setCloseBatchOpen(false);
+        setCloseBatchItem(null);
+        setCloseBatchForm({ closed_reason: 'cycle_end' });
+        setCloseBatchError(null);
+        setCloseBatchSubmitting(false);
+    };
+
+    const handleCloseBatch = async (event) => {
+        event.preventDefault();
+        if (!closeBatchItem?.id) return;
+
+        setCloseBatchError(null);
+        setCloseBatchSubmitting(true);
+
+        try {
+            await axios.post(`/api/flocks/${closeBatchItem.id}/close`, closeBatchForm);
+            closeCloseBatchModal();
+            await Promise.all([reload(), reloadFlocks()]);
+        } catch (err) {
+            setCloseBatchError(formatApiError(err, 'Unable to close batch.'));
+        } finally {
+            setCloseBatchSubmitting(false);
         }
     };
 
@@ -816,7 +861,10 @@ export default function StockHubPage() {
                                     <td>
                                         <RowActionButtons
                                             onView={() => setViewItem(item)}
-                                            onEdit={() => openEdit(item)}
+                                            onEdit={item.status === 'active' ? () => openEdit(item) : null}
+                                            onClose={activeTab === 'chicken' && item.status === 'active'
+                                                ? () => openCloseBatch(item)
+                                                : null}
                                         />
                                     </td>
                                 </tr>
@@ -1204,6 +1252,66 @@ export default function StockHubPage() {
                         </div>
                     </div>
                 </form>
+            </Modal>
+
+            <Modal
+                open={isCloseBatchOpen}
+                title="Close Batch"
+                size="landscape"
+                onClose={closeCloseBatchModal}
+                actions={(
+                    <>
+                        <button type="button" className="btn btn-outline" onClick={closeCloseBatchModal}>
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            className="btn btn-primary btn-row-action--warn"
+                            form="close-batch-form"
+                            disabled={closeBatchSubmitting}
+                        >
+                            {closeBatchSubmitting ? 'Closing...' : 'Close Batch'}
+                        </button>
+                    </>
+                )}
+            >
+                {closeBatchError && <div className="alert-error">{closeBatchError}</div>}
+                {closeBatchItem && (
+                    <form id="close-batch-form" onSubmit={handleCloseBatch}>
+                        <p className="form-help-text">
+                            Closing <strong>{closeBatchItem.batch_no}</strong> in{' '}
+                            <strong>{closeBatchItem.building_name}</strong> will free this building for a new batch.
+                            Final counts (quantity, mortality, cull) are kept in batch history.
+                        </p>
+                        <div className="modal-form-grid">
+                            <div className="form-group">
+                                <FormLabel htmlFor="close-batch-reason" required>Reason</FormLabel>
+                                <select
+                                    id="close-batch-reason"
+                                    className="form-control"
+                                    value={closeBatchForm.closed_reason}
+                                    onChange={(e) => setCloseBatchForm({ closed_reason: e.target.value })}
+                                    required
+                                >
+                                    {(resource.closeReasonOptions || []).map((option) => (
+                                        <option key={option.value} value={option.value}>
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <FormLabel>Current Quantity</FormLabel>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    value={`${closeBatchItem.quantity ?? 0} birds`}
+                                    readOnly
+                                />
+                            </div>
+                        </div>
+                    </form>
+                )}
             </Modal>
 
             <Modal

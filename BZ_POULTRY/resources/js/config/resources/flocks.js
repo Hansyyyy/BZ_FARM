@@ -28,6 +28,7 @@ export default {
             },
         },
         { key: 'date_in', label: 'Date In', render: (item) => item.date_in ? String(item.date_in).slice(0, 10) : '' },
+        { key: 'date_out', label: 'Date Out', render: (item) => item.date_out ? String(item.date_out).slice(0, 10) : '—' },
         { key: 'cull', label: 'Cull', render: (item) => item.cull ?? 0 },
         { key: 'mortality', label: 'Mortality', render: (item) => item.mortality ?? 0 },
         {
@@ -37,6 +38,14 @@ export default {
                 const initial = item.initial_quantity || item.quantity || 0;
                 const rate = initial ? ((item.mortality || 0) / initial) * 100 : 0;
                 return `${rate.toFixed(1)}%`;
+            },
+        },
+        {
+            key: 'closed_reason',
+            label: 'Close Reason',
+            render: (item) => {
+                if (!item.closed_reason) return '—';
+                return String(item.closed_reason).replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
             },
         },
         { key: 'status', label: 'Status', badge: true },
@@ -57,11 +66,19 @@ export default {
         { key: 'age_days', label: 'Age (Days)', type: 'number', min: 0 },
     ],
     editFormFields: [
-        { key: 'batch_no', label: 'Building', type: 'text', readOnly: true },
+        { key: 'batch_no', label: 'Batch No', type: 'text', readOnly: true },
+        { key: 'building_name', label: 'Building', type: 'text', readOnly: true },
         { key: 'type', label: 'Type', type: 'select', options: ['Layers', 'Growers'], required: true },
         { key: 'quantity', label: 'Quantity', type: 'number', required: true, min: 0 },
         { key: 'age_weeks', label: 'Age (Weeks)', type: 'number', required: true, min: 0 },
         { key: 'mortality', label: 'Mortality', type: 'number', min: 0 },
-        { key: 'status', label: 'Status', type: 'select', options: ['active', 'inactive'], required: true },
+    ],
+    closeReasonOptions: [
+        { value: 'cycle_end', label: 'Cycle ended' },
+        { value: 'depleted', label: 'Flock depleted' },
+        { value: 'sold', label: 'Sold / dispatched' },
+        { value: 'replaced', label: 'Replaced by new batch' },
+        { value: 'transferred', label: 'Transferred out' },
+        { value: 'other', label: 'Other' },
     ],
 };

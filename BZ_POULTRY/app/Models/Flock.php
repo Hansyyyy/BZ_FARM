@@ -8,14 +8,25 @@ class Flock extends Model
 {
     protected $fillable = [
         'batch_no', 'building_id', 'building_name', 'type', 'initial_quantity', 'quantity',
-        'age_weeks', 'date_in', 'mortality', 'cull', 'status',
+        'age_weeks', 'date_in', 'date_out', 'closed_reason', 'mortality', 'cull', 'status',
     ];
 
     protected function casts(): array
     {
         return [
             'date_in' => 'date',
+            'date_out' => 'date',
         ];
+    }
+
+    public function isActive(): bool
+    {
+        return $this->status === 'active';
+    }
+
+    public function isClosed(): bool
+    {
+        return $this->status === 'closed';
     }
 
     public function getMortalityRateAttribute(): float

@@ -9,6 +9,7 @@ use App\Models\EggProduction;
 use App\Models\FeedItem;
 use App\Models\Flock;
 use App\Models\StockTransaction;
+use App\Models\FlockLossRecord;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -92,12 +93,38 @@ class DailyReportEntryController extends Controller
                     'item_id' => $feedItem->id,
                     'type' => 'out',
                     'quantity' => $feedUsed,
+                    'building_id' => $buildingId,
                     'reference' => 'daily_report',
                     'user_id' => auth()->id(),
                     'notes' => "Daily report feed usage for building {$flock->building_name}",
                 ]);
 
                 ActivityLogger::log('updated', 'Feed Inventory', "Used {$feedUsed}kg feed from {$feedItem->name} (daily report)");
+            }
+
+            // 4. Record mortality/cull history for traceability
+            if ($cull > 0) {
+                FlockLossRecord::create([
+                    'record_date' => now()->toDateString(),
+                    'flock_id' => $flock->id,
+                    'building_id' => $buildingId,
+                    'type' => 'cull',
+                    'quantity' => $cull,
+                    'reason' => null,
+                    'user_id' => auth()->id(),
+                ]);
+            }
+
+            if ($mortality > 0) {
+                FlockLossRecord::create([
+                    'record_date' => now()->toDateString(),
+                    'flock_id' => $flock->id,
+                    'building_id' => $buildingId,
+                    'type' => 'mortality',
+                    'quantity' => $mortality,
+                    'reason' => null,
+                    'user_id' => auth()->id(),
+                ]);
             }
 
             // 3. Egg production record
