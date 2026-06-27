@@ -22,7 +22,9 @@ function formatCurrency(value) {
 
 function formatDisplayDate(dateStr) {
     if (!dateStr) return '';
-    return new Date(`${dateStr}T00:00:00`).toLocaleDateString('en-US', {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    return date.toLocaleDateString('en-US', {
         weekday: 'long',
         month: 'long',
         day: 'numeric',
@@ -36,13 +38,31 @@ function formatDateTime(value) {
 }
 
 function getTodayKey() {
-    return new Date().toISOString().slice(0, 10);
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 }
 
-function buildSummaryCards(summary = {}) {
+function toDateKey(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function buildSummaryCards(summary = {}, reportType = 'daily', dateRange = {}) {
+    const rangeSub = reportType !== 'daily' && dateRange.start && dateRange.end
+        ? `${dateRange.start} to ${dateRange.end}`
+        : 'For selected date';
+    const poultrySub = reportType !== 'daily'
+        ? 'Headcount at end of period'
+        : 'Headcount at end of day';
+
     return [
-        { key: 'poultry', label: 'Total Poultry', value: formatNumber(summary.total_poultry), sub: 'Active birds', icon: 'bi-egg-fried' },
-        { key: 'eggs', label: 'Eggs Collected', value: formatNumber(summary.eggs_collected), sub: 'For selected date', icon: 'bi-basket' },
+        { key: 'poultry', label: 'Total Poultry', value: formatNumber(summary.total_poultry), sub: poultrySub, icon: 'bi-egg-fried' },
+        { key: 'eggs', label: 'Eggs Collected', value: formatNumber(summary.eggs_collected), sub: rangeSub, icon: 'bi-basket' },
         { key: 'sales', label: 'Sales Total', value: formatCurrency(summary.sales_total), sub: `${formatNumber(summary.sales_count)} transactions`, icon: 'bi-cash-stack', tone: 'success' },
         { key: 'defects', label: 'Defect Eggs', value: formatNumber(summary.defect_eggs), sub: 'Soft shell, damaged, cracked', icon: 'bi-exclamation-circle', tone: 'orange' },
     ];
@@ -55,10 +75,16 @@ function StatusBadge({ status }) {
     return <span className={className}>{label}</span>;
 }
 
-function SnapshotSections({ snapshot, category = 'all', notes, readOnly = false }) {
+function SnapshotSections({ snapshot, category = 'all', notes, readOnly = false, periodLabel = '' }) {
     if (!snapshot) {
         return <p className="empty-state">No snapshot data available.</p>;
     }
+
+    const periodSuffix = periodLabel ? ` · ${periodLabel}` : '';
+    const isRange = snapshot.period && !snapshot.period.is_single_day;
+    const qtyLabel = isRange ? 'Qty (end of period)' : 'Qty (end of day)';
+    const lossLabel = isRange ? 'Mortality (period)' : 'Mortality (day)';
+    const cullLabel = isRange ? 'Cull (period)' : 'Cull (day)';
 
     const showEgg = category === 'all' || category === 'egg';
     const showPoultry = category === 'all' || category === 'poultry';
@@ -76,7 +102,7 @@ function SnapshotSections({ snapshot, category = 'all', notes, readOnly = false 
             )}
 
             {showEgg && (
-                <PanelCard title="Egg Production" subtitle="Collections for this date">
+                <PanelCard title="Egg Production" subtitle={`Collections for selected period${periodSuffix}`}>
                     <div className="table-wrap">
                         <table className="data-table mockup-table">
                             <thead>
@@ -110,15 +136,16 @@ function SnapshotSections({ snapshot, category = 'all', notes, readOnly = false 
 
             <div className="daily-report-split">
                 {showPoultry && (
-                    <PanelCard title="Poultry" subtitle="Active flock snapshot">
+                    <PanelCard title="Poultry" subtitle={`Flocks active during period${periodSuffix}`}>
                         <div className="table-wrap">
                             <table className="data-table mockup-table">
                                 <thead>
-                                    <tr><th>Batch</th><th>Type</th><th>Qty</th><th>Mortality</th><th>Cull</th></tr>
+                                    <tr><th>Building</th><th>Batch</th><th>Type</th><th>{qtyLabel}</th><th>{lossLabel}</th><th>{cullLabel}</th></tr>
                                 </thead>
                                 <tbody>
                                     {snapshot.poultry?.length ? snapshot.poultry.map((row) => (
-                                        <tr key={row.batch_no}>
+                                        <tr key={`${row.building}-${row.batch_no}`}>
+                                            <td>{row.building || '—'}</td>
                                             <td>{row.batch_no}</td>
                                             <td>{row.type}</td>
                                             <td>{formatNumber(row.quantity)}</td>
@@ -126,7 +153,7 @@ function SnapshotSections({ snapshot, category = 'all', notes, readOnly = false 
                                             <td>{formatNumber(row.cull)}</td>
                                         </tr>
                                     )) : (
-                                        <tr><td colSpan="5" className="empty-state">No poultry records.</td></tr>
+                                        <tr><td colSpan="6" className="empty-state">No poultry records for this period.</td></tr>
                                     )}
                                 </tbody>
                             </table>
@@ -135,7 +162,7 @@ function SnapshotSections({ snapshot, category = 'all', notes, readOnly = false 
                 )}
 
                 {showSales && (
-                    <PanelCard title="Sales" subtitle="Transactions for this date">
+                    <PanelCard title="Sales" subtitle={`Transactions for selected period${periodSuffix}`}>
                         <div className="table-wrap">
                             <table className="data-table mockup-table">
                                 <thead>
@@ -158,67 +185,98 @@ function SnapshotSections({ snapshot, category = 'all', notes, readOnly = false 
                 )}
             </div>
 
-            <div className="daily-report-split">
-                <PanelCard title="Low Stock Alerts">
-                    <ul className="recent-activities">
-                        {snapshot.low_stock?.length ? snapshot.low_stock.map((item, index) => (
-                            <li key={`${item.name}-${index}`}>
-                                <span className="activity-icon activity-icon-red"></span>
-                                <div className="activity-content">
-                                    <strong>{item.name}</strong>
-                                    <p>{item.category} · {formatNumber(item.stock)} {item.unit} left</p>
-                                </div>
-                            </li>
-                        )) : <li className="empty-state">No low stock items.</li>}
-                    </ul>
-                </PanelCard>
+            {showInventory && (
+                <div className="daily-report-split">
+                    <PanelCard title="Low Stock Alerts">
+                        <ul className="recent-activities">
+                            {snapshot.low_stock?.length ? snapshot.low_stock.map((item, index) => (
+                                <li key={`${item.name}-${index}`}>
+                                    <span className="activity-icon activity-icon-red"></span>
+                                    <div className="activity-content">
+                                        <strong>{item.name}</strong>
+                                        <p>{item.category} · {formatNumber(item.stock)} {item.unit} left</p>
+                                    </div>
+                                </li>
+                            )) : <li className="empty-state">No low stock items.</li>}
+                        </ul>
+                    </PanelCard>
 
-                <PanelCard title="Inventory Transactions">
-                    <div className="table-wrap">
-                        <table className="data-table mockup-table">
-                            <thead>
-                                <tr><th>Type</th><th>Item</th><th>Qty</th></tr>
-                            </thead>
-                            <tbody>
-                                {snapshot.transactions?.length ? snapshot.transactions.map((row, index) => (
-                                    <tr key={`${row.item_name}-${index}`}>
-                                        <td><span className={`txn-type-${row.type}`}>{row.type === 'in' ? 'In' : 'Out'}</span></td>
-                                        <td>{row.item_name}</td>
-                                        <td>{formatNumber(row.quantity)}</td>
-                                    </tr>
-                                )) : (
-                                    <tr><td colSpan="3" className="empty-state">No transactions for this date.</td></tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </PanelCard>
-            </div>
+                    <PanelCard title="Inventory Transactions">
+                        <div className="table-wrap">
+                            <table className="data-table mockup-table">
+                                <thead>
+                                    <tr><th>Type</th><th>Item</th><th>Qty</th></tr>
+                                </thead>
+                                <tbody>
+                                    {snapshot.transactions?.length ? snapshot.transactions.map((row, index) => (
+                                        <tr key={`${row.item_name}-${index}`}>
+                                            <td><span className={`txn-type-${row.type}`}>{row.type === 'in' ? 'In' : 'Out'}</span></td>
+                                            <td>{row.item_name}</td>
+                                            <td>{formatNumber(row.quantity)}</td>
+                                        </tr>
+                                    )) : (
+                                        <tr><td colSpan="3" className="empty-state">No transactions for this date.</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </PanelCard>
+                </div>
+            )}
 
-            <div className="daily-report-split">
-                <PanelCard title="Feed Consumption" subtitle="Feed used by building">
-                    <div className="table-wrap">
-                        <table className="data-table mockup-table">
-                            <thead>
-                                <tr><th>Building</th><th>Feed Type</th><th>Used</th><th>Remaining</th></tr>
-                            </thead>
-                            <tbody>
-                                {snapshot.feed_consumption?.length ? snapshot.feed_consumption.map((row, idx) => (
-                                    <tr key={`feed-${idx}`}>
-                                        <td>{row.building}</td>
-                                        <td>{row.feed_type}</td>
-                                        <td>{formatNumber(row.used)} kg</td>
-                                        <td>{formatNumber(row.remaining)} kg</td>
-                                    </tr>
-                                )) : (
-                                    <tr><td colSpan="4" className="empty-state">No feed consumption recorded for this date.</td></tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </PanelCard>
+            {showFeed && (
+                <div className="daily-report-split">
+                    <PanelCard title="Feed Consumption" subtitle={`Feed used by building${periodSuffix}`}>
+                        <div className="table-wrap">
+                            <table className="data-table mockup-table">
+                                <thead>
+                                    <tr><th>Building</th><th>Feed Type</th><th>Used</th><th>Remaining</th></tr>
+                                </thead>
+                                <tbody>
+                                    {snapshot.feed_consumption?.length ? snapshot.feed_consumption.map((row, idx) => (
+                                        <tr key={`feed-${idx}`}>
+                                            <td>{row.building}</td>
+                                            <td>{row.feed_type}</td>
+                                            <td>{formatNumber(row.used)} kg</td>
+                                            <td>{formatNumber(row.remaining)} kg</td>
+                                        </tr>
+                                    )) : (
+                                        <tr><td colSpan="4" className="empty-state">No feed consumption recorded for this date.</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </PanelCard>
 
-                <PanelCard title="Mortality & Cull Details" subtitle="Per-building breakdown">
+                    {showMortality && (
+                        <PanelCard title="Mortality & Cull Details" subtitle={`Per-building breakdown${periodSuffix}`}>
+                            <div className="table-wrap">
+                                <table className="data-table mockup-table">
+                                    <thead>
+                                        <tr><th>Building</th><th>Batch</th><th>Mortality</th><th>Cull</th><th>Reason</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        {snapshot.mortality_cull_details?.length ? snapshot.mortality_cull_details.map((row, idx) => (
+                                            <tr key={`loss-${idx}`}>
+                                                <td>{row.building}</td>
+                                                <td>{row.batch}</td>
+                                                <td>{formatNumber(row.mortality)}</td>
+                                                <td>{formatNumber(row.cull)}</td>
+                                                <td>{row.reason || '—'}</td>
+                                            </tr>
+                                        )) : (
+                                            <tr><td colSpan="5" className="empty-state">No mortality or cull details available.</td></tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </PanelCard>
+                    )}
+                </div>
+            )}
+
+            {showMortality && !showFeed && (
+                <PanelCard title="Mortality & Cull Details" subtitle={`Per-building breakdown${periodSuffix}`}>
                     <div className="table-wrap">
                         <table className="data-table mockup-table">
                             <thead>
@@ -240,13 +298,14 @@ function SnapshotSections({ snapshot, category = 'all', notes, readOnly = false 
                         </table>
                     </div>
                 </PanelCard>
-            </div>
+            )}
 
-            <PanelCard title="Building Performance" subtitle="Compare building KPIs">
+            {(category === 'all') && (
+                <PanelCard title="Building Performance" subtitle={`Compare building KPIs${periodSuffix}`}>
                 <div className="table-wrap">
                     <table className="data-table mockup-table">
                         <thead>
-                            <tr><th>Building</th><th>Chickens</th><th>Eggs</th><th>Mortality</th><th>Feed Used</th><th>Status</th></tr>
+                            <tr><th>Building</th><th>Chickens</th><th>Eggs</th><th>Mortality</th><th>Cull</th><th>Feed Used</th><th>Status</th></tr>
                         </thead>
                         <tbody>
                             {snapshot.building_performance?.length ? snapshot.building_performance.map((row, idx) => (
@@ -255,16 +314,18 @@ function SnapshotSections({ snapshot, category = 'all', notes, readOnly = false 
                                     <td>{formatNumber(row.chickens)}</td>
                                     <td>{formatNumber(row.eggs)}</td>
                                     <td>{formatNumber(row.mortality)}</td>
+                                    <td>{formatNumber(row.cull ?? 0)}</td>
                                     <td>{formatNumber(row.feed_used)} kg</td>
                                     <td>{row.status || '—'}</td>
                                 </tr>
                             )) : (
-                                <tr><td colSpan="6" className="empty-state">No building performance data available.</td></tr>
+                                <tr><td colSpan="7" className="empty-state">No building performance data available.</td></tr>
                             )}
                         </tbody>
                     </table>
                 </div>
             </PanelCard>
+            )}
 
             {!readOnly && !notes && (
                 <p className="daily-report-hint">Review the data above, add any notes below, then submit the daily report.</p>
@@ -289,17 +350,41 @@ export default function ReportsPage() {
     const [actionError, setActionError] = useState(null);
 
     const { data: listData, loading, error, reload, setError } = useFetch('/api/daily-reports');
-    const previewDate = reportType === 'daily' ? selectedDate : (startDate || selectedDate);
+
+    const snapshotUrl = useMemo(() => {
+        if (reportType === 'daily') {
+            return `/api/daily-reports/snapshot?date=${encodeURIComponent(selectedDate)}`;
+        }
+
+        if (startDate && endDate) {
+            const from = startDate <= endDate ? startDate : endDate;
+            const to = startDate <= endDate ? endDate : startDate;
+            return `/api/daily-reports/snapshot?start_date=${encodeURIComponent(from)}&end_date=${encodeURIComponent(to)}`;
+        }
+
+        return `/api/daily-reports/snapshot?date=${encodeURIComponent(selectedDate)}`;
+    }, [reportType, selectedDate, startDate, endDate]);
+
     const {
         data: snapshotData,
         loading: snapshotLoading,
         error: snapshotError,
         reload: reloadSnapshot,
-    } = useFetch(`/api/daily-reports/snapshot?date=${previewDate}`);
+    } = useFetch(snapshotUrl);
 
     const todayKey = getTodayKey();
     const existingReport = snapshotData?.report;
     const snapshot = existingReport?.snapshot || snapshotData?.snapshot;
+    const isRangeReport = reportType !== 'daily';
+    const effectiveStartDate = isRangeReport && startDate && endDate
+        ? (startDate <= endDate ? startDate : endDate)
+        : selectedDate;
+    const effectiveEndDate = isRangeReport && startDate && endDate
+        ? (startDate <= endDate ? endDate : startDate)
+        : selectedDate;
+    const periodLabel = isRangeReport
+        ? `${effectiveStartDate} to ${effectiveEndDate}`
+        : effectiveStartDate;
     const isSubmitted = Boolean(existingReport);
     const todaySubmitted = Boolean(listData?.today?.submitted);
     const isManagerDateLocked = !isAdmin && todaySubmitted;
@@ -315,8 +400,38 @@ export default function ReportsPage() {
         setNotes(existingReport?.notes || '');
     }, [existingReport?.id, existingReport?.notes, selectedDate]);
 
+    useEffect(() => {
+        if (reportType === 'daily') {
+            setSelectedDate(todayKey);
+        } else if (reportType === 'weekly') {
+            const today = new Date();
+            const weekStart = new Date(today);
+            const day = weekStart.getDay();
+            weekStart.setDate(today.getDate() - (day === 0 ? 6 : day - 1));
+            setStartDate(toDateKey(weekStart));
+            setEndDate(todayKey);
+        } else if (reportType === 'monthly') {
+            const today = new Date();
+            const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+            setStartDate(toDateKey(monthStart));
+            setEndDate(todayKey);
+        } else if (reportType === 'custom') {
+            // Keep user-selected dates when switching to custom range.
+        }
+    }, [reportType, todayKey]);
+
     const handleSearchChange = useCallback((value) => {
         setSearch(value);
+    }, []);
+
+    const handleCardClick = useCallback((cardKey) => {
+        const categoryMap = {
+            poultry: 'poultry',
+            eggs: 'egg',
+            sales: 'sales',
+            defects: 'mortality',
+        };
+        setCategory(categoryMap[cardKey] || 'all');
     }, []);
 
     usePageSearch('Search daily reports...', search, handleSearchChange);
@@ -347,7 +462,7 @@ export default function ReportsPage() {
         return {
             ...snapshot,
             egg_production: snapshot.egg_production?.filter((row) => matchBuilding(row.building)) || [],
-            poultry: snapshot.poultry?.filter((row) => matchBatch(row.batch_no)) || [],
+            poultry: snapshot.poultry?.filter((row) => matchBuilding(row.building) && matchBatch(row.batch_no)) || [],
             feed_consumption: snapshot.feed_consumption?.filter((row) => matchBuilding(row.building)) || [],
             mortality_cull_details: snapshot.mortality_cull_details?.filter((row) => matchBuilding(row.building) && matchBatch(row.batch)) || [],
             building_performance: snapshot.building_performance?.filter((row) => matchBuilding(row.building)) || [],
@@ -433,6 +548,16 @@ export default function ReportsPage() {
                 </div>
             )}
 
+            {isRangeReport && (
+                <div className="daily-report-banner is-pending">
+                    <div>
+                        <span className="daily-report-banner-kicker">Report Period</span>
+                        <h3>{formatDisplayDate(effectiveStartDate)} — {formatDisplayDate(effectiveEndDate)}</h3>
+                        <p>Aggregated totals and records from {effectiveStartDate} through {effectiveEndDate}.</p>
+                    </div>
+                </div>
+            )}
+
             <div className="page-toolbar daily-report-toolbar">
                 <div className="daily-report-filter-group" style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' }}>
                     <div style={{ minWidth: '150px' }}>
@@ -477,7 +602,7 @@ export default function ReportsPage() {
                         <label className="form-label">Building</label>
                         <select className="form-control" value={buildingFilter} onChange={(event) => setBuildingFilter(event.target.value)}>
                             <option value="">All Buildings</option>
-                            {Array.from(new Set([...(snapshot?.egg_production || []).map((row) => row.building), ...(snapshot?.feed_consumption || []).map((row) => row.building), ...(snapshot?.mortality_cull_details || []).map((row) => row.building), ...(snapshot?.building_performance || []).map((row) => row.building)])).filter(Boolean).map((building) => (
+                            {Array.from(new Set([...(snapshot?.poultry || []).map((row) => row.building), ...(snapshot?.egg_production || []).map((row) => row.building), ...(snapshot?.feed_consumption || []).map((row) => row.building), ...(snapshot?.mortality_cull_details || []).map((row) => row.building), ...(snapshot?.building_performance || []).map((row) => row.building)])).filter(Boolean).map((building) => (
                                 <option key={building} value={building}>{building}</option>
                             ))}
                         </select>
@@ -528,11 +653,15 @@ export default function ReportsPage() {
                 }}
             />
 
-            <SummaryCards items={buildSummaryCards(snapshot?.summary)} columns={4} />
+            <SummaryCards
+                items={buildSummaryCards(snapshot?.summary, reportType, { start: effectiveStartDate, end: effectiveEndDate })}
+                columns={4}
+                onCardClick={handleCardClick}
+            />
 
             {!isAdmin ? (
                 <form id="daily-report-form" onSubmit={submitReport}>
-                    <SnapshotSections snapshot={filteredSnapshot} category={category} notes={isSubmitted ? existingReport?.notes : null} />
+                    <SnapshotSections snapshot={filteredSnapshot} category={category} notes={isSubmitted ? existingReport?.notes : null} periodLabel={periodLabel} />
 
                     {canSubmit && (
                         <PanelCard title="End-of-Day Notes" subtitle="Optional remarks for the admin">
@@ -554,9 +683,11 @@ export default function ReportsPage() {
             ) : (
                 <>
                     <SnapshotSections
-                        snapshot={snapshot}
+                        snapshot={filteredSnapshot}
+                        category={category}
                         notes={existingReport?.notes}
                         readOnly
+                        periodLabel={periodLabel}
                     />
 
                     <div className="data-panel">

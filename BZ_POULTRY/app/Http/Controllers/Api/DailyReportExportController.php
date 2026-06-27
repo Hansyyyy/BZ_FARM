@@ -51,10 +51,8 @@ class DailyReportExportController extends Controller
             }
         } elseif ($start && $end) {
             $s = Carbon::parse($start)->startOfDay();
-            $e = Carbon::parse($end)->startOfDay();
-            for ($dt = $s; $dt->lte($e); $dt->addDay()) {
-                $snapshots[] = $snapshotService->build($dt->copy());
-            }
+            $e = Carbon::parse($end)->endOfDay();
+            $snapshots[] = $snapshotService->buildRange($s, $e);
         } else {
             $d = Carbon::today();
             $snapshots[] = $snapshotService->build($d);
@@ -76,11 +74,18 @@ class DailyReportExportController extends Controller
 
                 // Poultry
                 fputcsv($handle, ['Poultry']);
-                fputcsv($handle, ['Batch', 'Type', 'Quantity', 'Mortality', 'Cull']);
+                fputcsv($handle, ['Building', 'Batch', 'Type', 'Quantity', 'Mortality', 'Cull']);
                 foreach ($snapshot['poultry'] ?? [] as $row) {
                     if ($buildingFilter && stripos($row['building'] ?? ($row['building_name'] ?? ''), $buildingFilter) === false) continue;
                     if ($batchFilter && stripos($row['batch_no'] ?? '', $batchFilter) === false) continue;
-                    fputcsv($handle, [$row['batch_no'], $row['type'], $row['quantity'], $row['mortality'], $row['cull'] ?? 0]);
+                    fputcsv($handle, [
+                        $row['building'] ?? ($row['building_name'] ?? ''),
+                        $row['batch_no'],
+                        $row['type'],
+                        $row['quantity'],
+                        $row['mortality'],
+                        $row['cull'] ?? 0,
+                    ]);
                 }
                 fputcsv($handle, []);
 

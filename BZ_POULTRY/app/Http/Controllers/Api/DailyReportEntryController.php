@@ -167,15 +167,7 @@ class DailyReportEntryController extends Controller
 
             $eggRecord = null;
             if ($hasEggs) {
-                // Remove placeholder egg record for this building if exists
-                EggProduction::where('building_id', $buildingId)
-                    ->where('total_eggs', 0)
-                    ->where('soft_shell_eggs', 0)
-                    ->where('damaged_eggs', 0)
-                    ->where('cracked_eggs', 0)
-                    ->delete();
-
-                $eggRecord = EggProduction::create($eggData);
+                $eggRecord = EggProduction::addOrUpdateForDate($eggData);
                 ActivityLogger::log('created', 'Egg Production', "Added {$totalGood} eggs via daily report for building {$flock->building_name}");
             }
 

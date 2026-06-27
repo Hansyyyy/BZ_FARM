@@ -50,7 +50,31 @@ class DailyReportController extends Controller
 
     public function snapshot(Request $request, DailyReportSnapshotService $snapshotService)
     {
-        $date = Carbon::parse($request->query('date', now()->toDateString()))->startOfDay();
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+        $date = $request->query('date');
+
+        if ($startDate && $endDate) {
+            $start = Carbon::parse($startDate)->startOfDay();
+            $end = Carbon::parse($endDate)->endOfDay();
+            $existing = null;
+
+            try {
+                $snapshot = $snapshotService->buildRange($start, $end);
+            } catch (\Throwable $e) {
+                report()->error('Daily report range snapshot failed: '.$e->getMessage(), ['exception' => $e]);
+                $snapshot = null;
+            }
+
+            return response()->json([
+                'date' => $start->toDateString(),
+                'end_date' => $end->toDateString(),
+                'snapshot' => $snapshot,
+                'report' => null,
+            ]);
+        }
+
+        $date = Carbon::parse($date ?? now()->toDateString())->startOfDay();
         $existing = DailyReport::with(['submitter', 'reviewer'])
             ->whereDate('report_date', $date)
             ->first();

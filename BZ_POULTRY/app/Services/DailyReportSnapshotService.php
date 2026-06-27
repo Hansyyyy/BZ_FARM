@@ -2,31 +2,56 @@
 
 namespace App\Services;
 
+use App\Models\Building;
 use App\Models\EggProduction;
 use App\Models\FeedItem;
 use App\Models\Flock;
 use App\Models\FlockLossRecord;
-use App\Models\Building;
 use App\Models\MedicineItem;
 use App\Models\Sale;
 use App\Models\StockTransaction;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 
 class DailyReportSnapshotService
 {
+    public function buildRange(Carbon $startDate, Carbon $endDate): array
+    {
+        return $this->buildSnapshotData(
+            $startDate->copy()->startOfDay(),
+            $endDate->copy()->endOfDay()
+        );
+    }
+
     public function build(Carbon $date): array
     {
-        $activeFlocks = Flock::where('status', 'active')->get();
-        $eggRecords = EggProduction::with(['building', 'user'])
-            ->whereDate('date', $date)
+        $day = $date->copy()->startOfDay();
+
+        return $this->buildSnapshotData($day, $day->copy()->endOfDay());
+    }
+
+    private function buildSnapshotData(Carbon $periodStart, Carbon $periodEnd): array
+    {
+        $startKey = $periodStart->toDateString();
+        $endKey = $periodEnd->toDateString();
+        $isSingleDay = $startKey === $endKey;
+        $asOfDate = $periodEnd->copy()->endOfDay();
+
+        $hasLossRecordsTable = Schema::hasTable('flock_loss_records');
+        $flocksInPeriod = $this->flocksActiveDuringPeriod($periodStart, $periodEnd);
+        $lossRecords = $this->fetchLossRecords($periodStart, $hasLossRecordsTable, $periodEnd);
+
+        $eggRecords = EggProduction::with(['building', 'user', 'flock'])
+            ->whereBetween('date', [$startKey, $endKey])
             ->get();
         $sales = Sale::with(['customer', 'product'])
-            ->whereDate('sale_date', $date)
+            ->whereBetween('sale_date', [$startKey, $endKey])
             ->get();
         $transactions = StockTransaction::with('user')
-            ->whereDate('created_at', $date)
+            ->whereBetween('created_at', [$periodStart, $periodEnd])
             ->latest()
             ->get();
 
@@ -36,20 +61,24 @@ class DailyReportSnapshotService
         $cracked = (int) $eggRecords->sum('cracked_eggs');
         $sellable = max($eggsCollected - $softShell - $damaged - $cracked, 0);
 
-        // Feed transactions for the date (outgoing i.e. used)
+        $periodMortality = $this->sumLossesInPeriod(null, 'mortality', $periodStart, $periodEnd, $hasLossRecordsTable, $lossRecords);
+        $periodCull = $this->sumLossesInPeriod(null, 'cull', $periodStart, $periodEnd, $hasLossRecordsTable, $lossRecords);
+        $poultryRows = $this->buildPoultrySection($flocksInPeriod, $periodStart, $periodEnd, $hasLossRecordsTable, $lossRecords);
+
         $feedTransactions = StockTransaction::with('building')
             ->where('item_type', 'feed')
             ->where('type', 'out')
-            ->whereDate('created_at', $date)
+            ->whereBetween('created_at', [$periodStart, $periodEnd])
             ->get();
 
-        // Loss records (mortality/cull) for the date if available.
-        $hasLossRecordsTable = Schema::hasTable('flock_loss_records');
-        $lossRecords = $this->fetchLossRecords($date, $hasLossRecordsTable);
-
         return [
+            'period' => [
+                'start' => $startKey,
+                'end' => $endKey,
+                'is_single_day' => $isSingleDay,
+            ],
             'summary' => [
-                'total_poultry' => (int) $activeFlocks->sum('quantity'),
+                'total_poultry' => (int) collect($poultryRows)->sum('quantity'),
                 'eggs_collected' => $eggsCollected,
                 'sellable_eggs' => $sellable,
                 'defect_eggs' => $softShell + $damaged + $cracked,
@@ -57,25 +86,23 @@ class DailyReportSnapshotService
                 'sales_count' => $sales->count(),
                 'feed_stock' => (float) FeedItem::sum('stock'),
                 'medicine_stock' => (float) MedicineItem::sum('stock'),
-                'mortality' => (int) $activeFlocks->sum('mortality'),
+                'mortality' => $periodMortality,
+                'cull' => $periodCull,
                 'transactions_count' => $transactions->count(),
             ],
-            'egg_production' => $eggRecords->map(fn (EggProduction $record) => [
-                'building' => $record->building?->name ?? 'N/A',
-                'total_eggs' => (int) $record->total_eggs,
-                'soft_shell' => (int) $record->soft_shell_eggs,
-                'damaged' => (int) $record->damaged_eggs,
-                'cracked' => (int) $record->cracked_eggs,
-                'recorded_by' => $record->user?->name,
-            ])->values()->all(),
-            'poultry' => $activeFlocks->map(fn (Flock $flock) => [
-                'batch_no' => $flock->batch_no,
-                'type' => ucfirst($flock->type),
-                'quantity' => (int) $flock->quantity,
-                'mortality' => (int) $flock->mortality,
-                'cull' => (int) ($flock->cull ?? 0),
-                'status' => $flock->status,
-            ])->values()->all(),
+            'egg_production' => $eggRecords
+                ->groupBy(fn (EggProduction $record) => $record->building?->name ?? 'N/A')
+                ->map(fn ($records, $buildingName) => [
+                    'building' => $buildingName,
+                    'total_eggs' => (int) $records->sum('total_eggs'),
+                    'soft_shell' => (int) $records->sum('soft_shell_eggs'),
+                    'damaged' => (int) $records->sum('damaged_eggs'),
+                    'cracked' => (int) $records->sum('cracked_eggs'),
+                    'recorded_by' => $records->first()?->user?->name ?? '—',
+                ])
+                ->values()
+                ->all(),
+            'poultry' => $poultryRows,
             'sales' => $sales->map(fn (Sale $sale) => [
                 'invoice_no' => $sale->invoice_no,
                 'customer' => $sale->customer?->name ?? 'Walk-in',
@@ -106,11 +133,10 @@ class DailyReportSnapshotService
                 'notes' => $txn->notes,
                 'recorded_by' => $txn->user?->name,
             ])->values()->all(),
-            // Feed consumption grouped by building and feed type
             'feed_consumption' => $feedTransactions->groupBy(function ($t) {
-                return ($t->building?->name ?? 'Unassigned') . '|' . ($t->item_name ?? 'Unknown');
+                return ($t->building?->name ?? 'Unassigned').'|'.($t->item_name ?? 'Unknown');
             })->map(function ($group, $key) {
-                [$building, $feed] = explode('|', $key);
+                [$building, $feed] = explode('|', $key, 2);
                 $used = (float) $group->sum('quantity');
                 $item = FeedItem::find($group->first()->item_id);
                 $remaining = $item?->stock ?? 0;
@@ -122,62 +148,234 @@ class DailyReportSnapshotService
                     'remaining' => (float) $remaining,
                 ];
             })->values()->all(),
-            // Mortality & cull details
-            'mortality_cull_details' => (count($lossRecords) > 0)
-                ? $lossRecords->map(fn ($r) => [
-                    'building' => $r->building?->name ?? 'N/A',
-                    'batch' => $r->flock?->batch_no ?? '—',
-                    'mortality' => $r->type === 'mortality' ? (int) $r->quantity : 0,
-                    'cull' => $r->type === 'cull' ? (int) $r->quantity : 0,
-                    'reason' => $r->reason,
-                ])->values()->all()
-                : $activeFlocks->map(fn (Flock $f) => [
-                    'building' => $f->building_name ?? 'N/A',
-                    'batch' => $f->batch_no,
-                    'mortality' => (int) $f->mortality,
-                    'cull' => (int) ($f->cull ?? 0),
-                    'reason' => null,
-                ])->values()->all(),
-            // Building performance comparison
+            'mortality_cull_details' => $this->buildMortalityCullDetails(
+                $lossRecords,
+                $flocksInPeriod,
+                $periodStart,
+                $periodEnd,
+                $hasLossRecordsTable
+            ),
             'building_performance' => Building::all()->map(fn (Building $b) => [
                 'building' => $b->name,
-                'chickens' => (int) Flock::where('building_id', $b->id)->sum('quantity'),
-                'eggs' => (int) EggProduction::whereDate('date', $date)->where('building_id', $b->id)->sum('total_eggs'),
-                'mortality' => $this->getBuildingMortality($b->id, $date, $hasLossRecordsTable),
-                'feed_used' => (float) StockTransaction::where('building_id', $b->id)->where('item_type', 'feed')->where('type', 'out')->whereDate('created_at', $date)->sum('quantity'),
-                'status' => 'ok',
+                'chickens' => $this->buildingHeadcountOnDate($b->id, $asOfDate, $hasLossRecordsTable),
+                'eggs' => (int) EggProduction::whereBetween('date', [$startKey, $endKey])
+                    ->where('building_id', $b->id)
+                    ->sum('total_eggs'),
+                'mortality' => $this->getBuildingLossSum($b->id, 'mortality', $periodStart, $periodEnd, $hasLossRecordsTable),
+                'cull' => $this->getBuildingLossSum($b->id, 'cull', $periodStart, $periodEnd, $hasLossRecordsTable),
+                'feed_used' => (float) StockTransaction::where('building_id', $b->id)
+                    ->where('item_type', 'feed')
+                    ->where('type', 'out')
+                    ->whereBetween('created_at', [$periodStart, $periodEnd])
+                    ->sum('quantity'),
+                'status' => $this->buildingPerformanceStatus($b->id, $periodStart, $periodEnd, $hasLossRecordsTable),
             ])->values()->all(),
         ];
     }
 
-    private function fetchLossRecords(Carbon $date, bool $hasLossRecordsTable)
-    {
+    private function buildPoultrySection(
+        EloquentCollection $flocks,
+        Carbon $periodStart,
+        Carbon $periodEnd,
+        bool $hasLossRecordsTable,
+        Collection $lossRecords
+    ): array {
+        return $flocks->map(function (Flock $flock) use ($periodStart, $periodEnd, $hasLossRecordsTable, $lossRecords) {
+            $mortality = $this->sumLossesInPeriod($flock->id, 'mortality', $periodStart, $periodEnd, $hasLossRecordsTable, $lossRecords);
+            $cull = $this->sumLossesInPeriod($flock->id, 'cull', $periodStart, $periodEnd, $hasLossRecordsTable, $lossRecords);
+
+            return [
+                'building' => $flock->building_name ?? 'N/A',
+                'batch_no' => $flock->batch_no,
+                'type' => ucfirst($flock->type),
+                'quantity' => $this->estimateHeadcountOnDate($flock, $periodEnd, $hasLossRecordsTable),
+                'mortality' => $mortality,
+                'cull' => $cull,
+                'status' => $flock->status,
+            ];
+        })->sortBy('building')->values()->all();
+    }
+
+    private function buildMortalityCullDetails(
+        Collection $lossRecords,
+        EloquentCollection $flocks,
+        Carbon $periodStart,
+        Carbon $periodEnd,
+        bool $hasLossRecordsTable
+    ): array {
+        if ($lossRecords->isNotEmpty()) {
+            return $lossRecords
+                ->groupBy(fn ($record) => ($record->building?->name ?? 'N/A').'|'.($record->flock?->batch_no ?? '—'))
+                ->map(function ($records, $key) {
+                    [$building, $batch] = explode('|', $key, 2);
+
+                    return [
+                        'building' => $building,
+                        'batch' => $batch,
+                        'mortality' => (int) $records->where('type', 'mortality')->sum('quantity'),
+                        'cull' => (int) $records->where('type', 'cull')->sum('quantity'),
+                        'reason' => $records->pluck('reason')->filter()->unique()->implode(', ') ?: '—',
+                    ];
+                })
+                ->values()
+                ->all();
+        }
+
         if (! $hasLossRecordsTable) {
-            return collect();
+            return $flocks->map(fn (Flock $flock) => [
+                'building' => $flock->building_name ?? 'N/A',
+                'batch' => $flock->batch_no,
+                'mortality' => 0,
+                'cull' => 0,
+                'reason' => 'No daily loss records for this period',
+            ])->values()->all();
+        }
+
+        return [];
+    }
+
+    private function flocksActiveDuringPeriod(Carbon $periodStart, Carbon $periodEnd): EloquentCollection
+    {
+        $startKey = $periodStart->toDateString();
+        $endKey = $periodEnd->toDateString();
+
+        return Flock::query()
+            ->where(function ($query) use ($endKey) {
+                $query->whereNull('date_in')
+                    ->orWhereDate('date_in', '<=', $endKey);
+            })
+            ->where(function ($query) use ($startKey) {
+                $query->whereNull('date_out')
+                    ->orWhereDate('date_out', '>=', $startKey);
+            })
+            ->orderBy('building_name')
+            ->orderBy('batch_no')
+            ->get();
+    }
+
+    private function wasActiveOnDate(Flock $flock, Carbon $date): bool
+    {
+        $dateKey = $date->toDateString();
+
+        if ($flock->date_in && $flock->date_in->toDateString() > $dateKey) {
+            return false;
+        }
+
+        if ($flock->date_out && $flock->date_out->toDateString() < $dateKey) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private function estimateHeadcountOnDate(Flock $flock, Carbon $date, bool $hasLossRecordsTable): int
+    {
+        if (! $this->wasActiveOnDate($flock, $date)) {
+            return 0;
+        }
+
+        if (! $hasLossRecordsTable) {
+            return (int) $flock->quantity;
         }
 
         try {
-            return FlockLossRecord::with(['building', 'flock', 'user'])
-                ->whereDate('record_date', $date)
-                ->get();
+            $lossesAfterDate = (int) FlockLossRecord::where('flock_id', $flock->id)
+                ->whereDate('record_date', '>', $date->toDateString())
+                ->sum('quantity');
+
+            return max(0, (int) $flock->quantity + $lossesAfterDate);
         } catch (QueryException $e) {
-            return collect();
+            return (int) $flock->quantity;
         }
     }
 
-    private function getBuildingMortality(int $buildingId, Carbon $date, bool $hasLossRecordsTable): int
+    private function buildingHeadcountOnDate(int $buildingId, Carbon $date, bool $hasLossRecordsTable): int
     {
+        return Flock::where('building_id', $buildingId)
+            ->get()
+            ->filter(fn (Flock $flock) => $this->wasActiveOnDate($flock, $date))
+            ->sum(fn (Flock $flock) => $this->estimateHeadcountOnDate($flock, $date, $hasLossRecordsTable));
+    }
+
+    private function sumLossesInPeriod(
+        ?int $flockId,
+        string $type,
+        Carbon $periodStart,
+        Carbon $periodEnd,
+        bool $hasLossRecordsTable,
+        Collection $lossRecords
+    ): int {
+        if (! $hasLossRecordsTable) {
+            return 0;
+        }
+
+        $records = $lossRecords->where('type', $type);
+
+        if ($flockId !== null) {
+            $records = $records->where('flock_id', $flockId);
+        }
+
+        return (int) $records->sum('quantity');
+    }
+
+    private function getBuildingLossSum(
+        int $buildingId,
+        string $type,
+        Carbon $periodStart,
+        Carbon $periodEnd,
+        bool $hasLossRecordsTable
+    ): int {
         if (! $hasLossRecordsTable) {
             return 0;
         }
 
         try {
             return (int) FlockLossRecord::where('building_id', $buildingId)
-                ->where('type', 'mortality')
-                ->whereDate('record_date', $date)
+                ->where('type', $type)
+                ->whereBetween('record_date', [$periodStart->toDateString(), $periodEnd->toDateString()])
                 ->sum('quantity');
         } catch (QueryException $e) {
             return 0;
+        }
+    }
+
+    private function buildingPerformanceStatus(
+        int $buildingId,
+        Carbon $periodStart,
+        Carbon $periodEnd,
+        bool $hasLossRecordsTable
+    ): string {
+        $mortality = $this->getBuildingLossSum($buildingId, 'mortality', $periodStart, $periodEnd, $hasLossRecordsTable);
+
+        if ($mortality >= 20) {
+            return 'high mortality';
+        }
+
+        if ($mortality >= 5) {
+            return 'watch';
+        }
+
+        return 'ok';
+    }
+
+    private function fetchLossRecords(Carbon $startDate, bool $hasLossRecordsTable, ?Carbon $endDate = null)
+    {
+        if (! $hasLossRecordsTable) {
+            return collect();
+        }
+
+        try {
+            $query = FlockLossRecord::with(['building', 'flock', 'user']);
+
+            if ($endDate) {
+                $query->whereBetween('record_date', [$startDate->toDateString(), $endDate->toDateString()]);
+            } else {
+                $query->whereDate('record_date', $startDate);
+            }
+
+            return $query->get();
+        } catch (QueryException $e) {
+            return collect();
         }
     }
 }

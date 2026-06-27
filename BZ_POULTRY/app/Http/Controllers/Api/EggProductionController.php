@@ -42,10 +42,11 @@ class EggProductionController extends Controller
 
         $latestEggByBuilding = EggProduction::with('building')
             ->whereIn('building_id', $layerBuildings->pluck('id'))
-            ->latest('date')
+            ->selectRaw('building_id, date, SUM(total_eggs) as total_eggs, SUM(soft_shell_eggs) as soft_shell_eggs, SUM(damaged_eggs) as damaged_eggs, SUM(cracked_eggs) as cracked_eggs, SUM(small_eggs) as small_eggs, SUM(medium_eggs) as medium_eggs, SUM(large_eggs) as large_eggs, SUM(extra_large_eggs) as extra_large_eggs, SUM(jumbo_eggs) as jumbo_eggs, SUM(super_jumbo_eggs) as super_jumbo_eggs, SUM(piwi_eggs) as piwi_eggs')
+            ->groupBy('building_id', 'date')
             ->get()
             ->groupBy('building_id')
-            ->map(fn ($group) => $group->first());
+            ->map(fn ($group) => $group->sortByDesc('date')->first());
 
         $items = $layerBuildings->map(function ($building) use ($latestEggByBuilding) {
             $hasActiveFlock = Flock::where('building_name', $building->name)
@@ -166,17 +167,14 @@ class EggProductionController extends Controller
         $data['jumbo_eggs'] = $data['jumbo_eggs'] ?? 0;
         $data['super_jumbo_eggs'] = $data['super_jumbo_eggs'] ?? 0;
 
+        $data['date'] = $data['date'] ?? now()->toDateString();
         $data['user_id'] = auth()->id();
 
-        // Remove placeholder egg record for this building if exists
-        EggProduction::where('building_id', $data['building_id'])
-            ->where('total_eggs', 0)
-            ->where('soft_shell_eggs', 0)
-            ->where('damaged_eggs', 0)
-            ->where('cracked_eggs', 0)
-            ->delete();
+        if (! empty($data['flock_id'])) {
+            $data['flock_id'] = (int) $data['flock_id'];
+        }
 
-        $record = EggProduction::create($data);
+        $record = EggProduction::addOrUpdateForDate($data);
         ActivityLogger::log('created', 'Egg Production', "Added production record for building {$data['building_id']}");
 
         return response()->json(['message' => 'Production record added.', 'item' => $record->load('building')], 201);
