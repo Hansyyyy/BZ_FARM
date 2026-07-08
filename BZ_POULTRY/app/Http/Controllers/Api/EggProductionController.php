@@ -107,7 +107,7 @@ class EggProductionController extends Controller
                 ->addSelect(['buildings.*'])
                 ->selectSub(
                     Flock::select('status')
-                        ->whereColumn('flocks.building_id', 'buildings.id')
+                        ->whereColumn('flocks.building_name', 'buildings.name')
                         ->where('flocks.status', 'active')
                         ->limit(1),
                     'flock_status'

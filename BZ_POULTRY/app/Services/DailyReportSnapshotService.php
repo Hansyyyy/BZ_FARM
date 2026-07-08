@@ -45,10 +45,12 @@ class DailyReportSnapshotService
         $lossRecords = $this->fetchLossRecords($periodStart, $hasLossRecordsTable, $periodEnd);
 
         $eggRecords = EggProduction::with(['building', 'user', 'flock'])
-            ->whereBetween('date', [$startKey, $endKey])
+            ->whereDate('date', '>=', $startKey)
+            ->whereDate('date', '<=', $endKey)
             ->get();
         $sales = Sale::with(['customer', 'product'])
-            ->whereBetween('sale_date', [$startKey, $endKey])
+            ->whereDate('sale_date', '>=', $startKey)
+            ->whereDate('sale_date', '<=', $endKey)
             ->get();
         $transactions = StockTransaction::with('user')
             ->whereBetween('created_at', [$periodStart, $periodEnd])
@@ -158,7 +160,8 @@ class DailyReportSnapshotService
             'building_performance' => Building::all()->map(fn (Building $b) => [
                 'building' => $b->name,
                 'chickens' => $this->buildingHeadcountOnDate($b->id, $asOfDate, $hasLossRecordsTable),
-                'eggs' => (int) EggProduction::whereBetween('date', [$startKey, $endKey])
+                'eggs' => (int) EggProduction::whereDate('date', '>=', $startKey)
+                    ->whereDate('date', '<=', $endKey)
                     ->where('building_id', $b->id)
                     ->sum('total_eggs'),
                 'mortality' => $this->getBuildingLossSum($b->id, 'mortality', $periodStart, $periodEnd, $hasLossRecordsTable),
@@ -291,8 +294,21 @@ class DailyReportSnapshotService
 
     private function buildingHeadcountOnDate(int $buildingId, Carbon $date, bool $hasLossRecordsTable): int
     {
-        return Flock::where('building_id', $buildingId)
-            ->get()
+        $building = Building::find($buildingId);
+
+        if (! $building) {
+            return 0;
+        }
+
+        $query = Flock::query();
+
+        if (Schema::hasColumn('flocks', 'building_id')) {
+            $query->where('building_id', $buildingId);
+        } else {
+            $query->where('building_name', $building->name);
+        }
+
+        return $query->get()
             ->filter(fn (Flock $flock) => $this->wasActiveOnDate($flock, $date))
             ->sum(fn (Flock $flock) => $this->estimateHeadcountOnDate($flock, $date, $hasLossRecordsTable));
     }
@@ -330,9 +346,13 @@ class DailyReportSnapshotService
         }
 
         try {
+            $startKey = $periodStart->toDateString();
+            $endKey = $periodEnd->toDateString();
+
             return (int) FlockLossRecord::where('building_id', $buildingId)
                 ->where('type', $type)
-                ->whereBetween('record_date', [$periodStart->toDateString(), $periodEnd->toDateString()])
+                ->whereDate('record_date', '>=', $startKey)
+                ->whereDate('record_date', '<=', $endKey)
                 ->sum('quantity');
         } catch (QueryException $e) {
             return 0;
@@ -368,7 +388,8 @@ class DailyReportSnapshotService
             $query = FlockLossRecord::with(['building', 'flock', 'user']);
 
             if ($endDate) {
-                $query->whereBetween('record_date', [$startDate->toDateString(), $endDate->toDateString()]);
+                $query->whereDate('record_date', '>=', $startDate->toDateString())
+                    ->whereDate('record_date', '<=', $endDate->toDateString());
             } else {
                 $query->whereDate('record_date', $startDate);
             }

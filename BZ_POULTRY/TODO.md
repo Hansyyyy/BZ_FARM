@@ -1,4 +1,0 @@
-- [x] Remove default invoice number in Sales form initialization so only SI#/DR# prefix is shown until user input
-- [x] Inspect backend Sales API + model to ensure `reference_no` is validated, persisted, and returned in list response
-- [x] Patch backend/frontend as needed so entered `reference_no` appears in sales table and print/pdf
-- [x] Keep existing sales print/pdf Statement of Account formatting unchanged

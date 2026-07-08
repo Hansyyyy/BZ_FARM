@@ -8,6 +8,7 @@ use App\Models\DailyReport;
 use App\Services\DailyReportSnapshotService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 class DailyReportController extends Controller
@@ -62,7 +63,8 @@ class DailyReportController extends Controller
             try {
                 $snapshot = $snapshotService->buildRange($start, $end);
             } catch (\Throwable $e) {
-                report()->error('Daily report range snapshot failed: '.$e->getMessage(), ['exception' => $e]);
+                Log::error('Daily report range snapshot failed: '.$e->getMessage(), ['exception' => $e]);
+                report($e);
                 $snapshot = null;
             }
 
@@ -82,7 +84,8 @@ class DailyReportController extends Controller
         try {
             $snapshot = $snapshotService->build($date);
         } catch (\Throwable $e) {
-            report()->error('Daily report snapshot failed: '.$e->getMessage(), ['exception' => $e]);
+            Log::error('Daily report snapshot failed: '.$e->getMessage(), ['exception' => $e]);
+            report($e);
             $snapshot = null;
         }
 
