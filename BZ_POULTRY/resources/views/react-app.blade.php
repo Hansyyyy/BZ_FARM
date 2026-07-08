@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        (function () {
+            try {
+                document.documentElement.classList.remove('dark-theme');
+                localStorage.removeItem('theme');
+            } catch (error) {
+                // Ignore storage access errors.
+            }
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -12,8 +22,8 @@
     @php($farmSettings = \App\Models\FarmSetting::current()->toSettingsArray())
     <title>{{ $farmSettings['farm_name'] ?? 'BZ Farm' }}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="{{ asset('css/farm.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/design-system.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/farm.css') }}?v={{ @filemtime(public_path('css/farm.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/design-system.css') }}?v={{ @filemtime(public_path('css/design-system.css')) }}">
     <script>
         window.Laravel = {
             user: @json(auth()->user()),
