@@ -11,9 +11,11 @@ if [ -z "$APP_KEY" ]; then
     exit 1
 fi
 
-if [ -z "$DB_CONNECTION" ] || [ "$DB_CONNECTION" = "sqlite" ]; then
-    echo "WARN: DB_CONNECTION is not set to mysql."
-    echo "Add a MySQL service in Railway and set DB_CONNECTION=mysql"
+if [ -z "$MYSQLHOST" ] && [ -z "$MYSQL_URL" ]; then
+    echo "ERROR: MySQL is not linked to this web service."
+    echo "Railway -> Web service -> Variables -> + New Variable -> Add Reference"
+    echo "Select MySQL and add: MYSQLHOST, MYSQLPORT, MYSQLUSER, MYSQLPASSWORD, MYSQLDATABASE"
+    exit 1
 fi
 
 php artisan config:clear
@@ -23,8 +25,12 @@ php artisan storage:link 2>/dev/null || true
 
 echo "Running migrations..."
 if ! php artisan migrate --force --no-interaction; then
-    echo "WARN: Migrations failed. Check MySQL is linked and DB_* variables are set."
+    echo "ERROR: Migrations failed."
+    exit 1
 fi
+
+echo "Seeding default users and starter data..."
+php artisan db:seed --force --no-interaction
 
 echo "Starting server on 0.0.0.0:${PORT}"
 exec php artisan serve --host=0.0.0.0 --port="${PORT}"
