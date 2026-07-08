@@ -83,15 +83,15 @@ export default function DashboardPage() {
                                 <tbody>
                                     {inventoryRows.length ? inventoryRows.map((row, index) => (
                                         <tr key={row.key} className={index === 0 ? 'highlight-row' : ''}>
-                                            <td>{index + 1}</td>
-                                            <td>
+                                            <td data-label="#">{index + 1}</td>
+                                            <td data-label="Category">
                                                 <span className="standings-team">
                                                     <span className="standings-dot" style={{ background: row.color }}></span>
                                                     {row.label}
                                                 </span>
                                             </td>
-                                            <td>{row.value.toLocaleString()}</td>
-                                            <td>
+                                            <td data-label="Stock">{row.value.toLocaleString()}</td>
+                                            <td data-label="Status">
                                                 <span className={`inventory-status ${row.value > 0 ? 'inventory-status-ok' : 'inventory-status-low'}`}>
                                                     {row.value > 0 ? 'In stock' : 'Empty'}
                                                 </span>
@@ -159,20 +159,28 @@ export default function DashboardPage() {
                             <tbody>
                                 {dashboard?.recentTransactions?.length ? dashboard.recentTransactions.map((txn) => (
                                     <tr key={txn.id}>
-                                        <td>{formatTxnDate(txn.created_at)}</td>
-                                        <td>
+                                        <td data-label="Date">{formatTxnDate(txn.created_at)}</td>
+                                        <td data-label="Type">
                                             <span className={`txn-type-${txn.type}`}>
                                                 {txn.type === 'in' ? 'In' : 'Out'}
                                             </span>
                                         </td>
-                                        <td>{txn.item_name}</td>
-                                        <td>{Number(txn.quantity).toLocaleString()}</td>
+                                        <td data-label="Item">{txn.item_name}</td>
+                                        <td data-label="Qty">{Number(txn.quantity).toLocaleString()}</td>
                                     </tr>
                                 )) : (
                                     <tr>
                                         <td colSpan="4" className="empty-state">No recent transactions</td>
                                     </tr>
                                 )}
+                            </tbody>
+                        </table>
+                    </div>
+                </PanelCard>
+            </section>
+        </PageState>
+    );
+}
                             </tbody>
                         </table>
                     </div>

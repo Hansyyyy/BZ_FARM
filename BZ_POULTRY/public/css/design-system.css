@@ -733,6 +733,8 @@ body {
 
 /* ── Summary KPI cards (other pages) ── */
 .summary-cards {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 16px;
     margin-bottom: 24px;
 }
@@ -1686,7 +1688,7 @@ body {
         justify-content: flex-end;
     }
     .metric-tiles-grid { grid-template-columns: 1fr; }
-    .dashboard-mini-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .dashboard-mini-stats { grid-template-columns: 1fr; }
     .dashboard-alerts-grid { grid-template-columns: 1fr; }
     .daily-report-split { grid-template-columns: 1fr; }
     .daily-report-modal-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1699,6 +1701,25 @@ body {
     .farm-calendar-note-badge { font-size: 0.65rem; }
     .dashboard-cta-content { max-width: 100%; }
     .dashboard-cta-art { display: none; }
+    .dashboard-cta-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        min-height: auto;
+        padding: 20px 18px 22px;
+    }
+    .dashboard-cta-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    .dashboard-coach { gap: 18px; }
+    .dashboard-col { width: 100%; }
+    .metric-tile { min-width: 0; }
+    .summary-cards { grid-template-columns: 1fr; gap: 14px; }
+    .dashboard-mini-stats { grid-template-columns: 1fr; }
+    .dashboard-mini-stat { padding: 14px 16px; }
+    .table-wrap { width: 100%; min-width: 0; overflow-x: auto; }
+    .dashboard-txn-table .data-table,
+    .standings-table .data-table { width: 100%; min-width: 0; }
 
     .summary-cols-5,
     .summary-cols-4 { grid-template-columns: 1fr; }
