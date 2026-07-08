@@ -2,7 +2,7 @@
 
 PORT="${PORT:-8000}"
 
-echo "=== BZ Farm Railway startup ==="
+echo "=== BZ Farm Railway startup (PHP built-in server — NO Apache) ==="
 
 if [ -z "$APP_KEY" ]; then
     echo "ERROR: APP_KEY is missing."
