@@ -1631,6 +1631,263 @@ body {
     cursor: not-allowed;
 }
 
+.data-panel-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+/* Mobile card layout for data tables */
+@media (max-width: 768px) {
+    .table-responsive,
+    .table-wrap {
+        overflow-x: visible;
+    }
+
+    .data-panel .mockup-table,
+    .table-responsive .mockup-table,
+    .table-wrap .mockup-table,
+    .history-table-card .mockup-table {
+        display: block;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .data-panel .mockup-table thead,
+    .table-responsive .mockup-table thead,
+    .table-wrap .mockup-table thead,
+    .history-table-card .mockup-table thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    .data-panel .mockup-table tbody,
+    .table-responsive .mockup-table tbody,
+    .table-wrap .mockup-table tbody,
+    .history-table-card .mockup-table tbody {
+        display: block;
+    }
+
+    .data-panel .mockup-table tbody tr,
+    .table-responsive .mockup-table tbody tr,
+    .table-wrap .mockup-table tbody tr,
+    .history-table-card .mockup-table tbody tr {
+        display: block;
+        margin-bottom: 14px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 4px 14px 10px;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+    }
+
+    .data-panel .mockup-table tbody tr:nth-child(even),
+    .table-responsive .mockup-table tbody tr:nth-child(even),
+    .table-wrap .mockup-table tbody tr:nth-child(even),
+    .history-table-card .mockup-table tbody tr:nth-child(even) {
+        background: #fff;
+    }
+
+    .data-panel .mockup-table tbody tr:hover,
+    .table-responsive .mockup-table tbody tr:hover,
+    .table-wrap .mockup-table tbody tr:hover,
+    .history-table-card .mockup-table tbody tr:hover {
+        background: #f8fbf9;
+    }
+
+    .data-panel .mockup-table tbody tr.row-mature,
+    .table-responsive .mockup-table tbody tr.row-mature,
+    .table-wrap .mockup-table tbody tr.row-mature {
+        background: #fff8e1 !important;
+    }
+
+    .data-panel .mockup-table tbody tr.row-cull,
+    .table-responsive .mockup-table tbody tr.row-cull,
+    .table-wrap .mockup-table tbody tr.row-cull {
+        background: #fdecea !important;
+    }
+
+    .data-panel .mockup-table tbody tr.expanded,
+    .table-responsive .mockup-table tbody tr.expanded,
+    .history-table-card .mockup-table tbody tr.expanded {
+        margin-bottom: 0;
+        border-bottom: none;
+        border-radius: 12px 12px 0 0;
+    }
+
+    .data-panel .mockup-table tbody tr.expand-detail-row,
+    .table-responsive .mockup-table tbody tr.expand-detail-row,
+    .history-table-card .mockup-table tbody tr.expand-detail-row {
+        margin-top: 0;
+        margin-bottom: 14px;
+        border-top: none;
+        border-radius: 0 0 12px 12px;
+        padding: 0;
+    }
+
+    .data-panel .mockup-table tbody td,
+    .table-responsive .mockup-table tbody td,
+    .table-wrap .mockup-table tbody td,
+    .history-table-card .mockup-table tbody td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid #eef2ef;
+        text-align: right;
+        min-width: 0;
+        white-space: normal;
+    }
+
+    .data-panel .mockup-table tbody td::before,
+    .table-responsive .mockup-table tbody td::before,
+    .table-wrap .mockup-table tbody td::before,
+    .history-table-card .mockup-table tbody td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        color: var(--text-muted);
+        text-align: left;
+        flex: 0 0 42%;
+        max-width: 42%;
+        line-height: 1.35;
+    }
+
+    .data-panel .mockup-table tbody td:last-child,
+    .table-responsive .mockup-table tbody td:last-child,
+    .table-wrap .mockup-table tbody td:last-child,
+    .history-table-card .mockup-table tbody td:last-child {
+        border-bottom: none;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .data-panel .mockup-table tbody td:last-child::before,
+    .table-responsive .mockup-table tbody td:last-child::before,
+    .table-wrap .mockup-table tbody td:last-child::before,
+    .history-table-card .mockup-table tbody td:last-child::before {
+        flex: none;
+        max-width: none;
+    }
+
+    .data-panel .mockup-table tbody td.mobile-table-skip,
+    .table-responsive .mockup-table tbody td.mobile-table-skip,
+    .history-table-card .mockup-table tbody td.mobile-table-skip {
+        display: block;
+        border-bottom: none;
+        padding: 0 0 6px;
+        text-align: left;
+    }
+
+    .data-panel .mockup-table tbody td.mobile-table-skip::before,
+    .table-responsive .mockup-table tbody td.mobile-table-skip::before,
+    .history-table-card .mockup-table tbody td.mobile-table-skip::before {
+        content: none;
+    }
+
+    .data-panel .mockup-table tbody td.mobile-table-full,
+    .table-responsive .mockup-table tbody td.mobile-table-full,
+    .table-wrap .mockup-table tbody td.mobile-table-full,
+    .history-table-card .mockup-table tbody td.mobile-table-full {
+        display: block;
+        border-bottom: none;
+        padding: 16px 0;
+        text-align: center;
+    }
+
+    .data-panel .mockup-table tbody td.mobile-table-full::before,
+    .table-responsive .mockup-table tbody td.mobile-table-full::before,
+    .table-wrap .mockup-table tbody td.mobile-table-full::before,
+    .history-table-card .mockup-table tbody td.mobile-table-full::before {
+        content: none;
+    }
+
+    .data-panel .mockup-table .row-actions,
+    .table-responsive .mockup-table .row-actions,
+    .history-table-card .mockup-table .row-actions {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+
+    .data-panel .mockup-table .row-actions .btn,
+    .table-responsive .mockup-table .row-actions .btn,
+    .history-table-card .mockup-table .row-actions .btn {
+        flex: 1 1 calc(50% - 4px);
+        min-width: 0;
+    }
+
+    .table-pagination {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 14px 16px;
+    }
+
+    .pagination-controls {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .data-panel-filters,
+    .data-panel-filter-group,
+    .data-panel-actions {
+        width: 100%;
+        margin-left: 0;
+        justify-content: stretch;
+        align-items: stretch;
+    }
+
+    .data-panel-filters--stacked {
+        align-items: stretch;
+    }
+
+    .data-panel-filter-group {
+        flex-direction: column;
+    }
+
+    .data-panel-filter-group > *,
+    .data-panel-actions > *,
+    .data-panel-filters > .btn {
+        width: 100%;
+    }
+
+    .data-panel-filters select,
+    .data-panel-filter-group .animated-select,
+    .data-panel-filter-group .animated-date-picker {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .data-panel-filters select,
+    .animated-select-trigger {
+        min-width: 0;
+    }
+
+    .data-panel-title {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .mockup-table td:last-child,
+    .mockup-table th:last-child {
+        min-width: 0;
+    }
+}
+
 .stock-widgets { margin-top: 0; }
 .panel-card {
     background: white;
@@ -2494,9 +2751,22 @@ body {
     .grid-2, .grid-3, .grid-2-1, .grid-1-2 { grid-template-columns: 1fr; }
     .summary-boxes { grid-template-columns: repeat(2, 1fr); }
     .summary-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .data-panel-toolbar { flex-direction: column; align-items: stretch; }
+    .data-panel-toolbar { flex-direction: column; align-items: stretch; gap: 12px; }
     .data-panel-search { min-width: 0; }
-    .module-tabs { overflow-x: auto; }
+    .data-panel-filters,
+    .data-panel-filter-group,
+    .data-panel-actions {
+        width: 100%;
+        margin-left: 0;
+    }
+    .module-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .module-tabs::-webkit-scrollbar {
+        display: none;
+    }
     .modal-form-grid,
     .export-format-grid,
     .export-format-grid-3,

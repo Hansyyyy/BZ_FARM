@@ -2,8 +2,10 @@ import { useState } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import LogoutModal from './LogoutModal';
+import useMobileTableLabels from '../../hooks/useMobileTableLabels';
 
 export default function Layout({ children }) {
+    useMobileTableLabels();
     const [collapsed, setCollapsed] = useState(localStorage.getItem('sidebarCollapsed') === '1');
     const [mobileOpen, setMobileOpen] = useState(false);
     const [showLogout, setShowLogout] = useState(false);
