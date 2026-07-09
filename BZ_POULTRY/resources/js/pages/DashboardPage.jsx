@@ -181,11 +181,3 @@ export default function DashboardPage() {
         </PageState>
     );
 }
-                            </tbody>
-                        </table>
-                    </div>
-                </PanelCard>
-            </section>
-        </PageState>
-    );
-}
