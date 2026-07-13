@@ -13,7 +13,7 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - BZ Farm</title>
+    <title>Reset Password - BZ Farm</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{{ asset('css/farm.css') }}?v={{ @filemtime(public_path('css/farm.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/design-system.css') }}?v={{ @filemtime(public_path('css/design-system.css')) }}">
@@ -36,6 +36,8 @@
         .login-card__main .btn-primary{transition:transform .2s ease, box-shadow .2s ease, background .2s ease}
         .login-card__main .btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 20px rgba(27,77,46,0.18)}
         .login-card__main .btn-primary:active{transform:translateY(0) scale(0.98)}
+        .login-card__main .btn-outline{transition:transform .2s ease, box-shadow .2s ease, background .2s ease}
+        .login-card__main .btn-outline:hover{transform:translateY(-2px);box-shadow:0 10px 20px rgba(27,77,46,0.18)}
     </style>
 </head>
 <body>
@@ -47,14 +49,14 @@
                 <div class="login-logo"><img src="{{ asset('images/BZ_LOGO_W.png') }}" alt="BZ Farm Logo"></div>
             </div>
             <div class="aside-body">
-                <h1>Your next poultry adventure awaits!</h1>
-                <p>Log in to unlock real-time chicken tracking, egg production analytics, feed management, and sales monitoring in one modern farm dashboard.</p>
+                <h1>Reset Your Password</h1>
+                <p>Enter your username and new password to update your account credentials. This feature is available for admin and manager accounts.</p>
             </div>
         </div>
 
         <div class="login-card__main">
             <div class="login-form-header">
-                <h2 style="display:block !important; visibility:visible !important; color:#000000 !important; font-size:2.1rem !important; font-weight:700 !important; margin:0 !important; line-height:1.2 !important;">Welcome</h2>
+                <h2 style="display:block !important; visibility:visible !important; color:#000000 !important; font-size:2.1rem !important; font-weight:700 !important; margin:0 !important; line-height:1.2 !important;">Password Reset</h2>
             </div>
 
             @if($errors->any())
@@ -71,7 +73,13 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('login') }}">
+            @if(session('error'))
+                <div class="alert-error" style="margin-bottom:20px">
+                    <div>{{ session('error') }}</div>
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('password.reset.submit') }}">
                 @csrf
                 <div class="form-group">
                     <div class="floating-field">
@@ -82,23 +90,26 @@
                 <div class="form-group">
                     <div class="password-field floating-field">
                         <input type="password" id="password" name="password" class="form-control floating-input" placeholder=" " required>
-                        <label for="password" class="floating-label">Password <span class="form-required-mark">*</span></label>
+                        <label for="password" class="floating-label">New Password <span class="form-required-mark">*</span></label>
                         <button type="button" class="toggle-password" aria-label="Show password">
                             <i class="bi bi-eye"></i>
                         </button>
                     </div>
                 </div>
-                <div class="form-group remember-row">
-                    <label class="checkbox-field">
-                        <input type="checkbox" id="remember" name="remember" {{ old('remember') ? 'checked' : '' }}>
-                        <span>Remember me</span>
-                    </label>
-                    <a href="{{ route('password.reset') }}" class="forgot-link">Forgot password?</a>
+                <div class="form-group">
+                    <div class="password-field floating-field">
+                        <input type="password" id="password_confirmation" name="password_confirmation" class="form-control floating-input" placeholder=" " required>
+                        <label for="password_confirmation" class="floating-label">Confirm New Password <span class="form-required-mark">*</span></label>
+                        <button type="button" class="toggle-password" aria-label="Show password">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+                <button type="submit" class="btn btn-primary btn-block">Reset Password</button>
+                <div style="margin-top: 16px; text-align: center;">
+                    <a href="{{ route('login') }}" class="btn btn-outline btn-block">Back to Login</a>
+                </div>
             </form>
-
-         
         </div>
     </div>
 </div>
@@ -139,21 +150,23 @@
 
     // Password show/hide toggle
     (function(){
-        const pwdInput = document.getElementById('password');
-        const toggle = document.querySelector('.toggle-password');
-        if (!pwdInput || !toggle) return;
+        const toggleButtons = document.querySelectorAll('.toggle-password');
+        toggleButtons.forEach(function(toggle) {
+            const input = toggle.parentElement.querySelector('input');
+            if (!input) return;
 
-        toggle.addEventListener('click', function(){
-            const icon = this.querySelector('i');
-            if (pwdInput.type === 'password'){
-                pwdInput.type = 'text';
-                if (icon) { icon.classList.remove('bi-eye'); icon.classList.add('bi-eye-slash'); }
-                this.setAttribute('aria-label','Hide password');
-            } else {
-                pwdInput.type = 'password';
-                if (icon) { icon.classList.remove('bi-eye-slash'); icon.classList.add('bi-eye'); }
-                this.setAttribute('aria-label','Show password');
-            }
+            toggle.addEventListener('click', function(){
+                const icon = this.querySelector('i');
+                if (input.type === 'password'){
+                    input.type = 'text';
+                    if (icon) { icon.classList.remove('bi-eye'); icon.classList.add('bi-eye-slash'); }
+                    this.setAttribute('aria-label','Hide password');
+                } else {
+                    input.type = 'password';
+                    if (icon) { icon.classList.remove('bi-eye-slash'); icon.classList.add('bi-eye'); }
+                    this.setAttribute('aria-label','Show password');
+                }
+            });
         });
     })();
 </script>
