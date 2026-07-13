@@ -2401,6 +2401,58 @@ body {
     font-weight: 600;
     color: var(--text-muted);
 }
+
+/* Line Chart */
+.line-chart {
+    position: relative;
+    width: 100%;
+    padding: 8px 0 24px;
+}
+
+.line-chart-svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.line-chart-line {
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke 0.35s ease;
+}
+
+.line-chart-area {
+    transition: fill 0.35s ease;
+}
+
+.line-chart-point {
+    transition: r 0.2s ease, fill 0.2s ease;
+}
+
+.line-chart-point:hover {
+    r: 3;
+}
+
+.line-chart-labels {
+    display: flex;
+    justify-content: space-between;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0 4px;
+}
+
+.line-chart-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-align: center;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 .stat-bars {
     list-style: none;
     display: grid;
@@ -2972,8 +3024,7 @@ body {
 }
 .admin-panel-select {
     align-self: center;
-    background: var(--primary);
-    color: white;
+    color: rgb(0, 0, 0);
     border-radius: 10px;
     padding: 10px 16px;
     font-size: 13px;
