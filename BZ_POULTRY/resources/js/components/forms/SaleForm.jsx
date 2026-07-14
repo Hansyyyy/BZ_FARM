@@ -101,7 +101,6 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
             if (key === 'egg_type') {
                 const matchedProduct = findProductByEggType(products, value);
                 updated.product_id = matchedProduct?.id || '';
-                updated.unit_price = matchedProduct?.unit_price ?? '';
             }
 
             return updated;
@@ -126,7 +125,6 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
                     String(product.name || '').toLowerCase().includes(String(value || '').toLowerCase())
                 ));
                 updated.product_id = matchedProduct?.id || '';
-                updated.unit_price = matchedProduct?.unit_price ?? '';
             }
 
             return updated;
@@ -138,8 +136,7 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
             onChange('product_id', nextLines[0]?.product_id || '');
             onChange('chicken_type', nextLines[0]?.chicken_type || '');
             onChange('quantity_heads', nextLines[0]?.quantity || '');
-            onChange('unit_price', nextLines[0]?.unit_price || '');
-        }
+            }
     };
 
     const addEggLine = () => {
@@ -165,7 +162,6 @@ export default function SaleForm({ id, form, onChange, onSubmit, customers = [],
         onChange('product_id', nextLines[0]?.product_id || '');
         onChange('chicken_type', nextLines[0]?.chicken_type || '');
         onChange('quantity_heads', nextLines[0]?.quantity || '');
-        onChange('unit_price', nextLines[0]?.unit_price || '');
     };
 
     const usedEggTypes = new Set(eggLines.map((line) => line.egg_type).filter(Boolean));
