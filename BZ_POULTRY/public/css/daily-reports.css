@@ -1,0 +1,175 @@
+/* Daily Reports (ReportsPage / daily-reports) styles extracted from farm.css */
+
+.dailyReport_container {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+}
+
+.dailyReport_btn {
+    display: inline-flex;
+    background: var(--primary);
+    color: white;
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-size: 12px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+}
+.dailyReport_btn:hover {
+    background: #1f8c59;
+}
+
+.daily-report-btn {
+    display: inline-flex;
+    background: var(--primary);
+    color: white;
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-size: 12px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+}
+.daily-report-btn:hover {
+    background: #1f8c59;
+}
+
+.daily-report-modal-grid {
+    align-items: start;
+    gap: 20px 20px;
+}
+
+.daily-report-textarea {
+    min-height: 120px;
+    resize: vertical;
+    line-height: 1.55;
+}
+
+.daily-report-textarea::placeholder {
+    color: #8aa092;
+}
+
+.daily-report-info {
+    border: 1px solid #d9e8df;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #f8fcf9 0%, #f3faf6 100%);
+    padding: 14px 16px;
+}
+.daily-report-info strong {
+    display: block;
+    margin-bottom: 6px;
+    color: #1b4332;
+}
+.daily-report-info p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text-muted);
+}
+
+.daily-report-modal-grid .form-group label {
+    font-weight: 700;
+    color: #214d38;
+}
+
+.daily-report-modal-grid .form-control:focus {
+    border-color: #2f8d5c;
+    box-shadow: 0 0 0 4px rgba(47, 141, 92, 0.14);
+}
+
+/* Daily Report Form – Building-centric layout */
+.dr-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.dr-section {
+    border: 1px solid #d9e8df;
+    border-radius: 12px;
+    background: #f8fcf9;
+    padding: 16px;
+}
+
+.dr-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1b4332;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+
+.dr-egg-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+}
+
+.modal-form-grid.cols-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.modal-form-grid.cols-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.dr-section .form-group label {
+    font-weight: 600;
+    font-size: 12px;
+    color: #214d38;
+}
+
+.dr-section .form-control[readonly] {
+    background: #eef6f1;
+    color: #1b4332;
+    font-weight: 600;
+}
+
+/* Status badges */
+.daily-report-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.daily-report-status.reviewed {
+    background: #e8f7ee;
+    color: #1f7d47;
+}
+
+.daily-report-status.submitted {
+    background: #fff3dc;
+    color: #a05a00;
+}
+
+.daily-report-hint {
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.daily-report-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    align-items: start;
+}
+
+@media (max-width: 992px) {
+    .daily-report-split {
+        grid-template-columns: 1fr;
+    }
+}
+

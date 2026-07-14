@@ -18,9 +18,11 @@ Route::middleware('auth')->group(function () {
     require __DIR__.'/api.php';
 
     Route::view('/dashboard', 'react-app')->name('dashboard');
+    Route::view('/inventory-stock', 'react-app');
     Route::view('/chicken-stock', 'react-app');
     Route::view('/daily-reports', 'react-app');
     Route::view('/sales', 'react-app');
+    Route::view('/history', 'react-app');
     Route::view('/settings', 'react-app');
     Route::view('/{any}', 'react-app')->where('any', '.*');
 });

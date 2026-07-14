@@ -1,6 +1,5 @@
-/* Admin dashboard specific styles */
+/* Inventory Stock - Admin styles extracted from admin-dashboard.css */
 
-/* Admin Inventory Dashboard */
 .admin-inventory {
     display: flex;
     flex-direction: column;
@@ -192,7 +191,7 @@
 .admin-activity-list li {
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 14px 14px;
+    padding: 14px 16px;
     background: #fafbfa;
 }
 .admin-activity-list li > div {
@@ -318,50 +317,6 @@
 .grade-red .grade-bar span { color: #c62828; background: #c62828; }
 .text-success { color: var(--success); font-weight: 600; }
 .text-danger { color: var(--danger); font-weight: 600; }
-
-.medication-alert-body {
-    display: grid;
-    gap: 14px;
-}
-.medication-alert-body p {
-    margin: 0;
-    font-size: 14px;
-    line-height: 1.6;
-    color: var(--text-dark);
-}
-.medication-alert-icon {
-    width: 52px;
-    height: 52px;
-    border-radius: 14px;
-    background: #fff3e0;
-    color: #e65100;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-}
-.medication-alert-list {
-    list-style: none;
-    display: grid;
-    gap: 10px;
-    margin: 0;
-    padding: 0;
-}
-.medication-alert-list li {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 10px 12px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    background: #fafbfa;
-    font-size: 13px;
-}
-.medication-alert-list li span {
-    color: var(--text-muted);
-    text-transform: capitalize;
-}
 
 @media (max-width: 1200px) {
     .admin-summary-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }

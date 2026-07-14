@@ -1,0 +1,10 @@
+/* Inventory Stock - Manager styles
+   (currently kept separate from admin for easier future tuning)
+*/
+
+.manager-inventory-stock {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
