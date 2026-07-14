@@ -5,6 +5,7 @@ import SummaryCards from '../components/ui/SummaryCards';
 import PanelCard from '../components/ui/PanelCard';
 import RecentActivities from '../components/ui/RecentActivities';
 import VerticalBarChart from '../components/ui/VerticalBarChart';
+import LineChart from '../components/ui/LineChart';
 import FarmCalendar from '../components/ui/FarmCalendar';
 import { buildInventorySegments, chartColors } from '../config/chartTheme';
 
@@ -44,12 +45,68 @@ export default function DashboardPage() {
     const summary = dashboard?.summary || {};
     const flockDistribution = dashboard?.flockDistribution || {};
     const inventoryRows = buildInventorySegments(dashboard?.inventoryBreakdown);
+    const monthlyEggProduction = dashboard?.monthlyEggProduction || [];
+    const weeklyMortality = dashboard?.weeklyMortality || [];
+    const weeklyCull = dashboard?.weeklyCull || [];
 
-    
-    
+
+
     return (
         <PageState loading={loading} error={error ? `Unable to load dashboard: ${error}` : null} loadingLabel="Loading dashboard...">
             <SummaryCards items={buildSummaryItems(summary)} columns={5} />
+
+            <div className="dashboard-coach">
+                <div className="dashboard-col dashboard-col-left">
+                    <PanelCard
+                        title="Monthly Egg Production"
+                        subtitle="Egg production by month"
+                        icon="bi-bar-chart"
+                        className="chart-card"
+                    >
+                        <VerticalBarChart
+                            data={monthlyEggProduction}
+                            valueKey="total"
+                            labelKey="label"
+                            color="#2d6a4f"
+                            emptyLabel="No egg production data yet"
+                        />
+                    </PanelCard>
+                </div>
+
+                <div className="dashboard-col dashboard-col-right">
+                    <PanelCard
+                        title="Chicken Mortality"
+                        subtitle="Weekly mortality trends"
+                        icon="bi-graph-up"
+                        className="chart-card"
+                    >
+                        <LineChart
+                            data={weeklyMortality}
+                            valueKey="total"
+                            labelKey="label"
+                            color="#e63946"
+                            emptyLabel="No mortality data yet"
+                            height={200}
+                        />
+                    </PanelCard>
+
+                    <PanelCard
+                        title="Chicken Cull"
+                        subtitle="Weekly cull trends"
+                        icon="bi-graph-down"
+                        className="chart-card"
+                    >
+                        <LineChart
+                            data={weeklyCull}
+                            valueKey="total"
+                            labelKey="label"
+                            color="#f4a261"
+                            emptyLabel="No cull data yet"
+                            height={200}
+                        />
+                    </PanelCard>
+                </div>
+            </div>
 
             <PanelCard
                 title="Farm Calendar"
@@ -83,15 +140,15 @@ export default function DashboardPage() {
                                 <tbody>
                                     {inventoryRows.length ? inventoryRows.map((row, index) => (
                                         <tr key={row.key} className={index === 0 ? 'highlight-row' : ''}>
-                                            <td>{index + 1}</td>
-                                            <td>
+                                            <td data-label="#">{index + 1}</td>
+                                            <td data-label="Category">
                                                 <span className="standings-team">
                                                     <span className="standings-dot" style={{ background: row.color }}></span>
                                                     {row.label}
                                                 </span>
                                             </td>
-                                            <td>{row.value.toLocaleString()}</td>
-                                            <td>
+                                            <td data-label="Stock">{row.value.toLocaleString()}</td>
+                                            <td data-label="Status">
                                                 <span className={`inventory-status ${row.value > 0 ? 'inventory-status-ok' : 'inventory-status-low'}`}>
                                                     {row.value > 0 ? 'In stock' : 'Empty'}
                                                 </span>
@@ -159,14 +216,14 @@ export default function DashboardPage() {
                             <tbody>
                                 {dashboard?.recentTransactions?.length ? dashboard.recentTransactions.map((txn) => (
                                     <tr key={txn.id}>
-                                        <td>{formatTxnDate(txn.created_at)}</td>
-                                        <td>
+                                        <td data-label="Date">{formatTxnDate(txn.created_at)}</td>
+                                        <td data-label="Type">
                                             <span className={`txn-type-${txn.type}`}>
                                                 {txn.type === 'in' ? 'In' : 'Out'}
                                             </span>
                                         </td>
-                                        <td>{txn.item_name}</td>
-                                        <td>{Number(txn.quantity).toLocaleString()}</td>
+                                        <td data-label="Item">{txn.item_name}</td>
+                                        <td data-label="Qty">{Number(txn.quantity).toLocaleString()}</td>
                                     </tr>
                                 )) : (
                                     <tr>

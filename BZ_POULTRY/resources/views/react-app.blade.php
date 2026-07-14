@@ -4,9 +4,8 @@
     <script>
         (function () {
             try {
-                if (localStorage.getItem('theme') === 'dark') {
-                    document.documentElement.classList.add('dark-theme');
-                }
+                document.documentElement.classList.remove('dark-theme');
+                localStorage.removeItem('theme');
             } catch (error) {
                 // Ignore storage access errors.
             }
@@ -23,8 +22,8 @@
     @php($farmSettings = \App\Models\FarmSetting::current()->toSettingsArray())
     <title>{{ $farmSettings['farm_name'] ?? 'BZ Farm' }}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="{{ asset('css/farm.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/design-system.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/farm.css') }}?v={{ @filemtime(public_path('css/farm.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/design-system.css') }}?v={{ @filemtime(public_path('css/design-system.css')) }}">
     <script>
         window.Laravel = {
             user: @json(auth()->user()),

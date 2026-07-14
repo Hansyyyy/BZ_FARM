@@ -1,4 +1,4 @@
-export default function SummaryCards({ fields, summary = {}, items = null, columns = 5 }) {
+export default function SummaryCards({ fields, summary = {}, items = null, columns = 5, onCardClick = null }) {
     const cardItems = items || fields.map((field) => {
         const value = summary[field.key] ?? 0;
         let sub = field.sub || '';
@@ -22,7 +22,12 @@ export default function SummaryCards({ fields, summary = {}, items = null, colum
     return (
         <div className={`summary-cards summary-cols-${columns}`}>
             {cardItems.map((item) => (
-                <div className={`summary-card tone-${item.tone || 'default'}`} key={item.key || item.label}>
+                <div
+                    className={`summary-card tone-${item.tone || 'default'}${onCardClick ? ' cursor-pointer' : ''}`}
+                    key={item.key || item.label}
+                    onClick={() => onCardClick && onCardClick(item.key || item.label)}
+                    style={onCardClick ? { cursor: 'pointer' } : {}}
+                >
                     <div className="summary-card-top">
                         {item.icon && <span className="summary-card-icon"><i className={`bi ${item.icon}`}></i></span>}
                         <div className="summary-card-label">{item.label}</div>

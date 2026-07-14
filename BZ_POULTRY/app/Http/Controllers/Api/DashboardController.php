@@ -20,6 +20,7 @@ class DashboardController extends Controller
     {
         $today = Carbon::today();
         $weekStart = Carbon::now()->startOfWeek();
+        $monthStart = Carbon::now()->startOfMonth();
 
         $totalPoultry = Flock::where('status', 'active')->sum('quantity');
         $eggsToday = EggProduction::whereDate('date', $today)->sum('total_eggs');
@@ -95,6 +96,43 @@ class DashboardController extends Controller
             ]);
         }
 
+        // Monthly egg production for bar chart
+        $monthlyEggProduction = collect(range(0, 11))->map(function (int $offset) use ($today) {
+            $month = $today->copy()->subMonths($offset);
+            return [
+                'label' => $month->format('M'),
+                'month' => $month->month,
+                'year' => $month->year,
+                'total' => (int) EggProduction::whereMonth('date', $month->month)
+                    ->whereYear('date', $month->year)
+                    ->sum('total_eggs'),
+            ];
+        })->reverse()->values();
+
+        // Weekly chicken mortality for line chart
+        $weeklyMortality = collect(range(0, 11))->map(function (int $offset) use ($weekStart) {
+            $weekStartCopy = $weekStart->copy()->subWeeks($offset);
+            $weekEndCopy = $weekStartCopy->copy()->endOfWeek();
+            
+            return [
+                'label' => $weekStartCopy->format('M/d'),
+                'total' => (int) Flock::whereBetween('date_in', [$weekStartCopy, $weekEndCopy])
+                    ->sum('mortality'),
+            ];
+        })->reverse()->values();
+
+        // Weekly chicken cull for line chart
+        $weeklyCull = collect(range(0, 11))->map(function (int $offset) use ($weekStart) {
+            $weekStartCopy = $weekStart->copy()->subWeeks($offset);
+            $weekEndCopy = $weekStartCopy->copy()->endOfWeek();
+            
+            return [
+                'label' => $weekStartCopy->format('M/d'),
+                'total' => (int) Flock::whereBetween('date_in', [$weekStartCopy, $weekEndCopy])
+                    ->sum('cull'),
+            ];
+        })->reverse()->values();
+
         return response()->json([
             'summary' => compact('totalPoultry', 'eggsToday', 'feedStock', 'medicineStock', 'salesToday', 'feedLow', 'medicineLow', 'eggSummary'),
             'weeklyProduction' => $weeklyProduction,
@@ -104,6 +142,9 @@ class DashboardController extends Controller
             'lowStockAlerts' => $lowStockAlerts,
             'recentTransactions' => $recentTransactions,
             'recentActivities' => Activity::with('user')->latest()->take(6)->get(),
+            'monthlyEggProduction' => $monthlyEggProduction,
+            'weeklyMortality' => $weeklyMortality,
+            'weeklyCull' => $weeklyCull,
         ]);
     }
 }

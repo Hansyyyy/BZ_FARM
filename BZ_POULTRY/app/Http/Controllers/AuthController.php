@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
@@ -32,6 +34,45 @@ class AuthController extends Controller
         return back()->withErrors([
             'username' => 'Invalid username or password.',
         ])->onlyInput('username');
+    }
+
+    public function showResetPassword()
+    {
+        if (Auth::check()) {
+            return redirect()->route('dashboard');
+        }
+
+        return view('auth.reset-password');
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'username' => ['required', 'string'],
+            'password' => ['required', 'string', 'min:6'],
+            'password_confirmation' => ['required', 'string', 'same:password'],
+        ]);
+
+        $user = User::where('username', $request->username)->first();
+
+        if (!$user) {
+            return back()->withErrors([
+                'username' => 'User not found.',
+            ])->onlyInput('username');
+        }
+
+        // Only allow admin and manager roles to reset password
+        if (!in_array($user->role, ['admin', 'manager'])) {
+            return back()->withErrors([
+                'username' => 'Password reset is only available for admin and manager accounts.',
+            ])->onlyInput('username');
+        }
+
+        // Update the password
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        return redirect()->route('login')->with('success', 'Password has been reset successfully. Please login with your new password.');
     }
 
     public function logout(Request $request)

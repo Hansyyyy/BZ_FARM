@@ -8,6 +8,8 @@ Route::get('/', fn () => redirect()->route('login'));
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
+    Route::get('/reset-password', [AuthController::class, 'showResetPassword'])->name('password.reset');
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.reset.submit');
 });
 
 Route::middleware('auth')->group(function () {

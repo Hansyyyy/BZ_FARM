@@ -4,9 +4,8 @@
     <script>
         (function () {
             try {
-                if (localStorage.getItem('theme') === 'dark') {
-                    document.documentElement.classList.add('dark-theme');
-                }
+                document.documentElement.classList.remove('dark-theme');
+                localStorage.removeItem('theme');
             } catch (error) {
                 // Ignore storage access errors.
             }
@@ -16,8 +15,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - BZ Farm</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="{{ asset('css/farm.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/design-system.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/farm.css') }}?v={{ @filemtime(public_path('css/farm.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/design-system.css') }}?v={{ @filemtime(public_path('css/design-system.css')) }}">
     <style>
         .password-field{position:relative}
         .password-field .toggle-password{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:transparent;padding:6px;color:#495057;z-index:3}
@@ -66,6 +65,12 @@
                 </div>
             @endif
 
+            @if(session('success'))
+                <div class="alert-success" style="margin-bottom:20px">
+                    <div>{{ session('success') }}</div>
+                </div>
+            @endif
+
             <form method="POST" action="{{ route('login') }}">
                 @csrf
                 <div class="form-group">
@@ -88,6 +93,7 @@
                         <input type="checkbox" id="remember" name="remember" {{ old('remember') ? 'checked' : '' }}>
                         <span>Remember me</span>
                     </label>
+                    <a href="{{ route('password.reset') }}" class="forgot-link">Forgot password?</a>
                 </div>
                 <button type="submit" class="btn btn-primary btn-block">Sign In</button>
             </form>

@@ -68,7 +68,9 @@ class FlockController extends Controller
         $building = Building::where('name', $data['building_name'])->first();
 
         if ($building) {
-            $data['building_id'] = $building->id;
+            if (Schema::hasColumn('flocks', 'building_id')) {
+                $data['building_id'] = $building->id;
+            }
         }
 
         $activeInBuilding = Flock::where('building_name', $data['building_name'])
@@ -192,11 +194,16 @@ class FlockController extends Controller
 
         $sourceBuilding = $sourceFlock->building_name;
 
-        $sourceFlock->update([
-            'building_id' => $destinationBuilding->id,
+        $updateData = [
             'building_name' => $destinationBuilding->name,
             'type' => 'Layers',
-        ]);
+        ];
+
+        if (Schema::hasColumn('flocks', 'building_id')) {
+            $updateData['building_id'] = $destinationBuilding->id;
+        }
+
+        $sourceFlock->update($updateData);
 
         ActivityLogger::log(
             'updated',
