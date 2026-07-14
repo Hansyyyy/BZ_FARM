@@ -122,7 +122,7 @@ export default function HistoryPage() {
 
                 <ModuleTabs tabs={HISTORY_TABS} activeTab={activeTab} onChange={handleTabChange} />
 
-                <div className="history-filter-bar" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'end', marginBottom: '1rem' }}>
+                <div className="history-filter-bar">
                     <div>
                         <label className="form-label mb-1" htmlFor="history-start-date">From</label>
                         <AnimatedDatePicker
