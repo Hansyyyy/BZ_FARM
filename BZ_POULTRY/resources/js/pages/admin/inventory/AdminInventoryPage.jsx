@@ -11,13 +11,11 @@ import PageState from '../../../components/ui/PageState';
 
 
 import SummaryCards from '../../../components/ui/SummaryCards';
-
+import PanelCard from '../../../components/ui/PanelCard';
 
 import ModuleTabs from '../../../components/ui/ModuleTabs';
 
-
 import AnimatedDatePicker from '../../../components/ui/AnimatedDatePicker';
-
 
 import SegmentDonut from '../../../components/ui/SegmentDonut';
 
@@ -241,13 +239,13 @@ export default function AdminInventoryPage() {
                             </div>
                         </div>
 
-                        <div className="admin-panel admin-panel-full">
-                            <div className="admin-panel-head">
-                                <div>
-                                    <div className="admin-panel-kicker">Manager Activity</div>
-                                    <p className="admin-panel-sub">Updates submitted by farm managers</p>
-                                </div>
-                            </div>
+                        <PanelCard
+                            title="Manager Activity"
+                            subtitle="Updates submitted by farm managers"
+                            collapsible={true}
+                            defaultCollapsed={false}
+                            className="admin-panel-full"
+                        >
                             <ul className="admin-activity-list">
                                 {managerActivities.length ? managerActivities.map((activity) => (
                                     <li key={activity.id}>
@@ -262,7 +260,7 @@ export default function AdminInventoryPage() {
                                     <li className="empty-state">No manager activity logged yet.</li>
                                 )}
                             </ul>
-                        </div>
+                        </PanelCard>
                     </div>
                 )}
 
