@@ -6,6 +6,7 @@ import PageState from '../../../components/ui/PageState.jsx';
 import SummaryCards from '../../../components/ui/SummaryCards.jsx';
 import Modal from '../../../components/ui/Modal.jsx';
 import ExportModal from '../../../components/ui/ExportModal.jsx';
+import AnimatedDatePicker from '../../../components/ui/AnimatedDatePicker.jsx';
 import SaleForm, { buildEggLinesFromSale, createEmptyEggLine, createEmptyChickenLine } from '../../../components/forms/SaleForm.jsx';
 import CustomerForm from '../../../components/forms/CustomerForm.jsx';
 import RowActionButtons from '../../../components/ui/RowActionButtons.jsx';
@@ -34,6 +35,8 @@ export default function SalesPage() {
     const { data, loading, error, reload, setError } = useFetch('/api/sales');
     const [search, setSearch] = useState('');
     const [customerSearch, setCustomerSearch] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
     const [form, setForm] = useState({});
     const [newCustomer, setNewCustomer] = useState({ name: '', contact: '', email: '', phone: '' });
     const [editingId, setEditingId] = useState(null);
@@ -203,6 +206,39 @@ export default function SalesPage() {
     return (
         <PageState loading={loading} error={error} loadingLabel="Loading sales...">
             <SummaryCards fields={salesSummaryFields} summary={data?.summary} />
+
+            <div className="history-filter-bar">
+                <div>
+                    <label className="form-label mb-1" htmlFor="sales-start-date">From</label>
+                    <AnimatedDatePicker
+                        id="sales-start-date"
+                        value={startDate}
+                        onChange={setStartDate}
+                        placeholder="Start date"
+                        allowClear
+                    />
+                </div>
+                <div>
+                    <label className="form-label mb-1" htmlFor="sales-end-date">To</label>
+                    <AnimatedDatePicker
+                        id="sales-end-date"
+                        value={endDate}
+                        onChange={setEndDate}
+                        placeholder="End date"
+                        allowClear
+                    />
+                </div>
+                <button
+                    type="button"
+                    className="btn btn-outline"
+                    onClick={() => {
+                        setStartDate('');
+                        setEndDate('');
+                    }}
+                >
+                    Clear Dates
+                </button>
+            </div>
 
             <div className="data-panel">
                 <div className="data-panel-toolbar">
