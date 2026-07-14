@@ -78,6 +78,7 @@ class SalesController extends Controller
     {
         $request->merge([
             'egg_lines' => $this->normalizeEggLinesInput($request->input('egg_lines')),
+            'chicken_lines' => $this->normalizeChickenLinesInput($request->input('chicken_lines')),
         ]);
 
         $data = $request->validate([
@@ -92,12 +93,17 @@ class SalesController extends Controller
             'egg_lines.*.product_id' => 'required_with:egg_lines|exists:products,id',
             'egg_lines.*.quantity' => 'required_with:egg_lines|integer|min:1',
             'egg_lines.*.unit_price' => 'required_with:egg_lines|numeric|min:0',
-            'chicken_type' => 'nullable|string|max:255|required_if:sale_category,chicken',
+            'chicken_type' => 'nullable|string|max:255',
+            'chicken_lines' => 'nullable|array|min:1',
+            'chicken_lines.*.chicken_type' => 'required_with:chicken_lines|string|max:255',
+            'chicken_lines.*.product_id' => 'required_with:chicken_lines|exists:products,id',
+            'chicken_lines.*.quantity' => 'required_with:chicken_lines|integer|min:1',
+            'chicken_lines.*.unit_price' => 'required_with:chicken_lines|numeric|min:0',
             'quantity' => 'nullable|integer|min:0',
-            'quantity_heads' => 'nullable|integer|min:1|required_if:sale_category,chicken',
+            'quantity_heads' => 'nullable|integer|min:0',
             'quantity_trays' => 'nullable|integer|min:0',
             'quantity_pieces' => 'nullable|integer|min:0',
-            'pricing_unit' => 'nullable|in:per_head,per_tray,per_piece|required_if:sale_category,egg|required_if:sale_category,chicken',
+            'pricing_unit' => 'nullable|in:per_head,per_tray,per_piece',
             'unit_price' => 'nullable|numeric|min:0',
             'payment_method' => 'required|in:cash,credit',
             'status' => 'required|in:paid,unpaid',
@@ -120,6 +126,7 @@ class SalesController extends Controller
     {
         $request->merge([
             'egg_lines' => $this->normalizeEggLinesInput($request->input('egg_lines')),
+            'chicken_lines' => $this->normalizeChickenLinesInput($request->input('chicken_lines')),
         ]);
 
         $data = $request->validate([
@@ -134,12 +141,17 @@ class SalesController extends Controller
             'egg_lines.*.product_id' => 'required_with:egg_lines|exists:products,id',
             'egg_lines.*.quantity' => 'required_with:egg_lines|integer|min:1',
             'egg_lines.*.unit_price' => 'required_with:egg_lines|numeric|min:0',
-            'chicken_type' => 'nullable|string|max:255|required_if:sale_category,chicken',
+            'chicken_type' => 'nullable|string|max:255',
+            'chicken_lines' => 'nullable|array|min:1',
+            'chicken_lines.*.chicken_type' => 'required_with:chicken_lines|string|max:255',
+            'chicken_lines.*.product_id' => 'required_with:chicken_lines|exists:products,id',
+            'chicken_lines.*.quantity' => 'required_with:chicken_lines|integer|min:1',
+            'chicken_lines.*.unit_price' => 'required_with:chicken_lines|numeric|min:0',
             'quantity' => 'nullable|integer|min:0',
-            'quantity_heads' => 'nullable|integer|min:1|required_if:sale_category,chicken',
+            'quantity_heads' => 'nullable|integer|min:0',
             'quantity_trays' => 'nullable|integer|min:0',
             'quantity_pieces' => 'nullable|integer|min:0',
-            'pricing_unit' => 'nullable|in:per_head,per_tray,per_piece|required_if:sale_category,egg|required_if:sale_category,chicken',
+            'pricing_unit' => 'nullable|in:per_head,per_tray,per_piece',
             'unit_price' => 'nullable|numeric|min:0',
             'payment_method' => 'required|in:cash,credit',
             'status' => 'required|in:paid,unpaid',
@@ -180,16 +192,67 @@ class SalesController extends Controller
         return is_array($eggLines) ? $eggLines : null;
     }
 
+    private function normalizeChickenLinesInput(mixed $chickenLines): ?array
+    {
+        if ($chickenLines === null || $chickenLines === '') {
+            return null;
+        }
+
+        if (is_string($chickenLines)) {
+            $decoded = json_decode($chickenLines, true);
+
+            return is_array($decoded) ? $decoded : null;
+        }
+
+        return is_array($chickenLines) ? $chickenLines : null;
+    }
+
     private function normalizeSalePayload(array $data): array
     {
         if (($data['sale_category'] ?? null) === 'chicken') {
-            $data['quantity'] = (int) ($data['quantity_heads'] ?? 0);
+            $chickenLines = collect($data['chicken_lines'] ?? [])->map(function (array $line) {
+                return [
+                    'chicken_type' => $line['chicken_type'],
+                    'product_id' => (int) $line['product_id'],
+                    'quantity' => (int) $line['quantity'],
+                    'unit_price' => (float) $line['unit_price'],
+                    'line_total' => (int) $line['quantity'] * (float) $line['unit_price'],
+                ];
+            })->values()->all();
+
+            if (empty($chickenLines)) {
+                throw ValidationException::withMessages([
+                    'chicken_lines' => ['Add at least one chicken type.'],
+                ]);
+            }
+
+            $duplicateTypes = collect($chickenLines)
+                ->pluck('chicken_type')
+                ->duplicates()
+                ->values();
+
+            if ($duplicateTypes->isNotEmpty()) {
+                throw ValidationException::withMessages([
+                    'chicken_lines' => ['Each chicken type can only be selected once per sale.'],
+                ]);
+            }
+
+            $totalAmount = collect($chickenLines)->sum('line_total');
+            $totalQuantity = collect($chickenLines)->sum('quantity');
+            $firstLine = $chickenLines[0];
+
+            $data['chicken_lines'] = $chickenLines;
+            $data['chicken_type'] = $firstLine['chicken_type'];
+            $data['product_id'] = $firstLine['product_id'];
+            $data['unit_price'] = $firstLine['unit_price'];
+            $data['quantity_heads'] = $totalQuantity;
+            $data['quantity'] = $totalQuantity;
+            $data['amount'] = $totalAmount;
             $data['pricing_unit'] = 'per_head';
             $data['egg_type'] = null;
             $data['egg_lines'] = null;
             $data['quantity_trays'] = null;
             $data['quantity_pieces'] = null;
-            $data['amount'] = $data['quantity'] * (float) ($data['unit_price'] ?? 0);
 
             return $data;
         }

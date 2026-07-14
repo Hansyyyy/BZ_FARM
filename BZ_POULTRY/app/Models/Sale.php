@@ -9,7 +9,7 @@ class Sale extends Model
 {
     protected $fillable = [
         'invoice_no', 'reference_no', 'customer_id', 'product_id', 'sale_category',
-        'egg_type', 'egg_lines', 'chicken_type',
+        'egg_type', 'egg_lines', 'chicken_type', 'chicken_lines',
         'quantity', 'quantity_heads', 'quantity_trays', 'quantity_pieces',
         'pricing_unit', 'unit_price', 'amount', 'payment_method', 'status',
         'sale_date', 'user_id',
