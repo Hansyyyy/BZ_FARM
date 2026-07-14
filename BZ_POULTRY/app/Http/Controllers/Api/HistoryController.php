@@ -21,9 +21,11 @@ class HistoryController extends Controller
     public function index(Request $request)
     {
         $type = $request->query('type', 'inventory');
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
 
         if ($type === 'sales') {
-            $items = $this->salesHistory();
+            $items = $this->salesHistory($startDate, $endDate);
 
             return response()->json([
                 'type' => 'sales',
@@ -32,7 +34,7 @@ class HistoryController extends Controller
             ]);
         }
 
-        $items = $this->inventoryHistory();
+        $items = $this->inventoryHistory($startDate, $endDate);
 
         return response()->json([
             'type' => 'inventory',
@@ -41,11 +43,21 @@ class HistoryController extends Controller
         ]);
     }
 
-    private function inventoryHistory(): array
+    private function inventoryHistory(?string $startDate = null, ?string $endDate = null): array
     {
-        $activities = Activity::with('user')
+        $activitiesQuery = Activity::with('user')
             ->whereIn('module', self::INVENTORY_MODULES)
-            ->latest()
+            ->latest();
+
+        if ($startDate) {
+            $activitiesQuery->whereDate('created_at', '>=', $startDate);
+        }
+
+        if ($endDate) {
+            $activitiesQuery->whereDate('created_at', '<=', $endDate);
+        }
+
+        $activities = $activitiesQuery
             ->take(150)
             ->get()
             ->map(fn (Activity $activity) => [
@@ -59,8 +71,17 @@ class HistoryController extends Controller
                 'recorded_by' => $activity->user?->name ?? 'System',
             ]);
 
-        $transactions = StockTransaction::with('user')
-            ->latest()
+        $transactionsQuery = StockTransaction::with('user')->latest();
+
+        if ($startDate) {
+            $transactionsQuery->whereDate('created_at', '>=', $startDate);
+        }
+
+        if ($endDate) {
+            $transactionsQuery->whereDate('created_at', '<=', $endDate);
+        }
+
+        $transactions = $transactionsQuery
             ->take(150)
             ->get()
             ->map(fn (StockTransaction $transaction) => [
@@ -83,11 +104,21 @@ class HistoryController extends Controller
             ->all();
     }
 
-    private function salesHistory(): array
+    private function salesHistory(?string $startDate = null, ?string $endDate = null): array
     {
-        return Sale::with(['customer', 'product', 'user'])
+        $salesQuery = Sale::with(['customer', 'product', 'user'])
             ->latest('sale_date')
-            ->latest('id')
+            ->latest('id');
+
+        if ($startDate) {
+            $salesQuery->whereDate('sale_date', '>=', $startDate);
+        }
+
+        if ($endDate) {
+            $salesQuery->whereDate('sale_date', '<=', $endDate);
+        }
+
+        return $salesQuery
             ->take(150)
             ->get()
             ->map(fn (Sale $sale) => [

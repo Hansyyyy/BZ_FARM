@@ -4,6 +4,7 @@ import { usePageSearch } from '../context/HeaderSearchContext';
 import PageState from '../components/ui/PageState';
 import ModuleTabs from '../components/ui/ModuleTabs';
 import ExportModal from '../components/ui/ExportModal';
+import AnimatedDatePicker from '../components/ui/AnimatedDatePicker';
 import { exportTableData } from '../utils/exportData';
 
 const HISTORY_TABS = [
@@ -46,9 +47,25 @@ function actionClass(action) {
 export default function HistoryPage() {
     const [activeTab, setActiveTab] = useState('inventory');
     const [search, setSearch] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
     const [showExport, setShowExport] = useState(false);
 
-    const { data, loading, error } = useFetch(`/api/history?type=${activeTab}`);
+    const historyQuery = useMemo(() => {
+        const params = new URLSearchParams({ type: activeTab });
+
+        if (startDate) {
+            params.set('start_date', startDate);
+        }
+
+        if (endDate) {
+            params.set('end_date', endDate);
+        }
+
+        return `/api/history?${params.toString()}`;
+    }, [activeTab, startDate, endDate]);
+
+    const { data, loading, error } = useFetch(historyQuery);
 
     const handleSearchChange = useCallback((value) => {
         setSearch(value);
@@ -104,6 +121,39 @@ export default function HistoryPage() {
                 </div>
 
                 <ModuleTabs tabs={HISTORY_TABS} activeTab={activeTab} onChange={handleTabChange} />
+
+                <div className="history-filter-bar" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'end', marginBottom: '1rem' }}>
+                    <div>
+                        <label className="form-label mb-1" htmlFor="history-start-date">From</label>
+                        <AnimatedDatePicker
+                            id="history-start-date"
+                            value={startDate}
+                            onChange={setStartDate}
+                            placeholder="Start date"
+                            allowClear
+                        />
+                    </div>
+                    <div>
+                        <label className="form-label mb-1" htmlFor="history-end-date">To</label>
+                        <AnimatedDatePicker
+                            id="history-end-date"
+                            value={endDate}
+                            onChange={setEndDate}
+                            placeholder="End date"
+                            allowClear
+                        />
+                    </div>
+                    <button
+                        type="button"
+                        className="btn btn-outline"
+                        onClick={() => {
+                            setStartDate('');
+                            setEndDate('');
+                        }}
+                    >
+                        Clear Dates
+                    </button>
+                </div>
 
                 <div className="table-responsive">
                     {activeTab === 'inventory' ? (
