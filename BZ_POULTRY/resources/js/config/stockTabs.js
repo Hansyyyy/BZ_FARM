@@ -11,7 +11,10 @@ export const stockTabs = [
         searchPlaceholder: 'search by batch no or type...',
         showDistribution: true,
         showActivities: true,
-        filters: ['type', 'status', 'date'],
+        filters: {
+            admin: ['type', 'status', 'date'],
+            manager: ['status', 'building', 'date'],
+        },
     },
     {
         id: 'feeds',
@@ -21,7 +24,10 @@ export const stockTabs = [
         listTitle: 'Feed List',
         addLabel: 'Restock Feed',
         searchPlaceholder: 'search by category...',
-        filters: ['category', 'status', 'date'],
+        filters: {
+            admin: ['category', 'status', 'date'],
+            manager: ['category', 'status', 'date'],
+        },
     },
     {
         id: 'medicine',
@@ -31,7 +37,10 @@ export const stockTabs = [
         listTitle: 'Medicine List',
         addLabel: 'Add New Item',
         searchPlaceholder: 'search by name or category...',
-        filters: ['category', 'status', 'date'],
+        filters: {
+            admin: ['category', 'status', 'date'],
+            manager: ['category', 'status', 'date'],
+        },
     },
     {
         id: 'eggs',
@@ -41,7 +50,10 @@ export const stockTabs = [
         listTitle: 'Egg Production List',
         addLabel: 'Add New Record',
         searchPlaceholder: 'search by date or building...',
-        filters: ['date'],
+        filters: {
+            admin: ['date'],
+            manager: ['date'],
+        },
     },
     {
         id: 'medications',
@@ -51,7 +63,10 @@ export const stockTabs = [
         listTitle: 'Medications List',
         addLabel: 'Add New Item',
         searchPlaceholder: 'search by code or name...',
-        filters: ['category', 'status', 'date'],
+        filters: {
+            admin: ['category', 'status', 'date'],
+            manager: ['category', 'status', 'date'],
+        },
     },
 ];
 
@@ -62,4 +77,11 @@ export function getStockTab(id) {
 export function getStockResource(tabId) {
     const tab = getStockTab(tabId);
     return resources[tab.resourceKey];
+}
+
+export function getTabFilters(tab, userRole = 'admin') {
+    if (typeof tab.filters === 'object' && !Array.isArray(tab.filters)) {
+        return tab.filters[userRole] || tab.filters.admin || [];
+    }
+    return tab.filters || [];
 }

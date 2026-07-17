@@ -19,7 +19,7 @@ import AnimatedSelect from '../components/ui/AnimatedSelect';
 import AnimatedDatePicker from '../components/ui/AnimatedDatePicker';
 import { exportTableData } from '../utils/exportData';
 import { formatApiError } from '../utils/formatApiError';
-import { stockTabs, getStockResource } from '../config/stockTabs';
+import { stockTabs, getStockResource, getTabFilters } from '../config/stockTabs';
 
 const PAGE_SIZE = 11;
 
@@ -119,7 +119,9 @@ function getItemFilterDate(item) {
 export default function StockHubPage() {
     const [searchParams, setSearchParams] = useSearchParams();
     const activeTab = searchParams.get('tab') || 'chicken';
+    const userRole = window.Laravel?.user?.role || 'admin';
     const tabConfig = stockTabs.find((tab) => tab.id === activeTab) || stockTabs[0];
+    const tabFilters = getTabFilters(tabConfig, userRole);
     const resource = getStockResource(activeTab);
 
     const { data, loading, error, reload } = useFetch(resource.endpoint);
@@ -784,7 +786,7 @@ export default function StockHubPage() {
                 <div className="data-panel-toolbar">
                     <div className="data-panel-filters data-panel-filters--stacked">
                         <div className="data-panel-filter-group">
-                            {tabConfig.filters?.includes('type') && (
+                            {tabFilters?.includes('type') && (
                                 <AnimatedSelect
                                     value={filters.type}
                                     onChange={(option) => setFilters({ ...filters, type: option })}
@@ -792,7 +794,7 @@ export default function StockHubPage() {
                                     placeholder="All Type"
                                 />
                             )}
-                            {tabConfig.filters?.includes('status') && (
+                            {tabFilters?.includes('status') && (
                                 <AnimatedSelect
                                     value={filters.status}
                                     onChange={(option) => setFilters({ ...filters, status: option })}
@@ -800,7 +802,7 @@ export default function StockHubPage() {
                                     placeholder="All Status"
                                 />
                             )}
-                            {tabConfig.filters?.includes('category') && (
+                            {tabFilters?.includes('category') && (
                                 <AnimatedSelect
                                     value={filters.category}
                                     onChange={(option) => setFilters({ ...filters, category: option })}
@@ -808,7 +810,7 @@ export default function StockHubPage() {
                                     placeholder="All Category"
                                 />
                             )}
-                            {tabConfig.filters?.includes('building') && (
+                            {tabFilters?.includes('building') && (
                                 <AnimatedSelect
                                     value={filters.building}
                                     onChange={(option) => setFilters({ ...filters, building: option })}
@@ -816,7 +818,7 @@ export default function StockHubPage() {
                                     placeholder="All Buildings"
                                 />
                             )}
-                            {tabConfig.filters?.includes('date') && (
+                            {tabFilters?.includes('date') && (
                                 <AnimatedDatePicker
                                     value={filters.date}
                                     onChange={(date) => setFilters({ ...filters, date })}
