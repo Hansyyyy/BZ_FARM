@@ -129,8 +129,6 @@ export default function StockHubPage() {
     const { data: feedData, reload: reloadFeeds } = useFetch('/api/feed');
     const [search, setSearch] = useState('');
     const [filters, setFilters] = useState({ type: '', status: '', category: '', building: '', date: '' });
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
     const [page, setPage] = useState(1);
     const [form, setForm] = useState({});
     const [editingId, setEditingId] = useState(null);
@@ -744,39 +742,6 @@ export default function StockHubPage() {
                     }}
                 >
                     <i className="bi bi-journal-check"></i> Create Daily Report
-                </button>
-            </div>
-
-            <div className="history-filter-bar">
-                <div>
-                    <label className="form-label mb-1" htmlFor="stock-start-date">From</label>
-                    <AnimatedDatePicker
-                        id="stock-start-date"
-                        value={startDate}
-                        onChange={setStartDate}
-                        placeholder="Start date"
-                        allowClear
-                    />
-                </div>
-                <div>
-                    <label className="form-label mb-1" htmlFor="stock-end-date">To</label>
-                    <AnimatedDatePicker
-                        id="stock-end-date"
-                        value={endDate}
-                        onChange={setEndDate}
-                        placeholder="End date"
-                        allowClear
-                    />
-                </div>
-                <button
-                    type="button"
-                    className="btn btn-outline"
-                    onClick={() => {
-                        setStartDate('');
-                        setEndDate('');
-                    }}
-                >
-                    Clear Dates
                 </button>
             </div>
 
