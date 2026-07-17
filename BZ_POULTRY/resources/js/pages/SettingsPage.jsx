@@ -5,7 +5,6 @@ import { useFarmSettings } from '../context/FarmSettingsContext';
 import PageState from '../components/ui/PageState';
 import PanelCard from '../components/ui/PanelCard';
 import Modal from '../components/ui/Modal';
-import FarmSettingsForm from '../components/forms/FarmSettingsForm';
 import UserForm from '../components/forms/UserForm';
 
 export default function SettingsPage() {
@@ -59,7 +58,6 @@ export default function SettingsPage() {
         <PageState loading={loading} error={error} loadingLabel="Loading settings...">
             <PanelCard title="Farm Settings">
                 {message && <div className="alert-success">{message}</div>}
-                <FarmSettingsForm settings={settings} onChange={updateSettingsField} onSubmit={update} />
             </PanelCard>
 
             <div className="data-panel">
