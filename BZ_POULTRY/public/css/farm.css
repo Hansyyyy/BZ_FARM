@@ -3908,6 +3908,11 @@ body {
     margin-left: 0;
 }
 
+/* Align filter bar with header and tabs */
+.history-table-card .history-filter-bar {
+    padding: 0 24px;
+    margin-bottom: 1.5rem;
+}
 
 .history-table-card .table-responsive {
     padding: 0 24px 24px;

@@ -108,8 +108,8 @@ export default function HistoryPage() {
                         <h2 className="history-title">History</h2>
                         <p className="history-subtitle mb-0">
                             {activeTab === 'sales'
-                                ? 'Sales transactions recorded in Sales Management.'
-                                : 'Inventory updates logged from stock modules when managers add or edit records.'}
+  ? 'Sales transactions recorded in Sales Management.'
+  : ''}
                         </p>
                     </div>
                     <div className="history-table-actions">
